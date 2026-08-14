@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { Card } from '../../src/components/Card';
@@ -9,6 +10,7 @@ import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'Community Member';
@@ -30,7 +32,10 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 16) + 8 }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Apple-style Profile Card */}
         <View style={styles.profileHeaderCard}>
           <View style={styles.avatarCircle}>
