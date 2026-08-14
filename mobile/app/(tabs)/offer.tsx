@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../../src/auth/AuthProvider';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
@@ -12,6 +13,7 @@ import { Colors, Spacing, Typography } from '../../src/theme';
 export default function OfferRideScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
 
   // Form State
@@ -28,6 +30,27 @@ export default function OfferRideScreen() {
   const [vehicleDetails, setVehicleDetails] = useState('');
 
   const createRideMutation = useCreateRideMutation();
+
+  // Auth Guard: Require Login to Publish Ride
+  useEffect(() => {
+    if (!user) {
+      Alert.alert(
+        'Login Required',
+        'Please log in or create an account to publish a ride.',
+        [
+          {
+            text: 'Log In',
+            onPress: () => router.replace('/auth/login'),
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    }
+  }, [user]);
 
   const handleUseCurrentLocationForPickup = () => {
     setPickup('Current Location (Banswada, Telangana)');
@@ -47,6 +70,14 @@ export default function OfferRideScreen() {
   };
 
   const handlePublishRide = async () => {
+    if (!user) {
+      Alert.alert('Login Required', 'Please log in to publish a ride.', [
+        { text: 'Log In', onPress: () => router.replace('/auth/login') },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+      return;
+    }
+
     try {
       await createRideMutation.mutateAsync({
         vehicleType,

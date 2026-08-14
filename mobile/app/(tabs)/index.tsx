@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,10 +20,27 @@ export default function DashboardScreen() {
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'Community Member';
 
+  const handlePublishPress = () => {
+    if (!user) {
+      Alert.alert(
+        'Login Required',
+        'Please log in or create an account to publish a ride.',
+        [
+          { text: 'Log In', onPress: () => router.push('/auth/login') },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+      return;
+    }
+    router.push('/(tabs)/offer');
+  };
+
+  const topInsetPadding = Math.max(insets.top, 16) + 4;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top, 16) + 8 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: topInsetPadding }]}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
@@ -42,7 +59,7 @@ export default function DashboardScreen() {
 
         {/* Dual Hero Action Cards */}
         <View style={styles.dualCardRow}>
-          <TouchableOpacity style={styles.heroCardPrimary} onPress={() => router.push('/(tabs)/offer')} activeOpacity={0.88}>
+          <TouchableOpacity style={styles.heroCardPrimary} onPress={handlePublishPress} activeOpacity={0.88}>
             <View style={styles.heroIconBadge}>
               <Ionicons name="add-outline" size={20} color={Colors.primary} />
             </View>

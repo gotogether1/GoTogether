@@ -9,10 +9,12 @@ import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
 import { SEED_RIDES, SEED_USERS } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { useAuth } from '../../src/auth/AuthProvider';
 
 export default function RideDetailsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const { id } = useLocalSearchParams();
   const ride = SEED_RIDES.find(r => r.id === id) || SEED_RIDES[0];
   const driver = SEED_USERS.find(u => u.uid === ride.driverId) || SEED_USERS[0];
@@ -33,6 +35,18 @@ export default function RideDetailsScreen() {
   };
 
   const handleBookingSubmit = () => {
+    if (!user) {
+      Alert.alert(
+        'Login Required',
+        'Please log in or create an account to book a seat.',
+        [
+          { text: 'Log In', onPress: () => router.push('/auth/login') },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -42,6 +56,18 @@ export default function RideDetailsScreen() {
   };
 
   const handleNegotiateSubmit = () => {
+    if (!user) {
+      Alert.alert(
+        'Login Required',
+        'Please log in or create an account to propose a price offer.',
+        [
+          { text: 'Log In', onPress: () => router.push('/auth/login') },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
