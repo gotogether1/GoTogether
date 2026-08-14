@@ -2,6 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import meRoutes from './routes/me.routes.js';
+import ridesRoutes from './routes/rides.routes.js';
+import bookingsRoutes from './routes/bookings.routes.js';
+import reviewsRoutes from './routes/reviews.routes.js';
+import reportsRoutes from './routes/reports.routes.js';
+import blocksRoutes from './routes/blocks.routes.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 const app = express();
@@ -23,6 +28,11 @@ app.get('/health', (_req, res) => {
 
 // Mounted v1 API routes
 app.use('/v1/me', meRoutes);
+app.use('/v1/rides', ridesRoutes);
+app.use('/v1/bookings', bookingsRoutes);
+app.use('/v1/reviews', reviewsRoutes);
+app.use('/v1/reports', reportsRoutes);
+app.use('/v1/blocks', blocksRoutes);
 
 // Error Handler Middleware
 app.use(errorHandler as any);
