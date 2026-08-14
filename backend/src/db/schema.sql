@@ -1,4 +1,4 @@
--- Go Together — Neon PostgreSQL Relational Database Schema
+-- Go Together — Complete Neon PostgreSQL Relational Database Schema
 
 CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(128) PRIMARY KEY,
@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   city VARCHAR(255),
   bio TEXT,
   fcm_token TEXT,
+  is_verified BOOLEAN DEFAULT TRUE,
   average_rating NUMERIC(3, 2) DEFAULT 5.00,
   completed_ride_count INT DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -34,6 +35,13 @@ CREATE TABLE IF NOT EXISTS rides (
   total_seats INT NOT NULL CHECK (total_seats > 0),
   available_seats INT NOT NULL CHECK (available_seats >= 0),
   suggested_contribution NUMERIC(10, 2) DEFAULT 0.00,
+  route_variant VARCHAR(100) DEFAULT 'fastest',
+  estimated_duration VARCHAR(50),
+  estimated_distance VARCHAR(50),
+  stopovers JSONB DEFAULT '[]'::jsonb,
+  instant_booking BOOLEAN DEFAULT TRUE,
+  allows_smoking BOOLEAN DEFAULT FALSE,
+  allows_pets BOOLEAN DEFAULT FALSE,
   vehicle_details VARCHAR(255) NOT NULL,
   rules TEXT,
   notes TEXT,
@@ -47,6 +55,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   ride_id VARCHAR(128) NOT NULL REFERENCES rides(id) ON DELETE CASCADE,
   rider_id VARCHAR(128) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   seats_requested INT NOT NULL CHECK (seats_requested > 0),
+  negotiated_price NUMERIC(10, 2),
   rider_message TEXT,
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
