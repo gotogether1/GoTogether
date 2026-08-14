@@ -8,6 +8,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
+      "UIBackgroundModes": [
+        "fetch",
+        "remote-notification"
+      ],
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Go Together needs your location to find nearby carpool and bike pool rides and set pickup meeting points."
       }
@@ -21,7 +25,11 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
