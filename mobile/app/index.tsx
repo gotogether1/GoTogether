@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1200&q=80' }}
+        source={{ uri: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=800&q=80' }}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
@@ -41,26 +41,6 @@ export default function WelcomeScreen() {
               <Text style={styles.tagline}>
                 Connect directly with verified drivers and riders going your way. Zero booking fees.
               </Text>
-            </View>
-
-            {/* Featured Scenario Showcase Card: Bike Pool with Helmets */}
-            <View style={styles.scenarioCard}>
-              <ImageBackground
-                source={{ uri: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80' }}
-                style={styles.scenarioImage}
-                imageStyle={{ borderRadius: 16 }}
-              >
-                <View style={styles.scenarioOverlay}>
-                  <View style={styles.scenarioBadge}>
-                    <Ionicons name="bicycle" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
-                    <Text style={styles.scenarioBadgeText}>BIKE POOL SCENARIO</Text>
-                  </View>
-                  <Text style={styles.scenarioTitle}>Travel Together & Share Costs</Text>
-                  <Text style={styles.scenarioSubtitle}>
-                    Verified riders wearing safety helmets, enjoying the ride & splitting fuel costs.
-                  </Text>
-                </View>
-              </ImageBackground>
             </View>
 
             {/* Feature Cards Grid (Glassmorphism) */}
@@ -138,7 +118,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.52)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
   },
   safeArea: {
     flex: 1,
@@ -150,16 +130,16 @@ const styles = StyleSheet.create({
   },
   heroContainer: {
     alignItems: 'center',
-    marginTop: Spacing.xs,
+    marginTop: Spacing.sm,
   },
   logoCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
@@ -173,7 +153,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   badgeText: {
     ...Typography.labelSm,
@@ -183,84 +163,35 @@ const styles = StyleSheet.create({
   },
   brandTitle: {
     ...Typography.displayLg,
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '800',
     color: '#FFFFFF',
-    marginBottom: 2,
+    marginBottom: Spacing.xs,
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.4)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
   tagline: {
-    ...Typography.bodyMd,
+    ...Typography.bodyLg,
     color: 'rgba(255, 255, 255, 0.95)',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 24,
     maxWidth: 320,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-  scenarioCard: {
-    height: 140,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginVertical: Spacing.xs + 2,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  scenarioImage: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  scenarioOverlay: {
-    padding: Spacing.md,
-    backgroundColor: 'rgba(15, 23, 42, 0.62)',
-  },
-  scenarioBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  scenarioBadgeText: {
-    ...Typography.labelSm,
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: '800',
-  },
-  scenarioTitle: {
-    ...Typography.labelLg,
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  scenarioSubtitle: {
-    ...Typography.labelSm,
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginTop: 2,
-  },
   featuresGrid: {
-    gap: Spacing.xs + 2,
-    marginVertical: Spacing.xs,
+    gap: Spacing.sm,
+    marginVertical: Spacing.md,
   },
   glassFeatureCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.94)',
-    padding: Spacing.sm + 4,
-    borderRadius: 16,
+    padding: Spacing.md,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
     shadowColor: '#000',
@@ -270,44 +201,42 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   featureIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#ECFDF5',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm + 4,
+    marginRight: Spacing.md,
   },
   featureIconBadgeBlue: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm + 4,
+    marginRight: Spacing.md,
   },
   featureTextMeta: {
     flex: 1,
   },
   featureTitle: {
     ...Typography.labelLg,
-    fontSize: 14,
     fontWeight: '800',
     color: Colors.onSurface,
   },
   featureSubtitle: {
     ...Typography.labelSm,
-    fontSize: 12,
     color: Colors.onSurfaceVariant,
-    marginTop: 1,
+    marginTop: 2,
   },
   actionSection: {
     gap: Spacing.xs + 2,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   primaryBtn: {
-    height: 50,
+    height: 52,
     backgroundColor: Colors.primary,
     borderRadius: 16,
     alignItems: 'center',
@@ -325,7 +254,7 @@ const styles = StyleSheet.create({
     color: Colors.onPrimary,
   },
   secondaryBtn: {
-    height: 50,
+    height: 52,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     alignItems: 'center',
@@ -340,7 +269,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurface,
   },
   guestBtn: {
-    height: 40,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -352,7 +281,6 @@ const styles = StyleSheet.create({
   },
   termsFooter: {
     ...Typography.labelSm,
-    fontSize: 11,
     color: 'rgba(255, 255, 255, 0.75)',
     textAlign: 'center',
     marginTop: 2,
