@@ -1,12 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../src/components/Button';
 import { SEED_RIDES } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function RouteMapModalScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { rideId, location } = useLocalSearchParams();
   const ride = SEED_RIDES.find(r => r.id === rideId) || SEED_RIDES[0];
 
@@ -29,15 +32,18 @@ export default function RouteMapModalScreen() {
     }
   };
 
+  const topInsetPadding = Math.max(insets.top, 16) + 4;
+  const bottomInsetPadding = Math.max(insets.bottom, 24);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: topInsetPadding }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.8}>
-          <Text style={styles.closeIcon}>✕</Text>
+          <Ionicons name="close" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
         <View style={styles.topTitleBox}>
-          <Text style={styles.topTitle}>{targetLocation}</Text>
-          <Text style={styles.topSubtitle}>{ride.pickup} → {ride.destination}</Text>
+          <Text style={styles.topTitle} numberOfLines={1}>{targetLocation}</Text>
+          <Text style={styles.topSubtitle} numberOfLines={1}>{ride.pickup} → {ride.destination}</Text>
         </View>
       </View>
 
@@ -58,7 +64,10 @@ export default function RouteMapModalScreen() {
             </View>
             <View style={styles.markerCard}>
               <Text style={styles.markerTitle}>{ride.pickup}</Text>
-              <Text style={styles.markerSubtitle}>📍 {ride.meetingPoint}</Text>
+              <View style={styles.markerSubRow}>
+                <Ionicons name="location-outline" size={13} color={Colors.primary} style={{ marginRight: 3 }} />
+                <Text style={styles.markerSubtitle} numberOfLines={1}>{ride.meetingPoint}</Text>
+              </View>
             </View>
           </View>
 
@@ -69,18 +78,20 @@ export default function RouteMapModalScreen() {
             </View>
             <View style={styles.destMarkerCard}>
               <Text style={styles.markerTitle}>{ride.destination}</Text>
-              <Text style={styles.markerSubtitle}>🏁 Drop-off location</Text>
+              <View style={styles.markerSubRow}>
+                <Ionicons name="flag-outline" size={13} color="#0F172A" style={{ marginRight: 3 }} />
+                <Text style={styles.markerSubtitle}>Drop-off location</Text>
+              </View>
             </View>
           </View>
         </View>
       </View>
 
-      <View style={styles.bottomFloatingBar}>
-        <Button
-          title="↗ Open in Google Maps"
-          onPress={handleOpenGoogleMaps}
-          style={styles.openMapsBtn}
-        />
+      <View style={[styles.bottomFloatingBar, { bottom: bottomInsetPadding }]}>
+        <TouchableOpacity style={styles.openMapsBtn} onPress={handleOpenGoogleMaps} activeOpacity={0.88}>
+          <Ionicons name="open-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+          <Text style={styles.openMapsBtnText}>Open in Google Maps</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -89,41 +100,40 @@ export default function RouteMapModalScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#EAECEE',
+    backgroundColor: '#F8FAFC',
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceContainer,
+    borderBottomColor: '#E2E8F0',
     zIndex: 10,
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.surfaceContainerLow,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  closeIcon: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.onSurface,
+    marginRight: Spacing.sm,
   },
   topTitleBox: {
     flex: 1,
   },
   topTitle: {
-    ...Typography.headlineMd,
+    ...Typography.headlineLg,
+    fontSize: 20,
+    fontWeight: '800',
     color: Colors.onSurface,
   },
   topSubtitle: {
     ...Typography.labelSm,
     color: Colors.onSurfaceVariant,
+    marginTop: 2,
   },
   mapCanvasContainer: {
     flex: 1,
@@ -196,13 +206,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.sm + 4,
     paddingVertical: Spacing.xs,
-    borderRadius: 8,
+    borderRadius: 12,
     marginTop: 4,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   destinationMarker: {
     position: 'absolute',
@@ -230,18 +242,25 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.sm + 4,
     paddingVertical: Spacing.xs,
-    borderRadius: 8,
+    borderRadius: 12,
     marginTop: 4,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   markerTitle: {
     ...Typography.labelLg,
     color: Colors.onSurface,
-    fontWeight: '700',
+    fontWeight: '800',
+  },
+  markerSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
   },
   markerSubtitle: {
     ...Typography.labelSm,
@@ -249,18 +268,28 @@ const styles = StyleSheet.create({
   },
   bottomFloatingBar: {
     position: 'absolute',
-    bottom: 24,
     left: Spacing.md,
     right: Spacing.md,
     alignItems: 'center',
   },
   openMapsBtn: {
-    backgroundColor: '#0284C7',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
     borderRadius: 28,
-    elevation: 8,
-    shadowColor: '#000',
+    elevation: 6,
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 8,
+  },
+  openMapsBtnText: {
+    ...Typography.labelLg,
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.onPrimary,
   },
 });
