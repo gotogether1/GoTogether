@@ -1,4 +1,11 @@
-# Environment variables
+# Environment variables and secrets
 .env
 .env*.local
+*.json
+!app.json
+!package.json
+!tsconfig.json
+!firestore.indexes.json
 node_modules
+dist
+.expo

@@ -33,6 +33,13 @@
           "color": "#2563EB"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7b8fa767-b421-4cf8-b972-7fc7d14ce948"
+      }
+    },
+    "owner": "gotogether1"
   }
 }
