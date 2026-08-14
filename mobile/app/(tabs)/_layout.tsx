@@ -11,6 +11,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: styles.tabBarStyle,
+        tabBarItemStyle: styles.tabBarItemStyle,
       }}
     >
       {/* 1. HOME */}
@@ -54,9 +55,9 @@ export default function TabLayout() {
         name="offer"
         options={{
           title: 'Offer',
-          tabBarIcon: ({ focused }) => (
-            <View style={[styles.centerFloatingBtn, focused && styles.centerFloatingBtnActive]}>
-              <Ionicons name="add" size={32} color="#FFFFFF" />
+          tabBarIcon: () => (
+            <View style={styles.centerFloatingBtn}>
+              <Ionicons name="add" size={30} color="#FFFFFF" />
             </View>
           ),
         }}
@@ -124,27 +125,34 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    elevation: 10,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 16,
-    paddingHorizontal: 8,
+    elevation: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    paddingHorizontal: 4,
+  },
+  tabBarItemStyle: {
+    height: 68,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    padding: 0,
+    margin: 0,
   },
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
+    height: 68,
     width: 48,
+    position: 'relative',
   },
   activeDot: {
+    position: 'absolute',
+    bottom: 10,
     width: 5,
     height: 5,
     borderRadius: 2.5,
     backgroundColor: Colors.primary,
-    marginTop: 4,
   },
   centerFloatingBtn: {
     width: 56,
@@ -153,18 +161,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -26,
+    marginTop: -24,
     borderWidth: 4,
     borderColor: '#FFFFFF',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  centerFloatingBtnActive: {
-    backgroundColor: '#1E40AF',
-    transform: [{ scale: 1.05 }],
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
   iconBadgeWrapper: {
     position: 'relative',
