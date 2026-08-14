@@ -7,23 +7,34 @@ import { AuthProvider } from '../src/auth/AuthProvider';
 import { RealtimeProvider } from '../src/realtime/RealtimeProvider';
 import { usePushNotifications } from '../src/notifications/usePushNotifications';
 
-const queryClient = new QueryClient();
+// Configure TanStack Query for flicker-free, instant UI cache serving
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Serve cached data for 5 minutes without flickers
+      gcTime: 1000 * 60 * 30, // Preserve memory cache for 30 minutes
+      refetchOnWindowFocus: false, // Prevent reload flickers when switching tabs or apps
+      refetchOnReconnect: true,
+      retry: 2,
+    },
+  },
+});
 
 function AppContent() {
   usePushNotifications();
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="auth/login" />
       <Stack.Screen name="auth/signup" />
       <Stack.Screen name="auth/forgot-password" />
       <Stack.Screen name="auth/onboarding" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="ride/[id]" options={{ presentation: 'card' }} />
-      <Stack.Screen name="chat/[bookingId]" options={{ presentation: 'card' }} />
-      <Stack.Screen name="safety/report" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="safety/blocks" options={{ presentation: 'card' }} />
+      <Stack.Screen name="ride/[id]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+      <Stack.Screen name="chat/[bookingId]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+      <Stack.Screen name="safety/report" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="safety/blocks" options={{ presentation: 'card', animation: 'slide_from_right' }} />
     </Stack>
   );
 }
