@@ -7,6 +7,7 @@ import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { safeBack } from '../../src/utils/navigation';
 
 const REASONS = [
   'Unsafe behavior or driving',
@@ -31,7 +32,7 @@ export default function ReportScreen() {
       Alert.alert(
         'Report Submitted',
         'Thank you for reporting. Your report has been securely submitted to moderation.',
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{ text: 'OK', onPress: () => safeBack(router) }]
       );
     }, 600);
   };
@@ -46,7 +47,7 @@ export default function ReportScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* Top Header Row with Back Button */}
         <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
+          <TouchableOpacity onPress={() => safeBack(router)} style={styles.backBtn} activeOpacity={0.8}>
             <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>Report User or Ride</Text>
@@ -90,7 +91,7 @@ export default function ReportScreen() {
           />
 
           <Button title="Submit Report" onPress={handleSubmit} loading={submitting} variant="danger" style={styles.submitBtn} />
-          <Button title="Cancel" variant="outline" onPress={() => router.back()} />
+          <Button title="Cancel" variant="outline" onPress={() => safeBack(router)} />
         </Card>
       </ScrollView>
     </SafeAreaView>

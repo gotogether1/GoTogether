@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
 import { EmptyState } from '../../src/components/loading/EmptyState';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { safeBack } from '../../src/utils/navigation';
 
 export default function BlockedUsersScreen() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function BlockedUsersScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* Top Header Row with Back Button */}
         <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
+          <TouchableOpacity onPress={() => safeBack(router)} style={styles.backBtn} activeOpacity={0.8}>
             <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>Blocked Users</Text>

@@ -6,6 +6,8 @@ import { Button } from '../../src/components/Button';
 import { SEED_USERS } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
+import { safeBack } from '../../src/utils/navigation';
+
 export default function PublicProfileScreen() {
   const router = useRouter();
   const { userId } = useLocalSearchParams();
@@ -14,7 +16,7 @@ export default function PublicProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => safeBack(router)} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 

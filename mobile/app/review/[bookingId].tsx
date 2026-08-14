@@ -6,6 +6,7 @@ import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { SEED_BOOKINGS } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { safeBack } from '../../src/utils/navigation';
 
 export default function LeaveReviewScreen() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function LeaveReviewScreen() {
       Alert.alert(
         'Review Submitted ⭐',
         'Thank you for rating your commute experience!',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)/dashboard') }]
+        [{ text: 'OK', onPress: () => safeBack(router) }]
       );
     }, 600);
   };
@@ -32,7 +33,7 @@ export default function LeaveReviewScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => safeBack(router)} style={styles.backBtn}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Rate Your Trip</Text>

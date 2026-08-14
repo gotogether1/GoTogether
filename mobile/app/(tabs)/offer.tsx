@@ -9,6 +9,7 @@ import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
 import { useCreateRideMutation } from '../../src/api/hooks';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { safeBack } from '../../src/utils/navigation';
 
 export default function OfferRideScreen() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function OfferRideScreen() {
           {
             text: 'Cancel',
             style: 'cancel',
-            onPress: () => router.back(),
+            onPress: () => safeBack(router),
           },
         ]
       );
@@ -107,7 +108,7 @@ export default function OfferRideScreen() {
       {step === 1 && (
         <View style={styles.stepContainer}>
           <View style={[styles.wizardHeader, { paddingTop: headerPaddingTop }]}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+            <TouchableOpacity onPress={() => safeBack(router)} style={styles.closeBtn}>
               <Ionicons name="close" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
             <Text style={styles.wizardTitle}>Pick-up</Text>
