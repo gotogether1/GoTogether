@@ -34,7 +34,7 @@ export default function ForgotPasswordScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity style={styles.backBtn} onPress={() => safeBack(router, '/')} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/auth/login')} activeOpacity={0.8}>
           <Text style={styles.backIcon}>← Back</Text>
         </TouchableOpacity>
 
