@@ -15,11 +15,11 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=800&q=80' }}
+        source={require('../assets/welcome_bg.png')}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* Soft Aesthetic Ambient Gradient Overlay */}
+        {/* Soft Ambient Overlay to Ensure Text Legibility */}
         <View style={styles.overlay} />
 
         <SafeAreaView style={styles.safeArea}>
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.28)',
   },
   safeArea: {
     flex: 1,
@@ -147,12 +147,12 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   badgePill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
     marginBottom: Spacing.sm,
   },
   badgeText: {
@@ -160,6 +160,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     letterSpacing: 0.8,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   brandTitle: {
     ...Typography.displayLg,
@@ -168,7 +171,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginBottom: Spacing.xs,
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
@@ -178,7 +181,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 320,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
@@ -189,7 +192,7 @@ const styles = StyleSheet.create({
   glassFeatureCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     padding: Spacing.md,
     borderRadius: 18,
     borderWidth: 1,
@@ -277,12 +280,18 @@ const styles = StyleSheet.create({
     ...Typography.labelLg,
     fontSize: 15,
     fontWeight: '800',
-    color: '#60A5FA',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   termsFooter: {
     ...Typography.labelSm,
-    color: 'rgba(255, 255, 255, 0.75)',
+    color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
     marginTop: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
