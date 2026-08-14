@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button } from '../../src/components/Button';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { SEED_BOOKINGS, SEED_MESSAGES, SEED_RIDES, DemoMessage } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function ChatScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { bookingId } = useLocalSearchParams();
   const booking = SEED_BOOKINGS.find(b => b.id === bookingId) || SEED_BOOKINGS[0];
   const ride = SEED_RIDES.find(r => r.id === booking.rideId) || SEED_RIDES[0];
@@ -33,28 +35,48 @@ export default function ChatScreen() {
 
   const isClosed = booking.status !== 'approved';
 
+  const topInsetHeight = Math.max(insets.top + 12, 42);
+  const bottomInsetPadding = Math.max(insets.bottom, 12);
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Top Status Bar Spacer */}
+      <View style={{ height: topInsetHeight, backgroundColor: Colors.surface }} />
+
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>← Back</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
+            <Ionicons name="arrow-back" size={20} color={Colors.primary} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
             <Text style={styles.headerName}>{booking.driverName}</Text>
-            <Text style={styles.headerSub}>{ride.vehicleType === 'carpool' ? '🚗 Carpool' : '🚲 Bike Pool'}</Text>
+            <View style={styles.badgeRow}>
+              <Ionicons
+                name={ride.vehicleType === 'carpool' ? 'car-outline' : 'bicycle-outline'}
+                size={14}
+                color={Colors.primary}
+                style={{ marginRight: 4 }}
+              />
+              <Text style={styles.headerSub}>{ride.vehicleType === 'carpool' ? 'Carpool' : 'Bike Pool'}</Text>
+            </View>
           </View>
         </View>
 
         <View style={styles.rideContextStrip}>
-          <Text style={styles.stripText}>📍 Meeting Point: <Text style={styles.bold}>{ride.meetingPoint}</Text></Text>
-          <Text style={styles.noticeText}>ℹ️ This chat is available until the ride is completed. Keep messages about this ride.</Text>
+          <View style={styles.stripRow}>
+            <Ionicons name="location-outline" size={15} color={Colors.primary} style={{ marginRight: 6 }} />
+            <Text style={styles.stripText}>Meeting Point: <Text style={styles.bold}>{ride.meetingPoint}</Text></Text>
+          </View>
+          <View style={styles.noticeRow}>
+            <Ionicons name="information-circle-outline" size={15} color={Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
+            <Text style={styles.noticeText}>This chat is available until the ride is completed. Keep messages about this ride.</Text>
+          </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.messagesContainer}>
+        <ScrollView contentContainerStyle={styles.messagesContainer} showsVerticalScrollIndicator={false}>
           {messages.map(msg => {
             const isMe = msg.senderId === currentUserId;
             return (
@@ -74,13 +96,13 @@ export default function ChatScreen() {
         </ScrollView>
 
         {isClosed ? (
-          <View style={styles.closedBanner}>
+          <View style={[styles.closedBanner, { paddingBottom: bottomInsetPadding }]}>
             <Text style={styles.closedText}>
               {booking.status === 'completed' ? 'This ride is complete. This chat is now closed.' : 'This booking was cancelled. This chat is now closed.'}
             </Text>
           </View>
         ) : (
-          <View style={styles.inputContainer}>
+          <View style={[styles.inputContainer, { paddingBottom: bottomInsetPadding }]}>
             <TextInput
               style={styles.input}
               placeholder="Type your message..."
@@ -89,8 +111,8 @@ export default function ChatScreen() {
               onChangeText={setInputText}
               multiline
             />
-            <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
-              <Text style={styles.sendIcon}>➔</Text>
+            <TouchableOpacity style={styles.sendBtn} onPress={handleSend} activeOpacity={0.85}>
+              <Ionicons name="paper-plane" size={18} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         )}
@@ -102,7 +124,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   keyboardAvoid: {
     flex: 1,
@@ -110,47 +132,63 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceContainer,
+    borderBottomColor: '#E2E8F0',
   },
   backBtn: {
     paddingRight: Spacing.md,
-  },
-  backText: {
-    ...Typography.labelLg,
-    color: Colors.primary,
   },
   headerTitleContainer: {
     flex: 1,
   },
   headerName: {
     ...Typography.headlineMd,
+    fontSize: 18,
+    fontWeight: '800',
     color: Colors.onSurface,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
   },
   headerSub: {
     ...Typography.labelSm,
-    color: Colors.onSurfaceVariant,
+    color: Colors.primary,
+    fontWeight: '700',
   },
   rideContextStrip: {
-    backgroundColor: Colors.surfaceContainerLow,
+    backgroundColor: '#EFF6FF',
     padding: Spacing.sm,
     paddingHorizontal: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceContainer,
+    borderBottomColor: '#BFDBFE',
+    gap: 4,
+  },
+  stripRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   stripText: {
     ...Typography.bodyMd,
     color: Colors.onSurface,
+    fontSize: 13,
   },
   bold: {
     fontWeight: '700',
   },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   noticeText: {
     ...Typography.labelSm,
     color: Colors.onSurfaceVariant,
-    marginTop: 2,
+    fontSize: 12,
+    flex: 1,
   },
   messagesContainer: {
     padding: Spacing.md,
@@ -159,7 +197,7 @@ const styles = StyleSheet.create({
   messageBubble: {
     maxWidth: '80%',
     padding: Spacing.md,
-    borderRadius: 16,
+    borderRadius: 18,
     marginBottom: Spacing.xs,
   },
   myBubble: {
@@ -171,11 +209,12 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.surfaceContainer,
+    borderColor: '#E2E8F0',
     borderBottomLeftRadius: 4,
   },
   messageText: {
     ...Typography.bodyMd,
+    fontSize: 15,
   },
   myMessageText: {
     color: Colors.onPrimary,
@@ -189,7 +228,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   myTimeText: {
-    color: Colors.primaryContainer,
+    color: '#DBEAFE',
   },
   otherTimeText: {
     color: Colors.outline,
@@ -198,38 +237,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     backgroundColor: Colors.surface,
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceContainer,
+    borderTopColor: '#E2E8F0',
     gap: Spacing.xs,
   },
   input: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 44,
     maxHeight: 100,
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 22,
     paddingHorizontal: Spacing.md,
     paddingVertical: 8,
     fontSize: 15,
     color: Colors.onSurface,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sendIcon: {
-    color: Colors.onPrimary,
-    fontSize: 18,
-    fontWeight: '700',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   closedBanner: {
     padding: Spacing.md,
-    backgroundColor: Colors.errorContainer,
+    backgroundColor: '#FEF2F2',
     alignItems: 'center',
   },
   closedText: {
