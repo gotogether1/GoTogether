@@ -9,13 +9,13 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // Ensures logo clears camera punch hole and status bar clock
-  const topInsetPadding = Math.max(insets.top, 44) + 10;
+  // Clears camera notch and status bar cleanly
+  const topInsetPadding = Math.max(insets.top, 36) + 6;
   const bottomInsetPadding = Math.max(insets.bottom, 12);
 
   return (
     <View style={styles.root}>
-      {/* Tilted & Scaled Background Image ONLY */}
+      {/* Tilted & Scaled Background Image (Offset Down for Sky Clearance) */}
       <View style={styles.bgImageContainer} pointerEvents="none">
         <Image
           source={require('../assets/welcome_bg.png')}
@@ -33,7 +33,7 @@ export default function WelcomeScreen() {
           contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Top Hero Section (Sits Cleanly in Upper Sky Area Above Faces) */}
+          {/* Centered Hero Section (Positioned Cleanly in Sky Area) */}
           <View style={styles.heroContainer}>
             {/* Straight Center App Logo */}
             <View style={styles.logoWrapper}>
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   bgImageOnly: {
     width: '100%',
     height: '100%',
-    transform: [{ scale: 1.22 }, { rotate: '4deg' }, { translateY: 24 }],
+    transform: [{ scale: 1.28 }, { rotate: '4deg' }, { translateY: 75 }],
   },
   overlay: {
     position: 'absolute',
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.18)',
+    backgroundColor: 'rgba(15, 23, 42, 0.16)',
   },
   safeArea: {
     flex: 1,
@@ -128,43 +128,44 @@ const styles = StyleSheet.create({
   heroContainer: {
     alignItems: 'center',
     marginTop: 0,
+    marginBottom: Spacing.md,
   },
   logoWrapper: {
-    marginBottom: 6,
+    marginBottom: 8,
   },
   logoImage: {
-    width: 78,
-    height: 78,
+    width: 80,
+    height: 80,
     borderRadius: 20,
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   badgeText: {
     ...Typography.labelSm,
     color: '#FFFFFF',
     fontWeight: '800',
     letterSpacing: 0.6,
-    fontSize: 9.5,
+    fontSize: 10,
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
   tagline: {
     ...Typography.bodyMd,
-    fontSize: 12,
+    fontSize: 12.5,
     color: 'rgba(255, 255, 255, 0.95)',
     textAlign: 'center',
-    lineHeight: 16,
-    maxWidth: 270,
+    lineHeight: 17,
+    maxWidth: 280,
     textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
