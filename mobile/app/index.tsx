@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ImageBackground, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* Soft Ambient Overlay to Ensure High Contrast */}
+        {/* Soft Ambient Overlay */}
         <View style={styles.overlay} />
 
         <SafeAreaView style={styles.safeArea}>
@@ -29,18 +29,13 @@ export default function WelcomeScreen() {
           >
             {/* Top Hero Section */}
             <View style={styles.heroContainer}>
-              {/* Premium Aesthetic Brand Logo */}
-              <View style={styles.logoOuterGlow}>
-                <View style={styles.logoGlassCard}>
-                  <View style={styles.logoIconRow}>
-                    <Ionicons name="car-sport" size={28} color="#FFFFFF" />
-                    <View style={styles.logoDivider} />
-                    <Ionicons name="bicycle" size={26} color="#93C5FD" />
-                  </View>
-                  <View style={styles.sparkleBadge}>
-                    <Ionicons name="sparkles" size={10} color="#FBBF24" />
-                  </View>
-                </View>
+              {/* Official 4K GoTogether Logo (No White Border) */}
+              <View style={styles.logoWrapper}>
+                <Image
+                  source={require('../assets/logo.png')}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
               </View>
 
               <View style={styles.badgePill}>
@@ -48,7 +43,6 @@ export default function WelcomeScreen() {
                 <Text style={styles.badgeText}>COMMUNITY CARPOOL & BIKE POOL</Text>
               </View>
 
-              <Text style={styles.brandTitle}>Go Together</Text>
               <Text style={styles.tagline}>
                 Connect directly with verified drivers and riders going your way. Zero booking fees.
               </Text>
@@ -120,49 +114,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Spacing.xs,
   },
-  /* Premium Aesthetic Logo Styles */
-  logoOuterGlow: {
-    shadowColor: '#2563EB',
+  logoWrapper: {
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
     elevation: 12,
     marginBottom: Spacing.md,
   },
-  logoGlassCard: {
-    width: 96,
-    height: 96,
-    borderRadius: 28,
-    backgroundColor: 'rgba(15, 23, 42, 0.78)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  logoIconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  logoDivider: {
-    width: 1.5,
-    height: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
-  },
-  sparkleBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#1E293B',
-    borderWidth: 1.5,
-    borderColor: '#FBBF24',
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoImage: {
+    width: 140,
+    height: 140,
+    borderRadius: 36,
   },
   badgePill: {
     flexDirection: 'row',
@@ -173,7 +136,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.45)',
-    marginBottom: Spacing.xs + 2,
+    marginBottom: Spacing.md,
   },
   badgeText: {
     ...Typography.labelSm,
@@ -184,17 +147,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
-  },
-  brandTitle: {
-    ...Typography.displayLg,
-    fontSize: 38,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    marginBottom: 4,
-    letterSpacing: -0.8,
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 5,
   },
   tagline: {
     ...Typography.bodyLg,
