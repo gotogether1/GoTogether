@@ -51,7 +51,7 @@ export default function TabLayout() {
             <View style={styles.tabItem}>
               <Ionicons
                 name={focused ? 'add-circle' : 'add-circle-outline'}
-                size={26}
+                size={24}
                 color={focused ? Colors.primary : '#94A3B8'}
               />
               {focused && <View style={styles.activeDot} />}
@@ -67,7 +67,7 @@ export default function TabLayout() {
           title: 'My Rides',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.centerFloatingBtn, focused && styles.centerFloatingBtnActive]}>
-              <Ionicons name={focused ? 'car' : 'car-outline'} size={28} color="#FFFFFF" />
+              <Ionicons name={focused ? 'car' : 'car-outline'} size={26} color="#FFFFFF" />
             </View>
           ),
         }}
@@ -127,23 +127,24 @@ const styles = StyleSheet.create({
   tabBarStyle: {
     backgroundColor: '#FFFFFF',
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 24 : 16,
-    left: 16,
-    right: 16,
-    height: 68,
-    borderRadius: 34,
-    borderTopWidth: 0,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 4,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: Platform.OS === 'ios' ? 88 : 72,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    elevation: 12,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    paddingHorizontal: 4,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    paddingHorizontal: 8,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
   },
   tabBarItemStyle: {
-    height: 68,
+    height: Platform.OS === 'ios' ? 64 : 64,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 0,
@@ -152,34 +153,33 @@ const styles = StyleSheet.create({
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 68,
+    height: 52,
     width: 48,
-    paddingTop: 8,
     position: 'relative',
   },
   activeDot: {
     position: 'absolute',
-    bottom: 8,
+    bottom: -2,
     width: 5,
     height: 5,
     borderRadius: 2.5,
     backgroundColor: Colors.primary,
   },
   centerFloatingBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -18,
+    marginTop: -22,
     borderWidth: 4,
     borderColor: '#FFFFFF',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 6,
   },
   centerFloatingBtnActive: {
     backgroundColor: '#1E40AF',
