@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../src/theme';
 
@@ -12,6 +12,16 @@ export default function TabLayout() {
         tabBarShowLabel: false,
         tabBarStyle: styles.tabBarStyle,
         tabBarItemStyle: styles.tabBarItemStyle,
+        tabBarButton: ({ ref, ...restProps }: any) => (
+          <Pressable
+            {...restProps}
+            android_ripple={{ color: 'transparent' }}
+            style={({ pressed }) => [
+              restProps.style,
+              { opacity: pressed ? 0.85 : 1 },
+            ]}
+          />
+        ),
       }}
     >
       {/* 1. HOME */}
