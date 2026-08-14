@@ -1,8 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Text, View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography } from '../../src/theme';
+import { Colors } from '../../src/theme';
 
 export default function TabLayout() {
   return (
@@ -19,13 +19,13 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.tabItemActive]}>
+            <View style={styles.tabItem}>
               <Ionicons
                 name={focused ? 'home' : 'home-outline'}
-                size={22}
-                color={focused ? Colors.primary : '#64748B'}
+                size={24}
+                color={focused ? Colors.primary : '#94A3B8'}
               />
-              <Text style={[styles.labelText, focused && styles.labelTextActive]}>Home</Text>
+              {focused && <View style={styles.activeDot} />}
             </View>
           ),
         }}
@@ -37,31 +37,26 @@ export default function TabLayout() {
         options={{
           title: 'Find',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.tabItemActive]}>
+            <View style={styles.tabItem}>
               <Ionicons
                 name={focused ? 'search' : 'search-outline'}
-                size={22}
-                color={focused ? Colors.primary : '#64748B'}
+                size={24}
+                color={focused ? Colors.primary : '#94A3B8'}
               />
-              <Text style={[styles.labelText, focused && styles.labelTextActive]}>Find</Text>
+              {focused && <View style={styles.activeDot} />}
             </View>
           ),
         }}
       />
 
-      {/* 3. OFFER / CREATE */}
+      {/* 3. CENTER FLOATING "+" ACTION BUTTON (OFFER) */}
       <Tabs.Screen
         name="offer"
         options={{
           title: 'Offer',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.tabItemActive]}>
-              <Ionicons
-                name={focused ? 'add-circle' : 'add-circle-outline'}
-                size={22}
-                color={focused ? Colors.primary : '#64748B'}
-              />
-              <Text style={[styles.labelText, focused && styles.labelTextActive]}>Offer</Text>
+            <View style={[styles.centerFloatingBtn, focused && styles.centerFloatingBtnActive]}>
+              <Ionicons name="add" size={32} color="#FFFFFF" />
             </View>
           ),
         }}
@@ -75,22 +70,22 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 5. INBOX / NOTIFICATIONS WITH RED BADGE DOT */}
+      {/* 5. INBOX WITH RED UNREAD BADGE DOT */}
       <Tabs.Screen
         name="notifications"
         options={{
           title: 'Inbox',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.tabItemActive]}>
+            <View style={styles.tabItem}>
               <View style={styles.iconBadgeWrapper}>
                 <Ionicons
                   name={focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
-                  size={22}
-                  color={focused ? Colors.primary : '#64748B'}
+                  size={24}
+                  color={focused ? Colors.primary : '#94A3B8'}
                 />
                 <View style={styles.redBadgeDot} />
               </View>
-              <Text style={[styles.labelText, focused && styles.labelTextActive]}>Inbox</Text>
+              {focused && <View style={styles.activeDot} />}
             </View>
           ),
         }}
@@ -102,13 +97,13 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabItem, focused && styles.tabItemActive]}>
+            <View style={styles.tabItem}>
               <Ionicons
                 name={focused ? 'person' : 'person-outline'}
-                size={22}
-                color={focused ? Colors.primary : '#64748B'}
+                size={24}
+                color={focused ? Colors.primary : '#94A3B8'}
               />
-              <Text style={[styles.labelText, focused && styles.labelTextActive]}>Profile</Text>
+              {focused && <View style={styles.activeDot} />}
             </View>
           ),
         }}
@@ -120,57 +115,69 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBarStyle: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    height: Platform.OS === 'ios' ? 88 : 74,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-    paddingTop: 8,
-    paddingHorizontal: 8,
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    elevation: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
+    bottom: Platform.OS === 'ios' ? 24 : 16,
+    left: 16,
+    right: 16,
+    height: 68,
+    borderRadius: 34,
+    borderTopWidth: 0,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    elevation: 10,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'space-around',
   },
   tabItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 64,
-    height: 52,
-    borderRadius: 16,
+    height: 48,
+    width: 48,
   },
-  tabItemActive: {
-    backgroundColor: '#EFF6FF',
+  activeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: Colors.primary,
+    marginTop: 4,
+  },
+  centerFloatingBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -26,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  centerFloatingBtnActive: {
+    backgroundColor: '#1E40AF',
+    transform: [{ scale: 1.05 }],
   },
   iconBadgeWrapper: {
     position: 'relative',
   },
   redBadgeDot: {
     position: 'absolute',
-    top: -1,
-    right: -3,
+    top: 0,
+    right: -2,
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#EF4444',
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
-  },
-  labelText: {
-    ...Typography.labelSm,
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  labelTextActive: {
-    color: Colors.primary,
-    fontWeight: '800',
   },
 });
