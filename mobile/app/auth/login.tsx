@@ -3,10 +3,12 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-n
 import { useRouter } from 'expo-router';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
+import { useAuth } from '../../src/auth/AuthProvider';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { loginWithEmail } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,6 +18,19 @@ export default function LoginScreen() {
       Alert.alert('Missing Fields', 'Please enter your email and password.');
       return;
     }
+
+    setLoading(true);
+    try {
+      await loginWithEmail(email.trim(), password);
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      Alert.alert('Login Failed', err.message || 'Email or password is incorrect.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -57,10 +72,10 @@ export default function LoginScreen() {
           />
 
           <Button
-            title="Continue with Google"
-            variant="outline"
-            onPress={handleLogin}
-            style={styles.googleBtn}
+            title="Demo Instant Sign In"
+            variant="secondary"
+            onPress={handleDemoLogin}
+            style={styles.demoBtn}
           />
 
           <View style={styles.linksRow}>
@@ -106,7 +121,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     marginBottom: Spacing.sm,
   },
-  googleBtn: {
+  demoBtn: {
     marginBottom: Spacing.md,
   },
   linksRow: {

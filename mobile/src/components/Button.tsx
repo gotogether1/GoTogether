@@ -1,5 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import React, { useRef } from 'react';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, Animated } from 'react-native';
 import { Colors, BorderRadius, Spacing } from '../theme';
 
 interface ButtonProps {
@@ -21,9 +21,27 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
 }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+
   const isOutline = variant === 'outline';
   const isSecondary = variant === 'secondary';
   const isDanger = variant === 'danger';
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      friction: 4,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
 
   const buttonStyles = [
     styles.button,
@@ -44,18 +62,22 @@ export const Button: React.FC<ButtonProps> = ({
   ];
 
   return (
-    <TouchableOpacity
-      style={buttonStyles}
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.8}
-    >
-      {loading ? (
-        <ActivityIndicator color={isOutline ? Colors.primary : Colors.onPrimary} />
-      ) : (
-        <Text style={textStyles}>{title}</Text>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale }], width: style?.width || '100%' }}>
+      <TouchableOpacity
+        style={buttonStyles}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+        activeOpacity={0.9}
+      >
+        {loading ? (
+          <ActivityIndicator color={isOutline ? Colors.primary : Colors.onPrimary} />
+        ) : (
+          <Text style={textStyles}>{title}</Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -95,6 +117,9 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   dangerText: {
+    color: Colors.primary,
+  },
+  dangerTextContent: {
     color: Colors.onError,
   },
   disabledText: {

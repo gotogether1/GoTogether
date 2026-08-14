@@ -1,26 +1,45 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
+import { SkeletonCard } from '../../src/components/Skeleton';
 import { SEED_RIDES } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [selectedType, setSelectedType] = useState<'all' | 'carpool' | 'bike_pool'>('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleFilterChange = (type: 'all' | 'carpool' | 'bike_pool') => {
+    setSelectedType(type);
+    setLoading(true);
+    setTimeout(() => setLoading(false), 300);
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  };
 
   const filteredRides = SEED_RIDES.filter(r => selectedType === 'all' || r.vehicleType === selectedType);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} />
+        }
+      >
         <View style={styles.topHeader}>
           <View>
             <Text style={styles.greeting}>Welcome back 👋</Text>
             <Text style={styles.userName}>Alex Rivers</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/notifications')} style={styles.bellBtn}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/notifications')} style={styles.bellBtn} activeOpacity={0.8}>
             <Text style={styles.bellIcon}>🔔</Text>
             <View style={styles.redDot} />
           </TouchableOpacity>
@@ -51,21 +70,21 @@ export default function HomeScreen() {
         <View style={styles.filterRow}>
           <TouchableOpacity
             style={[styles.filterChip, selectedType === 'all' && styles.activeFilterChip]}
-            onPress={() => setSelectedType('all')}
+            onPress={() => handleFilterChange('all')}
           >
             <Text style={[styles.filterChipText, selectedType === 'all' && styles.activeFilterChipText]}>All Rides</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.filterChip, selectedType === 'carpool' && styles.activeFilterChip]}
-            onPress={() => setSelectedType('carpool')}
+            onPress={() => handleFilterChange('carpool')}
           >
             <Text style={[styles.filterChipText, selectedType === 'carpool' && styles.activeFilterChipText]}>🚗 Carpool</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.filterChip, selectedType === 'bike_pool' && styles.activeFilterChip]}
-            onPress={() => setSelectedType('bike_pool')}
+            onPress={() => handleFilterChange('bike_pool')}
           >
             <Text style={[styles.filterChipText, selectedType === 'bike_pool' && styles.activeFilterChipText]}>🚲 Bike Pool</Text>
           </TouchableOpacity>
@@ -73,34 +92,40 @@ export default function HomeScreen() {
 
         <Text style={styles.sectionTitle}>Available Upcoming Rides</Text>
 
-        {filteredRides.map(ride => (
-          <Card key={ride.id} onPress={() => router.push(`/ride/${ride.id}`)}>
-            <View style={styles.cardHeader}>
-              <Badge
-                label={ride.vehicleType === 'carpool' ? '🚗 Carpool' : '🚲 Bike Pool'}
-                variant={ride.vehicleType === 'carpool' ? 'primary' : 'success'}
-              />
-              <Text style={styles.priceText}>
-                {ride.suggestedContribution > 0 ? `\$${ride.suggestedContribution} suggested` : 'Free Share'}
-              </Text>
-            </View>
-
-            <View style={styles.routeContainer}>
-              <Text style={styles.locationText}>📍 {ride.pickup}</Text>
-
-              <Text style={styles.arrowText}>↓</Text>
-              <Text style={styles.locationText}>🏁 {ride.destination}</Text>
-            </View>
-
-            <View style={styles.driverInfoRow}>
-              <View style={styles.driverMeta}>
-                <Text style={styles.driverName}>{ride.driverName}</Text>
-                <Text style={styles.driverRating}>★ {ride.driverRating} ({ride.driverRideCount} rides)</Text>
+        {loading ? (
+          <View>
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        ) : (
+          filteredRides.map(ride => (
+            <Card key={ride.id} onPress={() => router.push(`/ride/${ride.id}`)}>
+              <View style={styles.cardHeader}>
+                <Badge
+                  label={ride.vehicleType === 'carpool' ? '🚗 Carpool' : '🚲 Bike Pool'}
+                  variant={ride.vehicleType === 'carpool' ? 'primary' : 'success'}
+                />
+                <Text style={styles.priceText}>
+                  {ride.suggestedContribution > 0 ? `\$${ride.suggestedContribution} suggested` : 'Free Share'}
+                </Text>
               </View>
-              <Text style={styles.seatsText}>{ride.availableSeats} of {ride.totalSeats} seats left</Text>
-            </View>
-          </Card>
-        ))}
+
+              <View style={styles.routeContainer}>
+                <Text style={styles.locationText}>📍 {ride.pickup}</Text>
+                <Text style={styles.arrowText}>↓</Text>
+                <Text style={styles.locationText}>🏁 {ride.destination}</Text>
+              </View>
+
+              <View style={styles.driverInfoRow}>
+                <View style={styles.driverMeta}>
+                  <Text style={styles.driverName}>{ride.driverName}</Text>
+                  <Text style={styles.driverRating}>★ {ride.driverRating} ({ride.driverRideCount} rides)</Text>
+                </View>
+                <Text style={styles.seatsText}>{ride.availableSeats} of {ride.totalSeats} seats left</Text>
+              </View>
+            </Card>
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,42 +1,44 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
+import { useAuth } from '../../src/auth/AuthProvider';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function SignupScreen() {
   const router = useRouter();
-  const [name, setName] = useState('');
+  const { signupWithEmail } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [agreedTerms, setAgreedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
-    if (!name || !email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword) {
       Alert.alert('Missing Fields', 'Please fill in all required fields.');
       return;
     }
+
+    if (password.length < 8) {
+      Alert.alert('Weak Password', 'Use at least 8 characters for your password.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert('Password Mismatch', 'Passwords do not match.');
       return;
     }
-    if (password.length < 8) {
-      Alert.alert('Weak Password', 'Password must be at least 8 characters long.');
-      return;
-    }
-    if (!agreedTerms) {
-      Alert.alert('Terms Agreement Required', 'You must agree to the Terms of Use, Privacy Notice, and Safety Rules.');
-      return;
-    }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await signupWithEmail(email.trim(), password);
       router.replace('/auth/onboarding');
-    }, 600);
+    } catch (err: any) {
+      Alert.alert('Sign Up Failed', err.message || 'An account already uses this email.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,13 +51,6 @@ export default function SignupScreen() {
 
         <View style={styles.form}>
           <Input
-            label="Full Name *"
-            placeholder="e.g. Alex Rivers"
-            value={name}
-            onChangeText={setName}
-          />
-
-          <Input
             label="Email Address *"
             placeholder="e.g. alex@example.com"
             value={email}
@@ -65,8 +60,8 @@ export default function SignupScreen() {
           />
 
           <Input
-            label="Password *"
-            placeholder="Min 8 characters"
+            label="Password (min 8 chars) *"
+            placeholder="Create password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -80,19 +75,6 @@ export default function SignupScreen() {
             secureTextEntry
           />
 
-          <TouchableOpacity
-            style={styles.checkboxRow}
-            onPress={() => setAgreedTerms(!agreedTerms)}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.checkbox, agreedTerms && styles.checkboxChecked]}>
-              {agreedTerms && <Text style={styles.checkmark}>✓</Text>}
-            </View>
-            <Text style={styles.checkboxLabel}>
-              I agree to the Terms of Use, Privacy Notice, and Safety Rules.
-            </Text>
-          </TouchableOpacity>
-
           <Button
             title="Create Account"
             onPress={handleSignup}
@@ -100,18 +82,12 @@ export default function SignupScreen() {
             style={styles.signupBtn}
           />
 
-          <Button
-            title="Continue with Google"
-            variant="outline"
-            onPress={handleSignup}
-            style={styles.googleBtn}
-          />
-
-          <TouchableOpacity onPress={() => router.push('/auth/login')} style={styles.loginLink}>
-            <Text style={styles.loginLinkText}>
-              Already have an account? <Text style={styles.loginHighlight}>Log in</Text>
+          <View style={styles.linksRow}>
+            <Text style={styles.hasAccountText}>Already have an account?</Text>
+            <Text style={styles.linkText} onPress={() => router.push('/auth/login')}>
+              Log In
             </Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -129,7 +105,7 @@ const styles = StyleSheet.create({
     minHeight: '100%',
   },
   header: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   title: {
     ...Typography.displayLg,
@@ -143,50 +119,22 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
   },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    marginRight: Spacing.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: Colors.primary,
-  },
-  checkmark: {
-    color: Colors.onPrimary,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  checkboxLabel: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    flex: 1,
-  },
   signupBtn: {
-    marginBottom: Spacing.sm,
-  },
-  googleBtn: {
+    marginTop: Spacing.md,
     marginBottom: Spacing.md,
   },
-  loginLink: {
-    alignItems: 'center',
-    marginTop: Spacing.xs,
+  linksRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    marginTop: Spacing.sm,
   },
-  loginLinkText: {
+  hasAccountText: {
     ...Typography.bodyMd,
     color: Colors.onSurfaceVariant,
   },
-  loginHighlight: {
+  linkText: {
+    ...Typography.labelLg,
     color: Colors.primary,
-    fontWeight: '600',
   },
 });
