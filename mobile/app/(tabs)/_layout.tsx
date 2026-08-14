@@ -60,22 +60,22 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 3. CENTER FLOATING "+" ACTION BUTTON (PUBLISH) */}
+      {/* 3. CENTER FLOATING BUTTON (MY RIDES / DASHBOARD) */}
       <Tabs.Screen
-        name="offer"
+        name="dashboard"
         options={{
-          title: 'Publish',
-          tabBarIcon: () => (
-            <View style={styles.centerFloatingBtn}>
-              <Ionicons name="add" size={30} color="#FFFFFF" />
+          title: 'My Rides',
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.centerFloatingBtn, focused && styles.centerFloatingBtnActive]}>
+              <Ionicons name={focused ? 'car' : 'car-outline'} size={28} color="#FFFFFF" />
             </View>
           ),
         }}
       />
 
-      {/* 4. MY RIDES (HIDDEN FROM BAR) */}
+      {/* 4. PUBLISH RIDE WIZARD (ACCESSIBLE VIA HOME HERO BUTTON) */}
       <Tabs.Screen
-        name="dashboard"
+        name="offer"
         options={{
           href: null,
         }}
@@ -180,6 +180,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 3,
+  },
+  centerFloatingBtnActive: {
+    backgroundColor: '#1E40AF',
   },
   iconBadgeWrapper: {
     position: 'relative',

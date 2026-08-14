@@ -42,20 +42,20 @@ export default function DashboardScreen() {
 
         {/* Dual Hero Action Cards */}
         <View style={styles.dualCardRow}>
-          <TouchableOpacity style={styles.heroCardPrimary} onPress={() => router.push('/(tabs)/find')} activeOpacity={0.88}>
+          <TouchableOpacity style={styles.heroCardPrimary} onPress={() => router.push('/(tabs)/offer')} activeOpacity={0.88}>
             <View style={styles.heroIconBadge}>
-              <Ionicons name="search-outline" size={20} color={Colors.primary} />
+              <Ionicons name="add-outline" size={20} color={Colors.primary} />
             </View>
-            <Text style={styles.heroCardTitle}>Find a Ride</Text>
-            <Text style={styles.heroCardSub}>Search carpool or bike pool</Text>
+            <Text style={styles.heroCardTitle}>Publish a Ride</Text>
+            <Text style={styles.heroCardSub}>Share your route & seats</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.heroCardAccent} onPress={() => router.push('/(tabs)/offer')} activeOpacity={0.88}>
+          <TouchableOpacity style={styles.heroCardAccent} onPress={() => router.push('/(tabs)/find')} activeOpacity={0.88}>
             <View style={styles.heroIconBadgeDark}>
-              <Ionicons name="add-outline" size={20} color="#FFFFFF" />
+              <Ionicons name="search-outline" size={20} color="#FFFFFF" />
             </View>
-            <Text style={styles.heroCardTitleDark}>Publish a Ride</Text>
-            <Text style={styles.heroCardSubDark}>Share your route & seats</Text>
+            <Text style={styles.heroCardTitleDark}>Find a Ride</Text>
+            <Text style={styles.heroCardSubDark}>Search carpool or bike pool</Text>
           </TouchableOpacity>
         </View>
 
