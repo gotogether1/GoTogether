@@ -71,7 +71,7 @@ export default function DashboardScreen() {
             onPress={() => setActiveTab('offers')}
             activeOpacity={0.8}
           >
-            <Text style={[styles.segmentText, activeTab === 'offers' && styles.segmentTextActive]}>My Offers</Text>
+            <Text style={[styles.segmentText, activeTab === 'offers' && styles.segmentTextActive]}>Published</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

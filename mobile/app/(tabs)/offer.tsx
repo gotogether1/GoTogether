@@ -60,10 +60,10 @@ export default function OfferRideScreen() {
         rules: 'No smoking, punctuality required',
         notes: `Route: ${selectedRouteVariant}. Stopovers: ${stopovers.join(', ') || 'None'}`,
       });
-      Alert.alert('Ride Offer Published!', 'Your trip and route options are now live for riders!');
+      Alert.alert('Ride Published!', 'Your trip and route options are now live for riders!');
       router.push('/(tabs)/dashboard');
     } catch {
-      Alert.alert('Ride Offer Published!', 'Your trip and route options are now live for riders!');
+      Alert.alert('Ride Published!', 'Your trip and route options are now live for riders!');
       router.push('/(tabs)/dashboard');
     }
   };
@@ -379,7 +379,7 @@ export default function OfferRideScreen() {
             />
 
             <Button
-              title="Publish Ride Offer"
+              title="Publish Ride"
               onPress={handlePublishRide}
               style={styles.publishBtn}
             />

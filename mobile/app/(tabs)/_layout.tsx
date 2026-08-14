@@ -60,11 +60,11 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 3. CENTER FLOATING "+" ACTION BUTTON (OFFER) */}
+      {/* 3. CENTER FLOATING "+" ACTION BUTTON (PUBLISH) */}
       <Tabs.Screen
         name="offer"
         options={{
-          title: 'Offer',
+          title: 'Publish',
           tabBarIcon: () => (
             <View style={styles.centerFloatingBtn}>
               <Ionicons name="add" size={30} color="#FFFFFF" />

@@ -54,7 +54,7 @@ export default function DashboardScreen() {
             <View style={styles.heroIconBadgeDark}>
               <Ionicons name="add-outline" size={20} color="#FFFFFF" />
             </View>
-            <Text style={styles.heroCardTitleDark}>Offer a Ride</Text>
+            <Text style={styles.heroCardTitleDark}>Publish a Ride</Text>
             <Text style={styles.heroCardSubDark}>Share your route & seats</Text>
           </TouchableOpacity>
         </View>
@@ -184,8 +184,8 @@ export default function DashboardScreen() {
           <EmptyState
             icon="compass-outline"
             title="No upcoming rides available"
-            message="Be the first to offer a ride or search nearby routes!"
-            actionLabel="Offer a Ride"
+            message="Be the first to publish a ride or search nearby routes!"
+            actionLabel="Publish a Ride"
             onAction={() => router.push('/(tabs)/offer')}
           />
         )}
