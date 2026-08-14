@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationService = void 0;
 const firebase_admin_js_1 = require("../config/firebase-admin.js");
 const api_error_js_1 = require("../utils/api-error.js");
+const push_service_js_1 = require("./push.service.js");
+const realtime_emitter_js_1 = require("../realtime/realtime-emitter.js");
 class NotificationService {
     static collection = 'notifications';
     static devicesCollection = 'devices';
@@ -33,6 +35,10 @@ class NotificationService {
             readAt: null,
         };
         await docRef.set(notif);
+        // Emit real-time WebSocket signal to private user room
+        (0, realtime_emitter_js_1.emitToUser)(userId, 'notification:created', { notificationId: docRef.id, targetType, targetId });
+        // Send optional best-effort Expo/FCM push notification
+        push_service_js_1.PushService.sendPushToUser(userId, title, body, { notificationId: docRef.id, targetType, targetId });
         return notif;
     }
     static async getNotifications(userId) {

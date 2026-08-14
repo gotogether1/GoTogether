@@ -1,5 +1,7 @@
 import { getFirestoreDb } from '../config/firebase-admin.js';
 import { ApiError } from '../utils/api-error.js';
+import { PushService } from './push.service.js';
+import { emitToUser } from '../realtime/realtime-emitter.js';
 
 export interface NotificationItem {
   id?: string;
@@ -13,14 +15,6 @@ export interface NotificationItem {
   read: boolean;
   createdAt: string;
   readAt?: string | null;
-}
-
-export interface UserDevice {
-  platform: 'android' | 'ios';
-  expoPushToken: string;
-  notificationsEnabled: boolean;
-  appVersion?: string;
-  updatedAt: string;
 }
 
 export class NotificationService {
@@ -67,6 +61,13 @@ export class NotificationService {
     };
 
     await docRef.set(notif);
+
+    // Emit real-time WebSocket signal to private user room
+    emitToUser(userId, 'notification:created', { notificationId: docRef.id, targetType, targetId });
+
+    // Send optional best-effort Expo/FCM push notification
+    PushService.sendPushToUser(userId, title, body, { notificationId: docRef.id, targetType, targetId });
+
     return notif;
   }
 
