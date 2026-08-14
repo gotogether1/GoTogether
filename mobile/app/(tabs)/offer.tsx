@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
@@ -10,6 +11,7 @@ import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function OfferRideScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
 
   // Form State
@@ -66,12 +68,14 @@ export default function OfferRideScreen() {
     }
   };
 
+  const headerPaddingTop = Math.max(insets.top, 16) + 4;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* STEP 1: PICK-UP ADDRESS SEARCH */}
       {step === 1 && (
         <View style={styles.stepContainer}>
-          <View style={styles.wizardHeader}>
+          <View style={[styles.wizardHeader, { paddingTop: headerPaddingTop }]}>
             <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
               <Ionicons name="close" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
@@ -108,7 +112,7 @@ export default function OfferRideScreen() {
       {/* STEP 2: PICK-UP MAP PIN CONFIRMATION */}
       {step === 2 && (
         <View style={styles.stepContainer}>
-          <View style={styles.topBarOverlay}>
+          <View style={[styles.topBarOverlay, { paddingTop: headerPaddingTop }]}>
             <TouchableOpacity onPress={() => setStep(1)} style={styles.backCircleBtn}>
               <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
@@ -147,7 +151,7 @@ export default function OfferRideScreen() {
       {/* STEP 3: DROP-OFF ADDRESS SEARCH */}
       {step === 3 && (
         <View style={styles.stepContainer}>
-          <View style={styles.wizardHeader}>
+          <View style={[styles.wizardHeader, { paddingTop: headerPaddingTop }]}>
             <TouchableOpacity onPress={() => setStep(2)} style={styles.closeBtn}>
               <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
@@ -184,7 +188,7 @@ export default function OfferRideScreen() {
       {/* STEP 4: DROP-OFF MAP PIN CONFIRMATION */}
       {step === 4 && (
         <View style={styles.stepContainer}>
-          <View style={styles.topBarOverlay}>
+          <View style={[styles.topBarOverlay, { paddingTop: headerPaddingTop }]}>
             <TouchableOpacity onPress={() => setStep(3)} style={styles.backCircleBtn}>
               <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
@@ -224,7 +228,7 @@ export default function OfferRideScreen() {
       {step === 5 && (
         <View style={styles.stepContainer}>
           <View style={styles.topMapPreview}>
-            <TouchableOpacity onPress={() => setStep(4)} style={styles.backCircleBtnTop}>
+            <TouchableOpacity onPress={() => setStep(4)} style={[styles.backCircleBtnTop, { top: headerPaddingTop }]}>
               <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
             <View style={styles.simulatedRouteTrack} />
@@ -273,7 +277,7 @@ export default function OfferRideScreen() {
       {/* STEP 6: ADD STOPOVERS */}
       {step === 6 && (
         <View style={styles.stepContainer}>
-          <View style={styles.wizardHeader}>
+          <View style={[styles.wizardHeader, { paddingTop: headerPaddingTop }]}>
             <TouchableOpacity onPress={() => setStep(5)} style={styles.closeBtn}>
               <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
@@ -322,7 +326,7 @@ export default function OfferRideScreen() {
 
       {/* STEP 7: RIDE DETAILS & PUBLISH */}
       {step === 7 && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: headerPaddingTop }]}>
           <View style={styles.wizardHeader}>
             <TouchableOpacity onPress={() => setStep(6)} style={styles.closeBtn}>
               <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
@@ -399,7 +403,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
+    paddingBottom: Spacing.sm,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
@@ -467,12 +471,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingBottom: Spacing.sm,
     position: 'absolute',
-    top: 10,
-    left: 10,
-    right: 10,
+    top: 0,
+    left: 0,
+    right: 0,
     zIndex: 10,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
   backCircleBtn: {
     width: 40,
@@ -511,7 +518,7 @@ const styles = StyleSheet.create({
   },
   suggestionsPill: {
     position: 'absolute',
-    top: 64,
+    top: 90,
     backgroundColor: Colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 6,
@@ -561,13 +568,12 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   topMapPreview: {
-    height: 220,
+    height: 240,
     backgroundColor: '#CBD5E1',
     position: 'relative',
   },
   backCircleBtnTop: {
     position: 'absolute',
-    top: 16,
     left: 16,
     width: 40,
     height: 40,
@@ -575,10 +581,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   simulatedRouteTrack: {
     position: 'absolute',
-    top: 90,
+    top: 110,
     left: 40,
     right: 40,
     height: 6,
