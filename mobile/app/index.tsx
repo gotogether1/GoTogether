@@ -10,12 +10,12 @@ export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
 
   // Clears camera notch and status bar cleanly
-  const topInsetPadding = Math.max(insets.top, 36) + 6;
+  const topInsetPadding = Math.max(insets.top, 24);
   const bottomInsetPadding = Math.max(insets.bottom, 12);
 
   return (
     <View style={styles.root}>
-      {/* Tilted & Scaled Background Image (Offset Down for Sky Clearance) */}
+      {/* Tilted & Scaled Background Image */}
       <View style={styles.bgImageContainer} pointerEvents="none">
         <Image
           source={require('../assets/welcome_bg.png')}
@@ -27,13 +27,13 @@ export default function WelcomeScreen() {
       {/* Soft Ambient Overlay */}
       <View style={styles.overlay} pointerEvents="none" />
 
-      {/* Perfectly Straight UI Elements (Logo, Text, Buttons) */}
+      {/* Perfectly Straight UI Elements (Logo, Text, Highlights, Buttons) */}
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Centered Hero Section (Positioned Cleanly in Sky Area) */}
+          {/* Centered Hero Section */}
           <View style={styles.heroContainer}>
             {/* Straight Center App Logo */}
             <View style={styles.logoWrapper}>
@@ -50,8 +50,26 @@ export default function WelcomeScreen() {
             </View>
 
             <Text style={styles.tagline}>
-              Connect with verified commuters. Zero booking fees.
+              Connect directly with verified commuters going your way. Zero booking fees.
             </Text>
+
+            {/* Value Proposition Highlights Under Tagline */}
+            <View style={styles.highlightsRow}>
+              <View style={styles.highlightChip}>
+                <Ionicons name="checkmark-circle" size={12} color="#34D399" style={{ marginRight: 4 }} />
+                <Text style={styles.highlightChipText}>100% ID Verified</Text>
+              </View>
+
+              <View style={styles.highlightChip}>
+                <Ionicons name="flash" size={12} color="#FBBF24" style={{ marginRight: 4 }} />
+                <Text style={styles.highlightChipText}>Instant Confirmation</Text>
+              </View>
+
+              <View style={styles.highlightChip}>
+                <Ionicons name="wallet-outline" size={12} color="#60A5FA" style={{ marginRight: 4 }} />
+                <Text style={styles.highlightChipText}>Fair Cost Share</Text>
+              </View>
+            </View>
           </View>
 
           {/* Bottom Glassmorphic Action Panel */}
@@ -107,7 +125,7 @@ const styles = StyleSheet.create({
   bgImageOnly: {
     width: '100%',
     height: '100%',
-    transform: [{ scale: 1.28 }, { rotate: '4deg' }, { translateY: 75 }],
+    transform: [{ scale: 1.25 }, { rotate: '4deg' }],
   },
   overlay: {
     position: 'absolute',
@@ -115,7 +133,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.16)',
+    backgroundColor: 'rgba(15, 23, 42, 0.22)',
   },
   safeArea: {
     flex: 1,
@@ -126,28 +144,34 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   heroContainer: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: 0,
-    marginBottom: Spacing.md,
+    justifyContent: 'center',
+    marginVertical: Spacing.md,
   },
   logoWrapper: {
-    marginBottom: 8,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 8,
   },
   logoImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+    width: 90,
+    height: 90,
+    borderRadius: 24,
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
     paddingHorizontal: 14,
     paddingVertical: 5,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    marginBottom: 6,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    marginBottom: 8,
   },
   badgeText: {
     ...Typography.labelSm,
@@ -161,17 +185,45 @@ const styles = StyleSheet.create({
   },
   tagline: {
     ...Typography.bodyMd,
-    fontSize: 12.5,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.95)',
     textAlign: 'center',
-    lineHeight: 17,
-    maxWidth: 280,
+    lineHeight: 18,
+    maxWidth: 290,
     textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+    marginBottom: Spacing.md,
+  },
+  /* Value Proposition Highlights Styles */
+  highlightsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  highlightChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.68)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  highlightChipText: {
+    ...Typography.labelSm,
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   actionGlassPanel: {
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    backgroundColor: 'rgba(15, 23, 42, 0.78)',
     padding: Spacing.md,
     borderRadius: 24,
     borderWidth: 1,
