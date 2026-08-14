@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,89 +13,115 @@ export default function WelcomeScreen() {
   const bottomInsetPadding = Math.max(insets.bottom, 16);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.root}>
+      <ImageBackground
+        source={{ uri: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=1200&q=80' }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
       >
-        {/* Top Hero Section */}
-        <View style={styles.heroContainer}>
-          <View style={styles.logoCircle}>
-            <Ionicons name="car" size={42} color={Colors.primary} />
-          </View>
+        {/* Soft Dark Aesthetic Gradient Overlay */}
+        <View style={styles.overlay} />
 
-          <View style={styles.badgePill}>
-            <Text style={styles.badgeText}>COMMUNITY CARPOOL & BIKE POOL</Text>
-          </View>
-
-          <Text style={styles.brandTitle}>Go Together</Text>
-          <Text style={styles.tagline}>
-            Connect directly with verified drivers and riders going your way. Zero booking fees.
-          </Text>
-        </View>
-
-        {/* Feature Cards Grid */}
-        <View style={styles.featuresGrid}>
-          <View style={styles.featureCard}>
-            <View style={styles.featureIconBadge}>
-              <Ionicons name="shield-checkmark-outline" size={22} color="#047857" />
-            </View>
-            <View style={styles.featureTextMeta}>
-              <Text style={styles.featureTitle}>Verified Community</Text>
-              <Text style={styles.featureSubtitle}>Real identity checks & ratings</Text>
-            </View>
-          </View>
-
-          <View style={styles.featureCard}>
-            <View style={styles.featureIconBadgeBlue}>
-              <Ionicons name="flash-outline" size={22} color={Colors.primary} />
-            </View>
-            <View style={styles.featureTextMeta}>
-              <Text style={styles.featureTitle}>Instant Confirmation</Text>
-              <Text style={styles.featureSubtitle}>Direct chat & seat booking</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Bottom Production Action Buttons */}
-        <View style={styles.actionSection}>
-          <TouchableOpacity
-            style={styles.primaryBtn}
-            onPress={() => router.push('/auth/signup')}
-            activeOpacity={0.88}
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView
+            contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
+            showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.primaryBtnText}>Create Account</Text>
-          </TouchableOpacity>
+            {/* Top Hero Section */}
+            <View style={styles.heroContainer}>
+              <View style={styles.logoCircle}>
+                <Ionicons name="car" size={42} color={Colors.primary} />
+              </View>
 
-          <TouchableOpacity
-            style={styles.secondaryBtn}
-            onPress={() => router.push('/auth/login')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.secondaryBtnText}>Log In</Text>
-          </TouchableOpacity>
+              <View style={styles.badgePill}>
+                <Text style={styles.badgeText}>COMMUNITY CARPOOL & BIKE POOL</Text>
+              </View>
 
-          <TouchableOpacity
-            style={styles.guestBtn}
-            onPress={() => router.replace('/(tabs)')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.guestBtnText}>Explore as Guest →</Text>
-          </TouchableOpacity>
+              <Text style={styles.brandTitle}>Go Together</Text>
+              <Text style={styles.tagline}>
+                Connect directly with verified drivers and riders going your way. Zero booking fees.
+              </Text>
+            </View>
 
-          <Text style={styles.termsFooter}>
-            By continuing, you agree to our Terms of Service & Privacy Policy.
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            {/* Feature Cards Grid (Glassmorphism) */}
+            <View style={styles.featuresGrid}>
+              <View style={styles.glassFeatureCard}>
+                <View style={styles.featureIconBadge}>
+                  <Ionicons name="shield-checkmark-outline" size={22} color="#047857" />
+                </View>
+                <View style={styles.featureTextMeta}>
+                  <Text style={styles.featureTitle}>Verified Community</Text>
+                  <Text style={styles.featureSubtitle}>Real identity checks & ratings</Text>
+                </View>
+              </View>
+
+              <View style={styles.glassFeatureCard}>
+                <View style={styles.featureIconBadgeBlue}>
+                  <Ionicons name="flash-outline" size={22} color={Colors.primary} />
+                </View>
+                <View style={styles.featureTextMeta}>
+                  <Text style={styles.featureTitle}>Instant Confirmation</Text>
+                  <Text style={styles.featureSubtitle}>Direct chat & seat booking</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Bottom Action Buttons */}
+            <View style={styles.actionSection}>
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={() => router.push('/auth/signup')}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.primaryBtnText}>Create Account</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryBtn}
+                onPress={() => router.push('/auth/login')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.secondaryBtnText}>Log In</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.guestBtn}
+                onPress={() => router.replace('/(tabs)')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.guestBtnText}>Explore as Guest →</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.termsFooter}>
+                By continuing, you agree to our Terms of Service & Privacy Policy.
+              </Text>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   container: {
     flexGrow: 1,
@@ -107,66 +133,72 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   logoCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#DBEAFE',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.md,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.25,
     shadowRadius: 16,
-    elevation: 6,
+    elevation: 8,
   },
   badgePill: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     marginBottom: Spacing.sm,
   },
   badgeText: {
     ...Typography.labelSm,
-    color: '#1E40AF',
+    color: '#FFFFFF',
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   brandTitle: {
     ...Typography.displayLg,
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: '800',
-    color: Colors.onBackground,
+    color: '#FFFFFF',
     marginBottom: Spacing.xs,
     letterSpacing: -0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.4)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   tagline: {
     ...Typography.bodyLg,
-    color: Colors.onSurfaceVariant,
+    color: 'rgba(255, 255, 255, 0.92)',
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 320,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   featuresGrid: {
     gap: Spacing.sm,
     marginVertical: Spacing.md,
   },
-  featureCard: {
+  glassFeatureCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     padding: Spacing.md,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.7)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
   featureIconBadge: {
     width: 40,
@@ -191,7 +223,7 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     ...Typography.labelLg,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.onSurface,
   },
   featureSubtitle: {
@@ -211,7 +243,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 4,
   },
@@ -223,12 +255,12 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     height: 52,
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   secondaryBtnText: {
     ...Typography.labelLg,
@@ -244,12 +276,12 @@ const styles = StyleSheet.create({
   guestBtnText: {
     ...Typography.labelLg,
     fontSize: 15,
-    fontWeight: '700',
-    color: Colors.primary,
+    fontWeight: '800',
+    color: '#60A5FA',
   },
   termsFooter: {
     ...Typography.labelSm,
-    color: Colors.outline,
+    color: 'rgba(255, 255, 255, 0.75)',
     textAlign: 'center',
     marginTop: 2,
   },
