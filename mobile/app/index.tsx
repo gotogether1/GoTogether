@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button } from '../src/components/Button';
 import { Colors, Spacing, Typography } from '../src/theme';
 
 export default function WelcomeScreen() {
@@ -9,52 +8,65 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.brandContainer}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>🚗 🚲</Text>
+      <View style={styles.container}>
+        {/* Top Hero Section */}
+        <View style={styles.heroContainer}>
+          <View style={styles.logoCircle}>
+            <Text style={styles.logoEmoji}>🚗</Text>
           </View>
-          <Text style={styles.appName}>Go Together</Text>
-          <Text style={styles.tagline}>Modern, Community-Driven Carpool & Bike Pool</Text>
-        </View>
 
-        <View style={styles.heroCard}>
-          <Text style={styles.heroTitle}>Effortless Travel Sharing</Text>
-          <Text style={styles.heroDescription}>
-            Connect directly with verified drivers and riders going your way. No booking fees or hidden charges.
+          <View style={styles.badgePill}>
+            <Text style={styles.badgeText}>✦ COMMUNITY CARPOOL & BIKE POOL</Text>
+          </View>
+
+          <Text style={styles.brandTitle}>Go Together</Text>
+          <Text style={styles.tagline}>
+            Connect directly with verified drivers and riders going your way. Zero booking fees.
           </Text>
         </View>
 
-        <View style={styles.disclaimerBox}>
-          <Text style={styles.disclaimerText}>
-            ℹ️ This app helps users coordinate ride sharing. It does not process payments or guarantee rides.
-          </Text>
+        {/* Feature Cards Grid */}
+        <View style={styles.featuresGrid}>
+          <View style={styles.featureCard}>
+            <Text style={styles.featureIcon}>🛡️</Text>
+            <View style={styles.featureTextMeta}>
+              <Text style={styles.featureTitle}>Verified Community</Text>
+              <Text style={styles.featureSubtitle}>Real identity checks & ratings</Text>
+            </View>
+          </View>
+
+          <View style={styles.featureCard}>
+            <Text style={styles.featureIcon}>⚡</Text>
+            <View style={styles.featureTextMeta}>
+              <Text style={styles.featureTitle}>Instant Confirmation</Text>
+              <Text style={styles.featureSubtitle}>Direct chat & seat booking</Text>
+            </View>
+          </View>
         </View>
 
-        <View style={styles.actionContainer}>
-          <Button
-            title="Create Account"
-            onPress={() => router.push('/auth/signup')}
+        {/* Bottom Production Action Buttons (NO DEMO BUTTON) */}
+        <View style={styles.actionSection}>
+          <TouchableOpacity
             style={styles.primaryBtn}
-          />
-          <Button
-            title="Log In"
-            variant="outline"
-            onPress={() => router.push('/auth/login')}
-            style={styles.secondaryBtn}
-          />
-          <Button
-            title="Explore Demo App"
-            variant="secondary"
-            onPress={() => router.push('/(tabs)')}
-            style={styles.demoBtn}
-          />
-        </View>
+            onPress={() => router.push('/auth/signup')}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.primaryBtnText}>Create Account</Text>
+          </TouchableOpacity>
 
-        <Text style={styles.footerText}>
-          By continuing, you agree to our Terms of Use, Privacy Notice, and Safety Rules.
-        </Text>
-      </ScrollView>
+          <TouchableOpacity
+            style={styles.secondaryBtn}
+            onPress={() => router.push('/auth/login')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.secondaryBtnText}>Log In</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.termsFooter}>
+            By continuing, you agree to our Terms of Service & Privacy Policy.
+          </Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -62,90 +74,141 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
-    padding: Spacing.lg,
-    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
     justifyContent: 'space-between',
-    minHeight: '100%',
+    paddingVertical: Spacing.lg,
   },
-  brandContainer: {
+  heroContainer: {
     alignItems: 'center',
     marginTop: Spacing.xl,
   },
-  logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.primaryContainer,
+  logoCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: Spacing.md,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  logoEmoji: {
+    fontSize: 42,
+  },
+  badgePill: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
     marginBottom: Spacing.sm,
   },
-  logoBadgeText: {
-    fontSize: 28,
+  badgeText: {
+    ...Typography.labelSm,
+    color: '#1E40AF',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  appName: {
+  brandTitle: {
     ...Typography.displayLg,
+    fontSize: 34,
+    fontWeight: '800',
     color: Colors.onBackground,
-    textAlign: 'center',
+    marginBottom: Spacing.xs,
+    letterSpacing: -0.5,
   },
   tagline: {
-    ...Typography.bodyMd,
+    ...Typography.bodyLg,
     color: Colors.onSurfaceVariant,
     textAlign: 'center',
-    marginTop: Spacing.xs,
+    lineHeight: 24,
+    maxWidth: 320,
   },
-  heroCard: {
+  featuresGrid: {
+    gap: Spacing.sm,
+    marginVertical: Spacing.md,
+  },
+  featureCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: Spacing.lg,
-    marginVertical: Spacing.lg,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: Colors.surfaceContainer,
-  },
-  heroTitle: {
-    ...Typography.headlineMd,
-    color: Colors.primary,
-    marginBottom: Spacing.xs,
-  },
-  heroDescription: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    lineHeight: 22,
-  },
-  disclaimerBox: {
-    backgroundColor: Colors.surfaceContainerLow,
     padding: Spacing.md,
-    borderRadius: 12,
-    marginBottom: Spacing.lg,
-    width: '100%',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  disclaimerText: {
+  featureIcon: {
+    fontSize: 24,
+    marginRight: Spacing.md,
+  },
+  featureTextMeta: {
+    flex: 1,
+  },
+  featureTitle: {
+    ...Typography.labelLg,
+    fontWeight: '700',
+    color: Colors.onSurface,
+  },
+  featureSubtitle: {
     ...Typography.labelSm,
     color: Colors.onSurfaceVariant,
-    lineHeight: 18,
+    marginTop: 2,
   },
-  actionContainer: {
-    width: '100%',
+  actionSection: {
     gap: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   primaryBtn: {
-    marginBottom: 4,
+    height: 54,
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  primaryBtnText: {
+    ...Typography.labelLg,
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.onPrimary,
   },
   secondaryBtn: {
-    marginBottom: 4,
+    height: 54,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
   },
-  demoBtn: {
-    marginTop: 4,
+  secondaryBtnText: {
+    ...Typography.labelLg,
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.onSurface,
   },
-  footerText: {
+  termsFooter: {
     ...Typography.labelSm,
     color: Colors.outline,
     textAlign: 'center',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginTop: Spacing.xs,
   },
 });
