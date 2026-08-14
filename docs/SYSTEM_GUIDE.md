@@ -5,7 +5,8 @@
 - React Native, TypeScript, and Expo
 - Expo Router for navigation
 - React Native `StyleSheet` and reusable design tokens (do not use Tailwind)
-- Firebase Web SDK, later in the build
+- Firebase client SDK for authentication, later in the build
+- Node.js + TypeScript + Express API deployed as a Render Free Web Service
 - Leaflet with OpenStreetMap, later in the build
 
 ## Code and design rules
@@ -29,13 +30,16 @@
 
 - Use Firebase Spark plan only.
 - Use Firebase Authentication with Email/Password and Google Sign-In only.
-- Use Cloud Firestore for data and Firebase Cloud Messaging for web push notifications.
+- Use Cloud Firestore as the persistent database and Firebase Cloud Messaging for Android push notifications.
+- The Android app must call the Render API for app data; the Render API verifies Firebase ID tokens and accesses Firestore with Firebase Admin SDK.
+- Do not access Firestore directly from the Android app for app data.
 - For the native app, use `expo-notifications` with Firebase Cloud Messaging (FCM) on Android.
 - Request notification permission only after a user action that explains its benefit.
 - Store an Expo push token under the signed-in user's Firestore profile.
 - Never include an FCM server key, Firebase service-account JSON, or notification-sending credentials in the mobile app or repository.
 - Use an in-app Firestore notification record and a mock notification sender during the zero-cost MVP; automatic push sending requires a separate trusted server-side sender later.
-- Use Expo Go during development. Prepare Android/iOS build configuration, but do not use paid deployment services.
+- Use Expo Go during development. Prepare Android-only build configuration.
+- Deploy the API to a Render Free Web Service. Its filesystem is temporary: never store application data or uploads locally on Render.
 - Put Firebase public configuration in environment variables; never expose private keys or secrets.
 - Enforce permissions with Firestore security rules, never with UI checks alone.
 
@@ -43,8 +47,8 @@
 
 1. Build all frontend pages, navigation, and flows with local seeded demo data.
 2. Run the app and resolve every TypeScript, build, runtime, and visible UI error.
-3. Do not connect Firebase until Phase 1 is complete and stable.
-4. Connect Firebase Authentication, then Firestore, then maps, then notifications.
+3. Do not connect Firebase or Render until Phase 1 is complete and stable.
+4. Connect Firebase Authentication, then the verified Render API/Firestore data layer, then maps, then notifications.
 5. After every phase, run the app and ensure existing features still work.
 6. Maintain a clear README with installation, configuration, and deployment steps.
 

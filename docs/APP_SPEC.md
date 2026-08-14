@@ -87,9 +87,11 @@ Replace the local demo auth with:
 
 Never use phone authentication or SMS.
 
-## Phase 3 — Firestore data
+## Phase 3 — Render API and Firestore data
 
-Use these collections:
+Build a Node.js + TypeScript + Express API and deploy it to Render Free. The Android app sends its Firebase ID token to this API. The API verifies the token with Firebase Admin SDK, authorizes every action, and reads/writes Firestore. Do not allow direct app-data access from the Android client.
+
+Use these Firestore collections:
 
 - `users`
 - `rides`
