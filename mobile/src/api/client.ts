@@ -1,6 +1,6 @@
 import { auth } from '../config/firebase';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:10000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://gotogether-backend-zceg.onrender.com';
 
 export async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<any> {
   let token: string | null = null;
