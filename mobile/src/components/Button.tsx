@@ -45,7 +45,8 @@ export const Button: React.FC<ButtonProps> = ({
   const getBackgroundColor = () => {
     if (isInteractionDisabled && variant === 'primary') return '#93C5FD';
     if (variant === 'secondary') return Colors.secondary;
-    if (variant === 'outline' || variant === 'ghost') return 'transparent';
+    if (variant === 'outline') return '#FFFFFF'; // Solid white surface to prevent Android elevation shadow artifacts
+    if (variant === 'ghost') return 'transparent';
     if (variant === 'danger') return Colors.error;
     return Colors.primary;
   };
@@ -64,7 +65,7 @@ export const Button: React.FC<ButtonProps> = ({
           styles.button,
           { backgroundColor: getBackgroundColor() },
           variant === 'outline' && styles.outlineBorder,
-          Shadows.sm,
+          variant !== 'outline' && Shadows.sm,
         ]}
         onPress={onPress}
         onPressIn={handlePressIn}
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.sm + 4,
+    paddingHorizontal: Spacing.md,
     flexDirection: 'row',
   },
   outlineBorder: {

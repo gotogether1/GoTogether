@@ -51,12 +51,15 @@ export default function RideDetailsScreen() {
     }, 600);
   };
 
-  const topInsetPadding = Math.max(insets.top, 24) + 12;
+  const topInsetHeight = Math.max(insets.top + 12, 42);
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Top Status Bar Spacer */}
+      <View style={{ height: topInsetHeight }} />
+
       <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: topInsetPadding }]}
+        contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
       >
         {/* Top Header Row */}
@@ -256,7 +259,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   container: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.xl * 2.5,
   },
   topHeader: {
