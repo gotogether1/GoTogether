@@ -9,7 +9,7 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const topInsetPadding = Math.max(insets.top, 24) + 12;
+  const topInsetPadding = Math.max(insets.top, 24) + 8;
   const bottomInsetPadding = Math.max(insets.bottom, 16);
 
   return (
@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* Soft Ambient Overlay to Ensure Text Legibility */}
+        {/* Soft Ambient Overlay to Ensure High Contrast */}
         <View style={styles.overlay} />
 
         <SafeAreaView style={styles.safeArea}>
@@ -29,11 +29,22 @@ export default function WelcomeScreen() {
           >
             {/* Top Hero Section */}
             <View style={styles.heroContainer}>
-              <View style={styles.logoCircle}>
-                <Ionicons name="car" size={42} color={Colors.primary} />
+              {/* Premium Aesthetic Brand Logo */}
+              <View style={styles.logoOuterGlow}>
+                <View style={styles.logoGlassCard}>
+                  <View style={styles.logoIconRow}>
+                    <Ionicons name="car-sport" size={28} color="#FFFFFF" />
+                    <View style={styles.logoDivider} />
+                    <Ionicons name="bicycle" size={26} color="#93C5FD" />
+                  </View>
+                  <View style={styles.sparkleBadge}>
+                    <Ionicons name="sparkles" size={10} color="#FBBF24" />
+                  </View>
+                </View>
               </View>
 
               <View style={styles.badgePill}>
+                <Ionicons name="shield-checkmark" size={12} color="#60A5FA" style={{ marginRight: 6 }} />
                 <Text style={styles.badgeText}>COMMUNITY CARPOOL & BIKE POOL</Text>
               </View>
 
@@ -95,7 +106,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.22)',
+    backgroundColor: 'rgba(15, 23, 42, 0.25)',
   },
   safeArea: {
     flex: 1,
@@ -107,50 +118,83 @@ const styles = StyleSheet.create({
   },
   heroContainer: {
     alignItems: 'center',
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xs,
   },
-  logoCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: '#FFFFFF',
+  /* Premium Aesthetic Logo Styles */
+  logoOuterGlow: {
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 12,
+    marginBottom: Spacing.md,
+  },
+  logoGlassCard: {
+    width: 96,
+    height: 96,
+    borderRadius: 28,
+    backgroundColor: 'rgba(15, 23, 42, 0.78)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.md,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    position: 'relative',
+  },
+  logoIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  logoDivider: {
+    width: 1.5,
+    height: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  sparkleBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#1E293B',
+    borderWidth: 1.5,
+    borderColor: '#FBBF24',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgePill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.xs + 1,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
-    marginBottom: Spacing.sm,
+    borderColor: 'rgba(255, 255, 255, 0.45)',
+    marginBottom: Spacing.xs + 2,
   },
   badgeText: {
     ...Typography.labelSm,
     color: '#FFFFFF',
     fontWeight: '800',
     letterSpacing: 0.8,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    fontSize: 11,
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
   brandTitle: {
     ...Typography.displayLg,
-    fontSize: 36,
-    fontWeight: '800',
+    fontSize: 38,
+    fontWeight: '900',
     color: '#FFFFFF',
-    marginBottom: Spacing.xs,
-    letterSpacing: -0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    marginBottom: 4,
+    letterSpacing: -0.8,
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    textShadowRadius: 5,
   },
   tagline: {
     ...Typography.bodyLg,
@@ -158,9 +202,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 320,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowRadius: 4,
   },
   actionSection: {
     gap: Spacing.xs + 2,
@@ -209,7 +253,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
@@ -218,7 +262,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
     marginTop: 2,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
