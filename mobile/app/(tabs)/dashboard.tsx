@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../src/components/Button';
 import { EmptyState } from '../../src/components/loading/EmptyState';
@@ -9,6 +10,7 @@ import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'requests' | 'offers' | 'past'>('upcoming');
   const [bookings, setBookings] = useState<DemoBooking[]>(SEED_BOOKINGS);
 
@@ -24,7 +26,10 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 16) + 8 }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.pageTitle}>My Rides</Text>
 
         {/* Top Summary Stats Row */}

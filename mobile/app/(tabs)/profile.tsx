@@ -33,7 +33,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 16) + 8 }]}
+        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 24) + 12 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Apple-style Profile Card */}
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     alignItems: 'center',
     marginBottom: Spacing.md,
+    marginTop: Spacing.xs,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
