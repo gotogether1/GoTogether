@@ -10,6 +10,7 @@ dotenv_1.default.config();
 const envSchema = zod_1.z.object({
     NODE_ENV: zod_1.z.enum(['development', 'production', 'test']).default('development'),
     PORT: zod_1.z.string().default('10000'),
+    DATABASE_URL: zod_1.z.string().optional(),
     FIREBASE_PROJECT_ID: zod_1.z.string().optional(),
     FIREBASE_CLIENT_EMAIL: zod_1.z.string().optional(),
     FIREBASE_PRIVATE_KEY: zod_1.z.string().optional(),
