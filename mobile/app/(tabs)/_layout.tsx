@@ -42,16 +42,16 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 2. FIND */}
+      {/* 2. PUBLISH (+) BUTTON IN DOCK */}
       <Tabs.Screen
-        name="find"
+        name="offer"
         options={{
-          title: 'Find',
+          title: 'Publish',
           tabBarIcon: ({ focused }) => (
             <View style={styles.tabItem}>
               <Ionicons
-                name={focused ? 'search' : 'search-outline'}
-                size={24}
+                name={focused ? 'add-circle' : 'add-circle-outline'}
+                size={26}
                 color={focused ? Colors.primary : '#94A3B8'}
               />
               {focused && <View style={styles.activeDot} />}
@@ -60,7 +60,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 3. CENTER FLOATING BUTTON (MY RIDES / DASHBOARD) */}
+      {/* 3. CENTER FLOATING BLUE BUTTON (MY RIDES / DASHBOARD) */}
       <Tabs.Screen
         name="dashboard"
         options={{
@@ -73,9 +73,9 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 4. PUBLISH RIDE WIZARD (ACCESSIBLE VIA HOME HERO BUTTON) */}
+      {/* 4. FIND A RIDE (ACCESSIBLE VIA HOME SEARCH & HERO CARDS) */}
       <Tabs.Screen
-        name="offer"
+        name="find"
         options={{
           href: null,
         }}
