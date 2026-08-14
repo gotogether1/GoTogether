@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from '../../src/components/Input';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
 import { Button } from '../../src/components/Button';
-import { SEED_RIDES, DemoRide } from '../../src/demo/seedData';
+import { SkeletonCard } from '../../src/components/Skeleton';
+import { useRidesQuery } from '../../src/api/hooks';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function FindRideScreen() {
@@ -14,24 +15,21 @@ export default function FindRideScreen() {
   const [destination, setDestination] = useState('');
   const [seats, setSeats] = useState('1');
   const [tripType, setTripType] = useState<'all' | 'carpool' | 'bike_pool'>('all');
-  const [searched, setSearched] = useState(false);
-  const [results, setResults] = useState<DemoRide[]>(SEED_RIDES);
 
-  const handleSearch = () => {
-    setSearched(true);
-    const filtered = SEED_RIDES.filter(r => {
-      const matchType = tripType === 'all' || r.vehicleType === tripType;
-      const matchPickup = !pickup || r.pickup.toLowerCase().includes(pickup.toLowerCase());
-      const matchDest = !destination || r.destination.toLowerCase().includes(destination.toLowerCase());
-      const matchSeats = r.availableSeats >= (parseInt(seats, 10) || 1);
-      return matchType && matchPickup && matchDest && matchSeats;
-    });
-    setResults(filtered);
-  };
+  const { data: rides, isLoading, refetch, isRefetching } = useRidesQuery({
+    vehicleType: tripType !== 'all' ? tripType : undefined,
+    pickup: pickup || undefined,
+    destination: destination || undefined,
+  });
+
+  const results = rides || [];
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[Colors.primary]} />}
+      >
         <Text style={styles.pageTitle}>Find a Ride</Text>
         <Text style={styles.pageSubtitle}>Search carpool or bike pool trips</Text>
 
@@ -86,21 +84,26 @@ export default function FindRideScreen() {
             </View>
           </View>
 
-          <Button title="Search Rides" onPress={handleSearch} style={styles.searchBtn} />
+          <Button title="Search Rides" onPress={() => refetch()} style={styles.searchBtn} />
         </Card>
 
         <Text style={styles.sectionTitle}>
-          {searched ? `Search Results (${results.length})` : 'Popular Commutes'}
+          Search Results ({results.length})
         </Text>
 
-        {results.length === 0 ? (
+        {isLoading ? (
+          <View>
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
+        ) : results.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🚗</Text>
             <Text style={styles.emptyTitle}>No Rides Found</Text>
             <Text style={styles.emptySubtitle}>Try adjusting your search criteria or trip filters.</Text>
           </View>
         ) : (
-          results.map(ride => (
+          results.map((ride: any) => (
             <Card key={ride.id} onPress={() => router.push(`/ride/${ride.id}`)}>
               <View style={styles.cardHeader}>
                 <Badge
@@ -119,7 +122,7 @@ export default function FindRideScreen() {
               </View>
 
               <View style={styles.footerRow}>
-                <Text style={styles.driverName}>{ride.driverName} • ★ {ride.driverRating}</Text>
+                <Text style={styles.driverName}>{ride.driverName || 'Verified Driver'} • ★ {ride.driverRating || 5.0}</Text>
                 <Text style={styles.seatsLeft}>{ride.availableSeats} seat(s) available</Text>
               </View>
             </Card>
