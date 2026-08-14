@@ -9,6 +9,7 @@ const helmet_1 = __importDefault(require("helmet"));
 const me_routes_js_1 = __importDefault(require("./routes/me.routes.js"));
 const rides_routes_js_1 = __importDefault(require("./routes/rides.routes.js"));
 const bookings_routes_js_1 = __importDefault(require("./routes/bookings.routes.js"));
+const chats_routes_js_1 = __importDefault(require("./routes/chats.routes.js"));
 const reviews_routes_js_1 = __importDefault(require("./routes/reviews.routes.js"));
 const reports_routes_js_1 = __importDefault(require("./routes/reports.routes.js"));
 const blocks_routes_js_1 = __importDefault(require("./routes/blocks.routes.js"));
@@ -31,6 +32,7 @@ app.get('/health', (_req, res) => {
 app.use('/v1/me', me_routes_js_1.default);
 app.use('/v1/rides', rides_routes_js_1.default);
 app.use('/v1/bookings', bookings_routes_js_1.default);
+app.use('/v1/chats', chats_routes_js_1.default);
 app.use('/v1/reviews', reviews_routes_js_1.default);
 app.use('/v1/reports', reports_routes_js_1.default);
 app.use('/v1/blocks', blocks_routes_js_1.default);

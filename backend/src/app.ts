@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import meRoutes from './routes/me.routes.js';
 import ridesRoutes from './routes/rides.routes.js';
 import bookingsRoutes from './routes/bookings.routes.js';
+import chatsRoutes from './routes/chats.routes.js';
 import reviewsRoutes from './routes/reviews.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
 import blocksRoutes from './routes/blocks.routes.js';
@@ -30,6 +31,7 @@ app.get('/health', (_req, res) => {
 app.use('/v1/me', meRoutes);
 app.use('/v1/rides', ridesRoutes);
 app.use('/v1/bookings', bookingsRoutes);
+app.use('/v1/chats', chatsRoutes);
 app.use('/v1/reviews', reviewsRoutes);
 app.use('/v1/reports', reportsRoutes);
 app.use('/v1/blocks', blocksRoutes);
