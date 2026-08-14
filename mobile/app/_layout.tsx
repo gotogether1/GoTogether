@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '../src/auth/AuthProvider';
 import { RealtimeProvider } from '../src/realtime/RealtimeProvider';
 import { usePushNotifications } from '../src/notifications/usePushNotifications';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 // Configure TanStack Query for flicker-free, instant UI cache serving
 const queryClient = new QueryClient({
@@ -37,21 +38,24 @@ function AppContent() {
       <Stack.Screen name="profile/[userId]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
       <Stack.Screen name="safety/report" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="safety/blocks" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+      <Stack.Screen name="[...unmatched]" options={{ presentation: 'card' }} />
     </Stack>
   );
 }
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RealtimeProvider>
-          <SafeAreaProvider>
-            <StatusBar style="dark" />
-            <AppContent />
-          </SafeAreaProvider>
-        </RealtimeProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RealtimeProvider>
+            <SafeAreaProvider>
+              <StatusBar style="dark" />
+              <AppContent />
+            </SafeAreaProvider>
+          </RealtimeProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

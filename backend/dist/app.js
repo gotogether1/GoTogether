@@ -15,6 +15,7 @@ const reviews_routes_js_1 = __importDefault(require("./routes/reviews.routes.js"
 const reports_routes_js_1 = __importDefault(require("./routes/reports.routes.js"));
 const blocks_routes_js_1 = __importDefault(require("./routes/blocks.routes.js"));
 const error_handler_js_1 = require("./middleware/error-handler.js");
+const api_error_js_1 = require("./utils/api-error.js");
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({ origin: '*' }));
@@ -38,6 +39,10 @@ app.use('/v1/notifications', notifications_routes_js_1.default);
 app.use('/v1/reviews', reviews_routes_js_1.default);
 app.use('/v1/reports', reports_routes_js_1.default);
 app.use('/v1/blocks', blocks_routes_js_1.default);
+// Catch-All 404 Handler for Unregistered Endpoints
+app.use((_req, _res, next) => {
+    next(api_error_js_1.ApiError.notFound('API endpoint not found'));
+});
 // Error Handler Middleware
 app.use(error_handler_js_1.errorHandler);
 exports.default = app;

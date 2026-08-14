@@ -10,6 +10,7 @@ import reviewsRoutes from './routes/reviews.routes.js';
 import reportsRoutes from './routes/reports.routes.js';
 import blocksRoutes from './routes/blocks.routes.js';
 import { errorHandler } from './middleware/error-handler.js';
+import { ApiError } from './utils/api-error.js';
 
 const app = express();
 
@@ -37,6 +38,11 @@ app.use('/v1/notifications', notificationsRoutes);
 app.use('/v1/reviews', reviewsRoutes);
 app.use('/v1/reports', reportsRoutes);
 app.use('/v1/blocks', blocksRoutes);
+
+// Catch-All 404 Handler for Unregistered Endpoints
+app.use((_req, _res, next) => {
+  next(ApiError.notFound('API endpoint not found'));
+});
 
 // Error Handler Middleware
 app.use(errorHandler as any);
