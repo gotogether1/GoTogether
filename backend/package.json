@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Go Together API - Node.js Express REST API & Socket.IO Real-time server for Render Free deployment",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
