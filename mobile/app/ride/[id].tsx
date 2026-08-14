@@ -10,6 +10,7 @@ import { Input } from '../../src/components/Input';
 import { SEED_RIDES, SEED_USERS } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
 import { useAuth } from '../../src/auth/AuthProvider';
+import { safeBack } from '../../src/utils/navigation';
 
 export default function RideDetailsScreen() {
   const router = useRouter();
@@ -90,7 +91,7 @@ export default function RideDetailsScreen() {
       >
         {/* Top Header Row */}
         <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
+          <TouchableOpacity onPress={() => safeBack(router)} style={styles.backBtn} activeOpacity={0.8}>
             <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>Ride Details</Text>

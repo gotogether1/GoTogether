@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { SEED_BOOKINGS, SEED_MESSAGES, SEED_RIDES, DemoMessage } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { safeBack } from '../../src/utils/navigation';
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function ChatScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
+          <TouchableOpacity onPress={() => safeBack(router)} style={styles.backBtn} activeOpacity={0.8}>
             <Ionicons name="arrow-back" size={20} color={Colors.primary} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>

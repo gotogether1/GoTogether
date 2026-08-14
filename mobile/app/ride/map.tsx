@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../src/components/Button';
 import { SEED_RIDES } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { safeBack } from '../../src/utils/navigation';
 
 export default function RouteMapModalScreen() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function RouteMapModalScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.topBar, { paddingTop: topInsetPadding }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.8}>
+        <TouchableOpacity onPress={() => safeBack(router)} style={styles.closeBtn} activeOpacity={0.8}>
           <Ionicons name="close" size={20} color={Colors.onSurface} />
         </TouchableOpacity>
         <View style={styles.topTitleBox}>

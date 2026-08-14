@@ -6,6 +6,8 @@ import { Button } from '../../src/components/Button';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
+import { safeBack } from '../../src/utils/navigation';
+
 export default function LoginScreen() {
   const router = useRouter();
   const { loginWithEmail } = useAuth();
@@ -34,7 +36,7 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {/* Top Back Navigation */}
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => safeBack(router)} activeOpacity={0.8}>
           <Text style={styles.backIcon}>← Back</Text>
         </TouchableOpacity>
 
