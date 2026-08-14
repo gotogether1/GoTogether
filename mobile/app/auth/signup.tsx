@@ -47,7 +47,7 @@ export default function SignupScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {/* Top Back Navigation */}
-        <TouchableOpacity style={styles.backBtn} onPress={() => safeBack(router)} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => safeBack(router, '/')} activeOpacity={0.8}>
           <Text style={styles.backIcon}>← Back</Text>
         </TouchableOpacity>
 
