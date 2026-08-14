@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
@@ -43,32 +43,38 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {/* Top Back Navigation */}
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
+          <Text style={styles.backIcon}>← Back</Text>
+        </TouchableOpacity>
+
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join Go Together to share carpool & bike pool rides</Text>
+          <Text style={styles.subtitle}>Join Go Together to share carpool & bike pool rides with zero fees.</Text>
         </View>
 
-        <View style={styles.form}>
+        <View style={styles.cardBox}>
           <Input
-            label="Email Address *"
-            placeholder="e.g. alex@example.com"
+            label="Email Address"
+            placeholder="name@example.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            onClear={() => setEmail('')}
           />
 
           <Input
-            label="Password (min 8 chars) *"
-            placeholder="Create password"
+            label="Password"
+            placeholder="Min. 8 characters"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
 
           <Input
-            label="Confirm Password *"
+            label="Confirm Password"
             placeholder="Re-enter password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -81,13 +87,13 @@ export default function SignupScreen() {
             loading={loading}
             style={styles.signupBtn}
           />
+        </View>
 
-          <View style={styles.linksRow}>
-            <Text style={styles.hasAccountText}>Already have an account?</Text>
-            <Text style={styles.linkText} onPress={() => router.push('/auth/login')}>
-              Log In
-            </Text>
-          </View>
+        <View style={styles.footerRow}>
+          <Text style={styles.footerPrompt}>Already have an account?</Text>
+          <TouchableOpacity onPress={() => router.push('/auth/login')} activeOpacity={0.8}>
+            <Text style={styles.loginLinkText}>Log In</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -97,44 +103,66 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     padding: Spacing.lg,
+    flexGrow: 1,
     justifyContent: 'center',
-    minHeight: '100%',
+  },
+  backBtn: {
+    marginBottom: Spacing.md,
+  },
+  backIcon: {
+    ...Typography.labelLg,
+    color: Colors.primary,
+    fontWeight: '700',
   },
   header: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   title: {
     ...Typography.displayLg,
+    fontSize: 30,
     color: Colors.onBackground,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    ...Typography.bodyMd,
+    ...Typography.bodyLg,
     color: Colors.onSurfaceVariant,
     marginTop: Spacing.xs,
+    lineHeight: 22,
   },
-  form: {
-    width: '100%',
+  cardBox: {
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
   signupBtn: {
     marginTop: Spacing.md,
-    marginBottom: Spacing.md,
   },
-  linksRow: {
+  footerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: Spacing.xs,
-    marginTop: Spacing.sm,
+    alignItems: 'center',
+    gap: 6,
+    marginTop: Spacing.xl,
   },
-  hasAccountText: {
+  footerPrompt: {
     ...Typography.bodyMd,
     color: Colors.onSurfaceVariant,
   },
-  linkText: {
+  loginLinkText: {
     ...Typography.labelLg,
     color: Colors.primary,
+    fontWeight: '800',
   },
 });

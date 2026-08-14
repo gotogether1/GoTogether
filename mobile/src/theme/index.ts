@@ -1,37 +1,42 @@
 export const Colors = {
-  primary: '#2563EB',
-  primaryContainer: '#DBEAFE',
+  // Brand & Accent Colors
+  primary: '#2563EB', // Royal Blue
+  primaryDark: '#1D4ED8',
+  primaryContainer: '#EFF6FF',
   onPrimary: '#FFFFFF',
   onPrimaryContainer: '#1E40AF',
 
-  secondary: '#565E74',
-  secondaryContainer: '#DAE2FD',
+  secondary: '#0F172A', // Slate Dark
+  secondaryContainer: '#F1F5F9',
   onSecondary: '#FFFFFF',
 
+  // Background & Surfaces
   background: '#F8FAFC',
-  onBackground: '#191C1E',
+  onBackground: '#0F172A',
 
   surface: '#FFFFFF',
-  surfaceDim: '#D8DADC',
-  surfaceBright: '#F7F9FB',
-  surfaceContainerLow: '#F2F4F6',
-  surfaceContainer: '#ECEEF0',
-  surfaceContainerHigh: '#E6E8EA',
-  onSurface: '#191C1E',
-  onSurfaceVariant: '#434655',
+  surfaceSubtle: '#F1F5F9',
+  surfaceBorder: '#E2E8F0',
+  surfaceContainer: '#E2E8F0',
+  surfaceContainerLow: '#F1F5F9',
+  surfaceContainerHigh: '#CBD5E1',
+  onSurface: '#0F172A',
+  onSurfaceVariant: '#64748B',
 
-  outline: '#737686',
-  outlineVariant: '#C3C6D7',
+  // Borders & Outlines
+  outline: '#94A3B8',
+  outlineVariant: '#CBD5E1',
 
-  success: '#006329',
-  successContainer: '#C7FFCA',
+  // Semantic Status Colors
+  success: '#059669', // Emerald Green
+  successContainer: '#ECFDF5',
   onSuccess: '#FFFFFF',
 
-  warning: '#D97706',
+  warning: '#D97706', // Amber
   warningContainer: '#FEF3C7',
 
-  error: '#BA1A1A',
-  errorContainer: '#FFDAD6',
+  error: '#DC2626', // Crimson Red
+  errorContainer: '#FEF2F2',
   onError: '#FFFFFF',
 };
 
@@ -41,23 +46,51 @@ export const Spacing = {
   md: 16,
   lg: 24,
   xl: 32,
-  containerMargin: 20,
+  xxl: 48,
+  containerMargin: 16,
 };
 
 export const BorderRadius = {
-  sm: 4,
-  md: 8,
+  xs: 4,
+  sm: 8,
+  md: 12,
   lg: 16,
-  xl: 24,
+  xl: 20,
+  xxl: 24,
   full: 9999,
 };
 
 export const Typography = {
-  displayLg: { fontSize: 32, fontWeight: '700' as const, lineHeight: 40 },
-  headlineLg: { fontSize: 24, fontWeight: '700' as const, lineHeight: 32 },
-  headlineMd: { fontSize: 20, fontWeight: '600' as const, lineHeight: 28 },
+  displayLg: { fontSize: 32, fontWeight: '800' as const, lineHeight: 40, letterSpacing: -0.5 },
+  headlineLg: { fontSize: 24, fontWeight: '800' as const, lineHeight: 32, letterSpacing: -0.3 },
+  headlineMd: { fontSize: 18, fontWeight: '700' as const, lineHeight: 26 },
   bodyLg: { fontSize: 16, fontWeight: '400' as const, lineHeight: 24 },
   bodyMd: { fontSize: 14, fontWeight: '400' as const, lineHeight: 20 },
-  labelLg: { fontSize: 14, fontWeight: '600' as const, lineHeight: 20 },
-  labelSm: { fontSize: 12, fontWeight: '500' as const, lineHeight: 16 },
+  labelLg: { fontSize: 14, fontWeight: '700' as const, lineHeight: 20 },
+  labelMd: { fontSize: 13, fontWeight: '600' as const, lineHeight: 18 },
+  labelSm: { fontSize: 12, fontWeight: '600' as const, lineHeight: 16 },
+};
+
+export const Shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
+  },
 };

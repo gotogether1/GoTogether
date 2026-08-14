@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card } from '../../src/components/Card';
-import { Badge } from '../../src/components/Badge';
 import { Button } from '../../src/components/Button';
+import { EmptyState } from '../../src/components/loading/EmptyState';
 import { SEED_BOOKINGS, SEED_RIDES, DemoBooking } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'offers' | 'requests'>('upcoming');
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'requests' | 'offers' | 'past'>('upcoming');
   const [bookings, setBookings] = useState<DemoBooking[]>(SEED_BOOKINGS);
 
   const handleApprove = (bookingId: string) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'approved' } : b));
-    Alert.alert('Booking Approved!', 'A confirmed direct chat has been created with the rider.');
+    Alert.alert('Booking Approved! 🎉', 'Direct chat with the rider is now unlocked.');
   };
 
   const handleReject = (bookingId: string) => {
@@ -25,8 +24,9 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.pageTitle}>My Rides Dashboard</Text>
+        <Text style={styles.pageTitle}>My Rides</Text>
 
+        {/* Top Summary Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>1</Text>
@@ -42,55 +42,97 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        <View style={styles.tabsRow}>
-          <TouchableOpacity style={[styles.tabBtn, activeTab === 'upcoming' && styles.activeTabBtn]} onPress={() => setActiveTab('upcoming')}>
-            <Text style={[styles.tabText, activeTab === 'upcoming' && styles.activeTabText]}>Upcoming</Text>
+        {/* Segmented Tab Filter */}
+        <View style={styles.segmentedControl}>
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'upcoming' && styles.segmentActive]}
+            onPress={() => setActiveTab('upcoming')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.segmentText, activeTab === 'upcoming' && styles.segmentTextActive]}>Upcoming</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.tabBtn, activeTab === 'requests' && styles.activeTabBtn]} onPress={() => setActiveTab('requests')}>
-            <Text style={[styles.tabText, activeTab === 'requests' && styles.activeTabText]}>Requests</Text>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'requests' && styles.segmentActive]}
+            onPress={() => setActiveTab('requests')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.segmentText, activeTab === 'requests' && styles.segmentTextActive]}>Requests</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.tabBtn, activeTab === 'offers' && styles.activeTabBtn]} onPress={() => setActiveTab('offers')}>
-            <Text style={[styles.tabText, activeTab === 'offers' && styles.activeTabText]}>My Offers</Text>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'offers' && styles.segmentActive]}
+            onPress={() => setActiveTab('offers')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.segmentText, activeTab === 'offers' && styles.segmentTextActive]}>My Offers</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.tabBtn, activeTab === 'past' && styles.activeTabBtn]} onPress={() => setActiveTab('past')}>
-            <Text style={[styles.tabText, activeTab === 'past' && styles.activeTabText]}>Past</Text>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, activeTab === 'past' && styles.segmentActive]}
+            onPress={() => setActiveTab('past')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.segmentText, activeTab === 'past' && styles.segmentTextActive]}>Past</Text>
           </TouchableOpacity>
         </View>
 
+        {/* TAB 1: UPCOMING APPROVED BOOKINGS */}
         {activeTab === 'upcoming' && (
           <View>
             {bookings.filter(b => b.status === 'approved').map(b => (
-              <Card key={b.id}>
+              <View key={b.id} style={styles.cardItem}>
                 <View style={styles.cardHeader}>
-                  <Badge label="Approved Booking" variant="success" />
+                  <View style={styles.approvedBadge}>
+                    <Text style={styles.approvedBadgeText}>✓ CONFIRMED</Text>
+                  </View>
                   <Text style={styles.dateText}>{new Date(b.departureAt).toLocaleDateString()}</Text>
                 </View>
-                <Text style={styles.cardRoute}>{b.pickup} → {b.destination}</Text>
-                <Text style={styles.cardSub}>Driver: {b.driverName} • 1 seat approved</Text>
+
+                <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
+                <Text style={styles.subText}>Driver: {b.driverName} • 1 seat approved</Text>
+
                 <Button
                   title="💬 Chat with Driver"
                   onPress={() => router.push(`/chat/${b.id}`)}
                   style={styles.chatBtn}
                 />
-              </Card>
+              </View>
             ))}
           </View>
         )}
 
+        {/* TAB 2: PENDING PASSENGER REQUESTS */}
         {activeTab === 'requests' && (
           <View>
             {bookings.map(b => (
-              <Card key={b.id}>
+              <View key={b.id} style={styles.cardItem}>
                 <View style={styles.cardHeader}>
-                  <Badge
-                    label={b.status.toUpperCase()}
-                    variant={b.status === 'approved' ? 'success' : b.status === 'pending' ? 'warning' : 'error'}
-                  />
-                  <Text style={styles.dateText}>{b.seatsRequested} seat(s)</Text>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      b.status === 'approved' && styles.approvedPill,
+                      b.status === 'pending' && styles.pendingPill,
+                      b.status === 'rejected' && styles.rejectedPill,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusPillText,
+                        b.status === 'approved' && styles.approvedPillText,
+                        b.status === 'pending' && styles.pendingPillText,
+                        b.status === 'rejected' && styles.rejectedPillText,
+                      ]}
+                    >
+                      {b.status.toUpperCase()}
+                    </Text>
+                  </View>
+                  <Text style={styles.dateText}>{b.seatsRequested} seat(s) requested</Text>
                 </View>
-                <Text style={styles.cardRoute}>{b.pickup} → {b.destination}</Text>
-                <Text style={styles.cardSub}>Rider: {b.riderName}</Text>
-                {b.riderMessage && <Text style={styles.riderMsg}>"{b.riderMessage}"</Text>}
+
+                <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
+                <Text style={styles.subText}>Rider: {b.riderName}</Text>
+                {b.riderMessage ? <Text style={styles.riderMsg}>"{b.riderMessage}"</Text> : null}
 
                 {b.status === 'pending' && (
                   <View style={styles.actionBtns}>
@@ -106,32 +148,41 @@ export default function DashboardScreen() {
                     style={styles.chatBtn}
                   />
                 )}
-              </Card>
+              </View>
             ))}
           </View>
         )}
 
+        {/* TAB 3: DRIVER'S OWN OFFERED RIDES */}
         {activeTab === 'offers' && (
           <View>
             {SEED_RIDES.map(r => (
-              <Card key={r.id} onPress={() => router.push(`/ride/${r.id}`)}>
+              <TouchableOpacity
+                key={r.id}
+                style={styles.cardItem}
+                onPress={() => router.push(`/ride/${r.id}`)}
+                activeOpacity={0.88}
+              >
                 <View style={styles.cardHeader}>
-                  <Badge label={r.vehicleType.toUpperCase()} variant="primary" />
+                  <View style={styles.typeBadge}>
+                    <Text style={styles.typeBadgeText}>{r.vehicleType.toUpperCase()}</Text>
+                  </View>
                   <Text style={styles.dateText}>{r.availableSeats} of {r.totalSeats} seats open</Text>
                 </View>
-                <Text style={styles.cardRoute}>{r.pickup} → {r.destination}</Text>
-                <Text style={styles.cardSub}>Departure: {new Date(r.departureAt).toLocaleTimeString()}</Text>
-              </Card>
+                <Text style={styles.routeText}>{r.pickup} → {r.destination}</Text>
+                <Text style={styles.subText}>Departure: {new Date(r.departureAt).toLocaleTimeString()}</Text>
+              </TouchableOpacity>
             ))}
           </View>
         )}
 
+        {/* TAB 4: PAST COMPLETED RIDES */}
         {activeTab === 'past' && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📜</Text>
-            <Text style={styles.emptyTitle}>No Past Completed Rides</Text>
-            <Text style={styles.emptySubtitle}>Completed rides will be archived here for leaving reviews.</Text>
-          </View>
+          <EmptyState
+            icon="📜"
+            title="No Past Completed Rides"
+            message="Your completed trips and history will be archived here."
+          />
         )}
       </ScrollView>
     </SafeAreaView>
@@ -141,16 +192,20 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     padding: Spacing.md,
+    paddingBottom: Spacing.xl * 2,
   },
   pageTitle: {
     ...Typography.displayLg,
+    fontSize: 28,
     color: Colors.onBackground,
+    fontWeight: '800',
     marginTop: Spacing.xs,
     marginBottom: Spacing.md,
+    letterSpacing: -0.5,
   },
   statsRow: {
     flexDirection: 'row',
@@ -161,13 +216,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
     padding: Spacing.md,
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.surfaceContainer,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   statNumber: {
     ...Typography.headlineLg,
+    fontSize: 22,
+    fontWeight: '800',
     color: Colors.primary,
   },
   statLabel: {
@@ -175,29 +237,48 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
     marginTop: 2,
   },
-  tabsRow: {
+  segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: 10,
-    padding: 2,
+    backgroundColor: '#E2E8F0',
+    padding: 3,
+    borderRadius: 14,
     marginBottom: Spacing.md,
   },
-  tabBtn: {
+  segmentBtn: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    paddingVertical: 8,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 10,
   },
-  activeTabBtn: {
+  segmentActive: {
     backgroundColor: Colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  tabText: {
+  segmentText: {
     ...Typography.labelSm,
+    fontWeight: '600',
     color: Colors.onSurfaceVariant,
   },
-  activeTabText: {
+  segmentTextActive: {
     color: Colors.primary,
     fontWeight: '700',
+  },
+  cardItem: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -205,15 +286,67 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xs,
   },
+  approvedBadge: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  approvedBadgeText: {
+    ...Typography.labelSm,
+    color: '#047857',
+    fontWeight: '700',
+  },
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusPillText: {
+    ...Typography.labelSm,
+    fontWeight: '700',
+  },
+  approvedPill: {
+    backgroundColor: '#ECFDF5',
+  },
+  approvedPillText: {
+    color: '#047857',
+  },
+  pendingPill: {
+    backgroundColor: '#FEF3C7',
+  },
+  pendingPillText: {
+    color: '#D97706',
+  },
+  rejectedPill: {
+    backgroundColor: '#FEF2F2',
+  },
+  rejectedPillText: {
+    color: '#DC2626',
+  },
+  typeBadge: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  typeBadgeText: {
+    ...Typography.labelSm,
+    color: '#1E40AF',
+    fontWeight: '700',
+  },
   dateText: {
     ...Typography.labelSm,
     color: Colors.onSurfaceVariant,
   },
-  cardRoute: {
+  routeText: {
     ...Typography.headlineMd,
+    fontWeight: '800',
     color: Colors.onSurface,
   },
-  cardSub: {
+  subText: {
     ...Typography.bodyMd,
     color: Colors.onSurfaceVariant,
     marginTop: 2,
@@ -236,27 +369,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chatBtn: {
-    marginTop: Spacing.sm,
-  },
-  emptyState: {
-    backgroundColor: Colors.surface,
-    padding: Spacing.xl,
-    borderRadius: 16,
-    alignItems: 'center',
     marginTop: Spacing.md,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.xs,
-  },
-  emptyTitle: {
-    ...Typography.headlineMd,
-    color: Colors.onSurface,
-  },
-  emptySubtitle: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginTop: 4,
   },
 });

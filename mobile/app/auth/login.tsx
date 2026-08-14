@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
@@ -30,62 +30,55 @@ export default function LoginScreen() {
     }
   };
 
-  const handleDemoLogin = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.replace('/(tabs)');
-    }, 600);
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        {/* Top Back Navigation */}
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
+          <Text style={styles.backIcon}>← Back</Text>
+        </TouchableOpacity>
+
         <View style={styles.header}>
           <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Log in to manage your rides and bookings</Text>
+          <Text style={styles.subtitle}>Sign in to manage your rides and connect with community travelers.</Text>
         </View>
 
-        <View style={styles.form}>
+        <View style={styles.cardBox}>
           <Input
             label="Email Address"
-            placeholder="e.g. alex@example.com"
+            placeholder="name@example.com"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            onClear={() => setEmail('')}
           />
 
           <Input
             label="Password"
-            placeholder="Enter password"
+            placeholder="Enter your password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
 
+          <TouchableOpacity style={styles.forgotBtn} onPress={() => router.push('/auth/forgot-password')} activeOpacity={0.8}>
+            <Text style={styles.forgotText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
           <Button
-            title="Log In"
+            title="Sign In"
             onPress={handleLogin}
             loading={loading}
             style={styles.loginBtn}
           />
+        </View>
 
-          <Button
-            title="Demo Instant Sign In"
-            variant="secondary"
-            onPress={handleDemoLogin}
-            style={styles.demoBtn}
-          />
-
-          <View style={styles.linksRow}>
-            <Text style={styles.linkText} onPress={() => router.push('/auth/forgot-password')}>
-              Forgot Password?
-            </Text>
-            <Text style={styles.linkText} onPress={() => router.push('/auth/signup')}>
-              Create Account
-            </Text>
-          </View>
+        <View style={styles.footerRow}>
+          <Text style={styles.footerPrompt}>Don't have an account?</Text>
+          <TouchableOpacity onPress={() => router.push('/auth/signup')} activeOpacity={0.8}>
+            <Text style={styles.signUpText}>Sign Up</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -95,42 +88,75 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     padding: Spacing.lg,
+    flexGrow: 1,
     justifyContent: 'center',
-    minHeight: '100%',
+  },
+  backBtn: {
+    marginBottom: Spacing.md,
+  },
+  backIcon: {
+    ...Typography.labelLg,
+    color: Colors.primary,
+    fontWeight: '700',
   },
   header: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   title: {
     ...Typography.displayLg,
+    fontSize: 30,
     color: Colors.onBackground,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    ...Typography.bodyMd,
+    ...Typography.bodyLg,
     color: Colors.onSurfaceVariant,
     marginTop: Spacing.xs,
+    lineHeight: 22,
   },
-  form: {
-    width: '100%',
+  cardBox: {
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  loginBtn: {
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  demoBtn: {
+  forgotBtn: {
+    alignSelf: 'flex-end',
     marginBottom: Spacing.md,
   },
-  linksRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: Spacing.sm,
+  forgotText: {
+    ...Typography.labelMd,
+    color: Colors.primary,
+    fontWeight: '700',
   },
-  linkText: {
+  loginBtn: {
+    marginTop: Spacing.xs,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: Spacing.xl,
+  },
+  footerPrompt: {
+    ...Typography.bodyMd,
+    color: Colors.onSurfaceVariant,
+  },
+  signUpText: {
     ...Typography.labelLg,
     color: Colors.primary,
+    fontWeight: '800',
   },
 });

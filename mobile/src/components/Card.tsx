@@ -1,24 +1,25 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
-import { Colors, BorderRadius, Spacing } from '../theme';
+import { Colors, BorderRadius, Spacing, Shadows } from '../theme';
 
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   onPress?: () => void;
-  elevation?: number;
+  elevation?: 1 | 2 | 3;
 }
 
 export const Card: React.FC<CardProps> = ({ children, style, onPress, elevation = 1 }) => {
   const cardStyle = [
     styles.card,
-    elevation === 2 && styles.elevation2,
+    elevation === 2 && Shadows.md,
+    elevation === 3 && Shadows.lg,
     style,
   ];
 
   if (onPress) {
     return (
-      <TouchableOpacity style={cardStyle} onPress={onPress} activeOpacity={0.85}>
+      <TouchableOpacity style={cardStyle} onPress={onPress} activeOpacity={0.88}>
         {children}
       </TouchableOpacity>
     );
@@ -30,23 +31,12 @@ export const Card: React.FC<CardProps> = ({ children, style, onPress, elevation 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     padding: Spacing.md,
     marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.surfaceContainer,
-    shadowColor: Colors.onSurface,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: '#E2E8F0',
+    ...Shadows.sm,
     width: '100%',
-  },
-  elevation2: {
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 4,
-    borderColor: Colors.outlineVariant,
   },
 });

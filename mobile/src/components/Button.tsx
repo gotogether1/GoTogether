@@ -1,15 +1,16 @@
 import React, { useRef } from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, Animated } from 'react-native';
-import { Colors, BorderRadius, Spacing } from '../theme';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, Animated, ViewStyle, TextStyle } from 'react-native';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../theme';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  icon?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -20,61 +21,67 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   style,
   textStyle,
+  icon,
 }) => {
-  const scale = useRef(new Animated.Value(1)).current;
-
-  const isOutline = variant === 'outline';
-  const isSecondary = variant === 'secondary';
-  const isDanger = variant === 'danger';
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const isInteractionDisabled = loading || disabled;
 
   const handlePressIn = () => {
-    Animated.spring(scale, {
-      toValue: 0.96,
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
       useNativeDriver: true,
+      speed: 20,
     }).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scale, {
+    Animated.spring(scaleAnim, {
       toValue: 1,
-      friction: 4,
-      tension: 40,
       useNativeDriver: true,
+      speed: 20,
     }).start();
   };
 
-  const buttonStyles = [
-    styles.button,
-    isSecondary && styles.secondaryButton,
-    isOutline && styles.outlineButton,
-    isDanger && styles.dangerButton,
-    (disabled || loading) && styles.disabledButton,
-    style,
-  ];
+  const getBackgroundColor = () => {
+    if (isInteractionDisabled && variant === 'primary') return '#93C5FD';
+    if (variant === 'secondary') return Colors.secondary;
+    if (variant === 'outline' || variant === 'ghost') return 'transparent';
+    if (variant === 'danger') return Colors.error;
+    return Colors.primary;
+  };
 
-  const textStyles = [
-    styles.text,
-    isSecondary && styles.secondaryText,
-    isOutline && styles.outlineText,
-    isDanger && styles.dangerText,
-    disabled && styles.disabledText,
-    textStyle,
-  ];
+  const getTextColor = () => {
+    if (variant === 'outline') return Colors.primary;
+    if (variant === 'ghost') return Colors.onSurface;
+    if (variant === 'secondary') return Colors.onSecondary;
+    return Colors.onPrimary;
+  };
 
   return (
-    <Animated.View style={{ transform: [{ scale }], width: style?.width || '100%' }}>
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
       <TouchableOpacity
-        style={buttonStyles}
+        style={[
+          styles.button,
+          { backgroundColor: getBackgroundColor() },
+          variant === 'outline' && styles.outlineBorder,
+          Shadows.sm,
+        ]}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={disabled || loading}
-        activeOpacity={0.9}
+        disabled={isInteractionDisabled}
+        activeOpacity={0.88}
+        aria-busy={loading}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isInteractionDisabled, busy: loading }}
       >
         {loading ? (
-          <ActivityIndicator color={isOutline ? Colors.primary : Colors.onPrimary} />
+          <ActivityIndicator size="small" color={getTextColor()} />
         ) : (
-          <Text style={textStyles}>{title}</Text>
+          <>
+            {icon ? <Text style={styles.icon}>{icon}</Text> : null}
+            <Text style={[styles.text, { color: getTextColor() }, textStyle]}>{title}</Text>
+          </>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -83,46 +90,24 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: Colors.primary,
-    height: 48,
-    borderRadius: BorderRadius.full,
+    height: 52,
+    borderRadius: BorderRadius.xl,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.lg,
-    width: '100%',
+    flexDirection: 'row',
   },
-  secondaryButton: {
-    backgroundColor: Colors.secondaryContainer,
-  },
-  outlineButton: {
-    backgroundColor: 'transparent',
+  outlineBorder: {
     borderWidth: 1.5,
     borderColor: Colors.primary,
   },
-  dangerButton: {
-    backgroundColor: Colors.error,
-  },
-  disabledButton: {
-    opacity: 0.5,
+  icon: {
+    fontSize: 18,
+    marginRight: Spacing.xs + 2,
   },
   text: {
-    color: Colors.onPrimary,
+    ...Typography.labelLg,
+    fontWeight: '700',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryText: {
-    color: Colors.onSurface,
-  },
-  outlineText: {
-    color: Colors.primary,
-  },
-  dangerText: {
-    color: Colors.primary,
-  },
-  dangerTextContent: {
-    color: Colors.onError,
-  },
-  disabledText: {
-    color: Colors.outline,
   },
 });

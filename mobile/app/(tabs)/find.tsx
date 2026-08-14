@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input } from '../../src/components/Input';
-import { Card } from '../../src/components/Card';
-import { Badge } from '../../src/components/Badge';
 import { Button } from '../../src/components/Button';
-import { SkeletonCard } from '../../src/components/Skeleton';
+import { SkeletonCard } from '../../src/components/loading/SkeletonCard';
+import { EmptyState } from '../../src/components/loading/EmptyState';
 import { useRidesQuery } from '../../src/api/hooks';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
@@ -28,30 +27,33 @@ export default function FindRideScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.container}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[Colors.primary]} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.primary} />}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.pageTitle}>Find a Ride</Text>
-        <Text style={styles.pageSubtitle}>Search carpool or bike pool trips</Text>
+        <Text style={styles.pageTitle}>Search Rides</Text>
+        <Text style={styles.pageSubtitle}>Find verified carpool or bike pool trips along your route</Text>
 
-        <Card style={styles.searchCard}>
+        <View style={styles.searchCardBox}>
           <Input
-            label="Pickup Location *"
-            placeholder="e.g. San Francisco"
+            label="Pickup City / Landmark"
+            placeholder="e.g. Banswada"
             value={pickup}
             onChangeText={setPickup}
+            onClear={() => setPickup('')}
           />
 
           <Input
-            label="Destination Location *"
-            placeholder="e.g. San Jose"
+            label="Drop-off Destination"
+            placeholder="e.g. Hyderabad"
             value={destination}
             onChangeText={setDestination}
+            onClear={() => setDestination('')}
           />
 
           <View style={styles.row}>
             <View style={styles.halfInput}>
               <Input
-                label="Seats Needed (1–4) *"
+                label="Seats Needed"
                 placeholder="1"
                 value={seats}
                 onChangeText={setSeats}
@@ -60,23 +62,26 @@ export default function FindRideScreen() {
             </View>
 
             <View style={styles.halfInput}>
-              <Text style={styles.typeLabel}>Vehicle Type</Text>
+              <Text style={styles.typeLabel}>Ride Mode</Text>
               <View style={styles.typeToggle}>
                 <TouchableOpacity
                   style={[styles.typeBtn, tripType === 'all' && styles.activeTypeBtn]}
                   onPress={() => setTripType('all')}
+                  activeOpacity={0.8}
                 >
                   <Text style={[styles.typeBtnText, tripType === 'all' && styles.activeTypeBtnText]}>All</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.typeBtn, tripType === 'carpool' && styles.activeTypeBtn]}
                   onPress={() => setTripType('carpool')}
+                  activeOpacity={0.8}
                 >
                   <Text style={[styles.typeBtnText, tripType === 'carpool' && styles.activeTypeBtnText]}>🚗</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.typeBtn, tripType === 'bike_pool' && styles.activeTypeBtn]}
                   onPress={() => setTripType('bike_pool')}
+                  activeOpacity={0.8}
                 >
                   <Text style={[styles.typeBtnText, tripType === 'bike_pool' && styles.activeTypeBtnText]}>🚲</Text>
                 </TouchableOpacity>
@@ -84,48 +89,73 @@ export default function FindRideScreen() {
             </View>
           </View>
 
-          <Button title="Search Rides" onPress={() => refetch()} style={styles.searchBtn} />
-        </Card>
+          <Button title="Search Matching Rides" onPress={() => refetch()} style={styles.searchBtn} />
+        </View>
 
-        <Text style={styles.sectionTitle}>
-          Search Results ({results.length})
-        </Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>
+            Available Trips ({results.length})
+          </Text>
+        </View>
 
         {isLoading ? (
-          <View>
-            <SkeletonCard />
-            <SkeletonCard />
-          </View>
+          <SkeletonCard type="trip" count={3} />
         ) : results.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🚗</Text>
-            <Text style={styles.emptyTitle}>No Rides Found</Text>
-            <Text style={styles.emptySubtitle}>Try adjusting your search criteria or trip filters.</Text>
-          </View>
+          <EmptyState
+            icon="🔍"
+            title="No Matching Trips Found"
+            message="Try widening your search terms or clearing your pickup location filter."
+            actionLabel="Reset Search"
+            onAction={() => {
+              setPickup('');
+              setDestination('');
+              setTripType('all');
+              refetch();
+            }}
+          />
         ) : (
           results.map((ride: any) => (
-            <Card key={ride.id} onPress={() => router.push(`/ride/${ride.id}`)}>
+            <TouchableOpacity
+              key={ride.id}
+              style={styles.rideResultCard}
+              onPress={() => router.push(`/ride/${ride.id}`)}
+              activeOpacity={0.88}
+            >
               <View style={styles.cardHeader}>
-                <Badge
-                  label={ride.vehicleType === 'carpool' ? '🚗 Carpool' : '🚲 Bike Pool'}
-                  variant={ride.vehicleType === 'carpool' ? 'primary' : 'success'}
-                />
-                <Text style={styles.priceText}>
-                  {ride.suggestedContribution > 0 ? `\$${ride.suggestedContribution}` : 'Free Share'}
+                <View style={styles.badgePill}>
+                  <Text style={styles.badgeText}>
+                    {ride.vehicleType === 'carpool' ? '🚗 CARPOOL' : '🚲 BIKE POOL'}
+                  </Text>
+                </View>
+
+                <Text style={styles.priceTag}>
+                  {ride.suggestedContribution > 0 ? `$${ride.suggestedContribution}` : 'Free Share'}
                 </Text>
               </View>
 
-              <View style={styles.routeContainer}>
-                <Text style={styles.locationText}>📍 {ride.pickup}</Text>
-                <Text style={styles.arrowText}>↓</Text>
-                <Text style={styles.locationText}>🏁 {ride.destination}</Text>
+              <View style={styles.routeBox}>
+                <View style={styles.dotsLine}>
+                  <View style={styles.dotBlue} />
+                  <View style={styles.line} />
+                  <View style={styles.dotDark} />
+                </View>
+
+                <View style={styles.routeMeta}>
+                  <Text style={styles.locationText} numberOfLines={1}>📍 {ride.pickup}</Text>
+                  <Text style={styles.locationText} numberOfLines={1}>🏁 {ride.destination}</Text>
+                </View>
               </View>
 
               <View style={styles.footerRow}>
-                <Text style={styles.driverName}>{ride.driverName || 'Verified Driver'} • ★ {ride.driverRating || 5.0}</Text>
-                <Text style={styles.seatsLeft}>{ride.availableSeats} seat(s) available</Text>
+                <View style={styles.driverInfo}>
+                  <View style={styles.avatarCircleSmall}>
+                    <Text style={styles.avatarText}>{ride.driverName?.charAt(0) || 'D'}</Text>
+                  </View>
+                  <Text style={styles.driverName}>{ride.driverName || 'Community Driver'} • ★ 4.9</Text>
+                </View>
+                <Text style={styles.seatsLeft}>{ride.availableSeats} seats left</Text>
               </View>
-            </Card>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>
@@ -136,23 +166,37 @@ export default function FindRideScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     padding: Spacing.md,
+    paddingBottom: Spacing.xl * 2,
   },
   pageTitle: {
     ...Typography.displayLg,
+    fontSize: 28,
     color: Colors.onBackground,
+    fontWeight: '800',
     marginTop: Spacing.xs,
+    letterSpacing: -0.5,
   },
   pageSubtitle: {
     ...Typography.bodyMd,
     color: Colors.onSurfaceVariant,
     marginBottom: Spacing.md,
   },
-  searchCard: {
+  searchCardBox: {
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    padding: Spacing.md,
     marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
   row: {
     flexDirection: 'row',
@@ -162,17 +206,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   typeLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...Typography.labelMd,
+    fontWeight: '700',
     color: Colors.onSurface,
     marginBottom: Spacing.xs,
   },
   typeToggle: {
     flexDirection: 'row',
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: 8,
-    padding: 2,
-    height: 48,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 3,
+    height: 52,
     alignItems: 'center',
   },
   typeBtn: {
@@ -180,85 +224,142 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    borderRadius: 6,
+    borderRadius: 10,
   },
   activeTypeBtn: {
     backgroundColor: Colors.surface,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   typeBtnText: {
-    ...Typography.labelLg,
+    ...Typography.labelSm,
+    fontWeight: '600',
     color: Colors.onSurfaceVariant,
   },
   activeTypeBtnText: {
     color: Colors.primary,
+    fontWeight: '700',
   },
   searchBtn: {
     marginTop: Spacing.xs,
   },
-  sectionTitle: {
-    ...Typography.headlineMd,
-    color: Colors.onBackground,
+  sectionHeader: {
     marginBottom: Spacing.sm,
   },
-  emptyState: {
-    backgroundColor: Colors.surface,
-    padding: Spacing.xl,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.xs,
-  },
-  emptyTitle: {
+  sectionTitle: {
     ...Typography.headlineMd,
-    color: Colors.onSurface,
+    fontWeight: '800',
+    color: Colors.onBackground,
   },
-  emptySubtitle: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginTop: 4,
+  rideResultCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
-  priceText: {
-    ...Typography.labelLg,
+  badgePill: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  badgeText: {
+    ...Typography.labelSm,
+    fontWeight: '700',
+    color: '#1E40AF',
+  },
+  priceTag: {
+    ...Typography.headlineMd,
+    fontWeight: '800',
     color: Colors.primary,
   },
-  routeContainer: {
+  routeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginVertical: Spacing.xs,
   },
-  locationText: {
-    ...Typography.bodyLg,
-    fontWeight: '600',
-    color: Colors.onSurface,
+  dotsLine: {
+    alignItems: 'center',
+    marginRight: Spacing.md,
   },
-  arrowText: {
-    color: Colors.outline,
-    marginLeft: 4,
+  dotBlue: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+  },
+  line: {
+    width: 2,
+    height: 20,
+    backgroundColor: '#CBD5E1',
     marginVertical: 2,
+  },
+  dotDark: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#0F172A',
+  },
+  routeMeta: {
+    flex: 1,
+    gap: 4,
+  },
+  locationText: {
+    ...Typography.bodyMd,
+    fontWeight: '700',
+    color: Colors.onSurface,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: Spacing.sm,
-    paddingTop: Spacing.xs,
+    paddingTop: Spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceContainer,
+    borderTopColor: '#F1F5F9',
+  },
+  driverInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarCircleSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.xs + 2,
+  },
+  avatarText: {
+    ...Typography.labelSm,
+    fontWeight: '700',
+    color: Colors.primary,
   },
   driverName: {
     ...Typography.bodyMd,
     color: Colors.onSurfaceVariant,
+    fontWeight: '600',
   },
   seatsLeft: {
-    ...Typography.labelLg,
+    ...Typography.labelSm,
+    fontWeight: '700',
     color: Colors.success,
   },
 });
