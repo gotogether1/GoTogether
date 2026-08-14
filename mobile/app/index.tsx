@@ -9,8 +9,8 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const topInsetPadding = Math.max(insets.top, 24) + 8;
-  const bottomInsetPadding = Math.max(insets.bottom, 16);
+  const topInsetPadding = Math.max(insets.top, 16);
+  const bottomInsetPadding = Math.max(insets.bottom, 12);
 
   return (
     <View style={styles.root}>
@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* Soft Ambient Overlay */}
+        {/* Soft Ambient Overlay for Optimal Contrast */}
         <View style={styles.overlay} />
 
         <SafeAreaView style={styles.safeArea}>
@@ -27,9 +27,9 @@ export default function WelcomeScreen() {
             contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
             showsVerticalScrollIndicator={false}
           >
-            {/* Top Hero Section */}
+            {/* Top Hero Section (Sits Cleanly in Sky Region) */}
             <View style={styles.heroContainer}>
-              {/* Official 4K GoTogether Logo (No White Border) */}
+              {/* Official 4K GoTogether Logo */}
               <View style={styles.logoWrapper}>
                 <Image
                   source={require('../assets/logo.png')}
@@ -39,17 +39,17 @@ export default function WelcomeScreen() {
               </View>
 
               <View style={styles.badgePill}>
-                <Ionicons name="shield-checkmark" size={12} color="#60A5FA" style={{ marginRight: 6 }} />
+                <Ionicons name="shield-checkmark" size={12} color="#60A5FA" style={{ marginRight: 5 }} />
                 <Text style={styles.badgeText}>COMMUNITY CARPOOL & BIKE POOL</Text>
               </View>
 
               <Text style={styles.tagline}>
-                Connect directly with verified drivers and riders going your way. Zero booking fees.
+                Connect with verified commuters going your way. Zero booking fees.
               </Text>
             </View>
 
-            {/* Bottom Action Buttons */}
-            <View style={styles.actionSection}>
+            {/* Bottom Glassmorphic Action Panel (Anchored cleanly at bottom) */}
+            <View style={styles.actionGlassPanel}>
               <TouchableOpacity
                 style={styles.primaryBtn}
                 onPress={() => router.push('/auth/signup')}
@@ -100,90 +100,96 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.25)',
+    backgroundColor: 'rgba(15, 23, 42, 0.18)',
   },
   safeArea: {
     flex: 1,
   },
   container: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md + 4,
     justifyContent: 'space-between',
   },
   heroContainer: {
     alignItems: 'center',
-    marginTop: Spacing.xs,
+    marginTop: 0,
   },
   logoWrapper: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    elevation: 12,
-    marginBottom: Spacing.md,
+    marginBottom: 8,
   },
   logoImage: {
-    width: 140,
-    height: 140,
-    borderRadius: 36,
+    width: 104,
+    height: 104,
+    borderRadius: 26,
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs + 1,
-    borderRadius: 20,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
-    marginBottom: Spacing.md,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    marginBottom: 6,
   },
   badgeText: {
     ...Typography.labelSm,
     color: '#FFFFFF',
     fontWeight: '800',
-    letterSpacing: 0.8,
-    fontSize: 11,
+    letterSpacing: 0.6,
+    fontSize: 10,
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
   tagline: {
-    ...Typography.bodyLg,
+    ...Typography.bodyMd,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.95)',
     textAlign: 'center',
-    lineHeight: 24,
-    maxWidth: 320,
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    lineHeight: 18,
+    maxWidth: 290,
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  actionSection: {
-    gap: Spacing.xs + 2,
-    marginBottom: Spacing.sm,
+  actionGlassPanel: {
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    padding: Spacing.md,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    gap: 8,
+    marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
   },
   primaryBtn: {
-    height: 52,
+    height: 48,
     backgroundColor: Colors.primary,
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 4,
   },
   primaryBtnText: {
     ...Typography.labelLg,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: Colors.onPrimary,
   },
   secondaryBtn: {
-    height: 52,
+    height: 48,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -191,31 +197,26 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     ...Typography.labelLg,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: Colors.onSurface,
   },
   guestBtn: {
-    height: 44,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
   guestBtnText: {
     ...Typography.labelLg,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    color: '#60A5FA',
   },
   termsFooter: {
     ...Typography.labelSm,
-    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 10.5,
+    color: 'rgba(255, 255, 255, 0.75)',
     textAlign: 'center',
     marginTop: 2,
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
 });
