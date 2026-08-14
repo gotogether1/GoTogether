@@ -15,11 +15,11 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80' }}
+        source={{ uri: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1200&q=80' }}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* Soft Dark Aesthetic Overlay */}
+        {/* Soft Aesthetic Ambient Gradient Overlay */}
         <View style={styles.overlay} />
 
         <SafeAreaView style={styles.safeArea}>
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.42)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
   },
   safeArea: {
     flex: 1,
