@@ -9,7 +9,7 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const topInsetPadding = Math.max(insets.top, 16);
+  const topInsetPadding = Math.max(insets.top, 24);
   const bottomInsetPadding = Math.max(insets.bottom, 12);
 
   return (
@@ -27,9 +27,9 @@ export default function WelcomeScreen() {
             contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
             showsVerticalScrollIndicator={false}
           >
-            {/* Top Hero Section (Sits Cleanly in Sky Region) */}
+            {/* Centered Hero Section */}
             <View style={styles.heroContainer}>
-              {/* Official 4K GoTogether Logo */}
+              {/* Official 4K GoTogether Logo (Tilted to Right Side) */}
               <View style={styles.logoWrapper}>
                 <Image
                   source={require('../assets/logo.png')}
@@ -48,7 +48,7 @@ export default function WelcomeScreen() {
               </Text>
             </View>
 
-            {/* Bottom Glassmorphic Action Panel (Anchored cleanly at bottom) */}
+            {/* Bottom Glassmorphic Action Panel */}
             <View style={styles.actionGlassPanel}>
               <TouchableOpacity
                 style={styles.primaryBtn}
@@ -88,11 +88,13 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    overflow: 'hidden',
   },
   backgroundImage: {
     flex: 1,
     width: '100%',
     height: '100%',
+    transform: [{ scale: 1.15 }],
   },
   overlay: {
     position: 'absolute',
@@ -111,27 +113,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   heroContainer: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: 0,
+    justifyContent: 'center',
+    marginVertical: Spacing.lg,
   },
   logoWrapper: {
-    marginBottom: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 4, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
   logoImage: {
-    width: 104,
-    height: 104,
-    borderRadius: 26,
+    width: 110,
+    height: 110,
+    borderRadius: 28,
+    transform: [{ rotate: '6deg' }],
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   badgeText: {
     ...Typography.labelSm,
