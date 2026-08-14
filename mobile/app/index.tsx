@@ -9,7 +9,8 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const topInsetPadding = Math.max(insets.top, 24) + 4;
+  // Ensures logo clears Android camera punch hole and status bar clock cleanly
+  const topInsetPadding = Math.max(insets.top, 48) + 16;
   const bottomInsetPadding = Math.max(insets.bottom, 12);
 
   return (
@@ -27,7 +28,7 @@ export default function WelcomeScreen() {
             contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
             showsVerticalScrollIndicator={false}
           >
-            {/* Top Hero Section (Sits in Sky Area Above Riders' Faces) */}
+            {/* Top Hero Section (Sits Below Camera Punch Hole in Sky Area) */}
             <View style={styles.heroContainer}>
               {/* Official 4K GoTogether Logo */}
               <View style={styles.logoWrapper}>
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    transform: [{ scale: 1.25 }, { rotate: '4deg' }],
+    transform: [{ scale: 1.12 }, { rotate: '2deg' }],
   },
   overlay: {
     position: 'absolute',
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.18)',
+    backgroundColor: 'rgba(15, 23, 42, 0.16)',
   },
   safeArea: {
     flex: 1,
@@ -120,9 +121,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   logoImage: {
-    width: 96,
-    height: 96,
-    borderRadius: 24,
+    width: 84,
+    height: 84,
+    borderRadius: 22,
   },
   badgePill: {
     flexDirection: 'row',
