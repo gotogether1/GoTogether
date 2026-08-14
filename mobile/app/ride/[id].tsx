@@ -51,10 +51,12 @@ export default function RideDetailsScreen() {
     }, 600);
   };
 
+  const topInsetPadding = Math.max(insets.top, 24) + 12;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 16) + 8 }]}
+        contentContainerStyle={[styles.container, { paddingTop: topInsetPadding }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Top Header Row */}
@@ -261,7 +263,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.sm,
-    marginTop: 4,
   },
   backBtn: {
     width: 36,

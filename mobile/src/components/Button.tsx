@@ -80,7 +80,9 @@ export const Button: React.FC<ButtonProps> = ({
         ) : (
           <>
             {icon ? <Text style={styles.icon}>{icon}</Text> : null}
-            <Text style={[styles.text, { color: getTextColor() }, textStyle]}>{title}</Text>
+            <Text style={[styles.text, { color: getTextColor() }, textStyle]} numberOfLines={1}>
+              {title}
+            </Text>
           </>
         )}
       </TouchableOpacity>
@@ -94,7 +96,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.sm + 4,
     flexDirection: 'row',
   },
   outlineBorder: {
@@ -108,6 +110,6 @@ const styles = StyleSheet.create({
   text: {
     ...Typography.labelLg,
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 15,
   },
 });
