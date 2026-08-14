@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
 import { SkeletonCard } from '../../src/components/loading/SkeletonCard';
@@ -76,14 +77,14 @@ export default function FindRideScreen() {
                   onPress={() => setTripType('carpool')}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.typeBtnText, tripType === 'carpool' && styles.activeTypeBtnText]}>🚗</Text>
+                  <Ionicons name="car-outline" size={16} color={tripType === 'carpool' ? Colors.primary : Colors.onSurfaceVariant} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.typeBtn, tripType === 'bike_pool' && styles.activeTypeBtn]}
                   onPress={() => setTripType('bike_pool')}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.typeBtnText, tripType === 'bike_pool' && styles.activeTypeBtnText]}>🚲</Text>
+                  <Ionicons name="bicycle-outline" size={16} color={tripType === 'bike_pool' ? Colors.primary : Colors.onSurfaceVariant} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -102,7 +103,7 @@ export default function FindRideScreen() {
           <SkeletonCard type="trip" count={3} />
         ) : results.length === 0 ? (
           <EmptyState
-            icon="🔍"
+            icon="search-outline"
             title="No Matching Trips Found"
             message="Try widening your search terms or clearing your pickup location filter."
             actionLabel="Reset Search"
@@ -123,8 +124,14 @@ export default function FindRideScreen() {
             >
               <View style={styles.cardHeader}>
                 <View style={styles.badgePill}>
+                  <Ionicons
+                    name={ride.vehicleType === 'carpool' ? 'car-outline' : 'bicycle-outline'}
+                    size={14}
+                    color="#1E40AF"
+                    style={{ marginRight: 4 }}
+                  />
                   <Text style={styles.badgeText}>
-                    {ride.vehicleType === 'carpool' ? '🚗 CARPOOL' : '🚲 BIKE POOL'}
+                    {ride.vehicleType === 'carpool' ? 'CARPOOL' : 'BIKE POOL'}
                   </Text>
                 </View>
 
@@ -141,8 +148,14 @@ export default function FindRideScreen() {
                 </View>
 
                 <View style={styles.routeMeta}>
-                  <Text style={styles.locationText} numberOfLines={1}>📍 {ride.pickup}</Text>
-                  <Text style={styles.locationText} numberOfLines={1}>🏁 {ride.destination}</Text>
+                  <View style={styles.locRow}>
+                    <Ionicons name="location-outline" size={14} color={Colors.primary} style={styles.locIcon} />
+                    <Text style={styles.locationText} numberOfLines={1}>{ride.pickup}</Text>
+                  </View>
+                  <View style={styles.locRow}>
+                    <Ionicons name="flag-outline" size={14} color="#0F172A" style={styles.locIcon} />
+                    <Text style={styles.locationText} numberOfLines={1}>{ride.destination}</Text>
+                  </View>
                 </View>
               </View>
 
@@ -274,6 +287,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   badgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#DBEAFE',
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -319,6 +334,13 @@ const styles = StyleSheet.create({
   routeMeta: {
     flex: 1,
     gap: 4,
+  },
+  locRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locIcon: {
+    marginRight: 6,
   },
   locationText: {
     ...Typography.bodyMd,

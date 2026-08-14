@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } fr
 import { useRouter } from 'expo-router';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
-import { Button } from '../../src/components/Button';
+import { EmptyState } from '../../src/components/loading/EmptyState';
 import { SEED_NOTIFICATIONS, DemoNotification } from '../../src/demo/seedData';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
@@ -49,11 +49,11 @@ export default function NotificationsScreen() {
         </View>
 
         {notifications.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🔔</Text>
-            <Text style={styles.emptyTitle}>No Notifications</Text>
-            <Text style={styles.emptySubtitle}>You are all caught up! Updates about your rides will appear here.</Text>
-          </View>
+          <EmptyState
+            icon="notifications-outline"
+            title="No Notifications"
+            message="You are all caught up! Updates about your rides will appear here."
+          />
         ) : (
           notifications.map(n => (
             <Card
@@ -78,10 +78,11 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     padding: Spacing.md,
+    paddingBottom: Spacing.xl * 2,
   },
   headerRow: {
     flexDirection: 'row',
@@ -97,7 +98,10 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     ...Typography.displayLg,
+    fontSize: 28,
     color: Colors.onBackground,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   countBadge: {
     backgroundColor: Colors.error,
@@ -113,10 +117,11 @@ const styles = StyleSheet.create({
   markReadText: {
     ...Typography.labelLg,
     color: Colors.primary,
+    fontWeight: '700',
   },
   unreadCard: {
-    backgroundColor: Colors.primaryContainer + '30',
-    borderColor: Colors.primary,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -132,31 +137,11 @@ const styles = StyleSheet.create({
     ...Typography.headlineMd,
     color: Colors.onSurface,
     marginTop: 4,
+    fontWeight: '700',
   },
   notifBody: {
     ...Typography.bodyMd,
     color: Colors.onSurfaceVariant,
     marginTop: 2,
-  },
-  emptyState: {
-    backgroundColor: Colors.surface,
-    padding: Spacing.xl,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.xs,
-  },
-  emptyTitle: {
-    ...Typography.headlineMd,
-    color: Colors.onSurface,
-  },
-  emptySubtitle: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginTop: 4,
   },
 });

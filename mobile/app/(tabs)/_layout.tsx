@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Text, View, StyleSheet, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography } from '../../src/theme';
 
 export default function TabLayout() {
@@ -19,7 +20,11 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.tabItemActive]}>
-              <Text style={[styles.iconText, focused && styles.iconTextActive]}>🏠</Text>
+              <Ionicons
+                name={focused ? 'home' : 'home-outline'}
+                size={22}
+                color={focused ? Colors.primary : '#64748B'}
+              />
               <Text style={[styles.labelText, focused && styles.labelTextActive]}>Home</Text>
             </View>
           ),
@@ -33,7 +38,11 @@ export default function TabLayout() {
           title: 'Find',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.tabItemActive]}>
-              <Text style={[styles.iconText, focused && styles.iconTextActive]}>🔍</Text>
+              <Ionicons
+                name={focused ? 'search' : 'search-outline'}
+                size={22}
+                color={focused ? Colors.primary : '#64748B'}
+              />
               <Text style={[styles.labelText, focused && styles.labelTextActive]}>Find</Text>
             </View>
           ),
@@ -47,14 +56,18 @@ export default function TabLayout() {
           title: 'Offer',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.tabItemActive]}>
-              <Text style={[styles.iconText, focused && styles.iconTextActive]}>➕</Text>
+              <Ionicons
+                name={focused ? 'add-circle' : 'add-circle-outline'}
+                size={22}
+                color={focused ? Colors.primary : '#64748B'}
+              />
               <Text style={[styles.labelText, focused && styles.labelTextActive]}>Offer</Text>
             </View>
           ),
         }}
       />
 
-      {/* 4. MY RIDES (HIDDEN FROM BAR, ACCESSIBLE VIA HOME/PROFILE) */}
+      {/* 4. MY RIDES (HIDDEN FROM BAR) */}
       <Tabs.Screen
         name="dashboard"
         options={{
@@ -70,7 +83,11 @@ export default function TabLayout() {
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.tabItemActive]}>
               <View style={styles.iconBadgeWrapper}>
-                <Text style={[styles.iconText, focused && styles.iconTextActive]}>💬</Text>
+                <Ionicons
+                  name={focused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline'}
+                  size={22}
+                  color={focused ? Colors.primary : '#64748B'}
+                />
                 <View style={styles.redBadgeDot} />
               </View>
               <Text style={[styles.labelText, focused && styles.labelTextActive]}>Inbox</Text>
@@ -86,7 +103,11 @@ export default function TabLayout() {
           title: 'Profile',
           tabBarIcon: ({ focused }) => (
             <View style={[styles.tabItem, focused && styles.tabItemActive]}>
-              <Text style={[styles.iconText, focused && styles.iconTextActive]}>👤</Text>
+              <Ionicons
+                name={focused ? 'person' : 'person-outline'}
+                size={22}
+                color={focused ? Colors.primary : '#64748B'}
+              />
               <Text style={[styles.labelText, focused && styles.labelTextActive]}>Profile</Text>
             </View>
           ),
@@ -133,20 +154,14 @@ const styles = StyleSheet.create({
   },
   redBadgeDot: {
     position: 'absolute',
-    top: -2,
-    right: -4,
+    top: -1,
+    right: -3,
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#EF4444',
     borderWidth: 1.5,
     borderColor: '#FFFFFF',
-  },
-  iconText: {
-    fontSize: 20,
-  },
-  iconTextActive: {
-    transform: [{ scale: 1.05 }],
   },
   labelText: {
     ...Typography.labelSm,

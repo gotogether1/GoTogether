@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
 import { Button } from '../../src/components/Button';
@@ -34,7 +35,7 @@ export default function RideDetailsScreen() {
     setTimeout(() => {
       setLoading(false);
       setBookingSubmitted(true);
-      Alert.alert('Booking Request Sent! 🎉', 'The driver will review your request.');
+      Alert.alert('Booking Request Sent!', 'The driver will review your request.');
     }, 600);
   };
 
@@ -44,7 +45,7 @@ export default function RideDetailsScreen() {
       setLoading(false);
       setNegotiating(false);
       setBookingSubmitted(true);
-      Alert.alert('Negotiated Offer Sent! 💬', `Sent price offer of \$${negotiatePrice} to ${driver.displayName}.`);
+      Alert.alert('Negotiated Offer Sent!', `Sent price offer of $${negotiatePrice} to ${driver.displayName}.`);
     }, 600);
   };
 
@@ -54,11 +55,11 @@ export default function RideDetailsScreen() {
         {/* Top Header Row */}
         <View style={styles.topHeader}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
-            <Text style={styles.backIcon}>←</Text>
+            <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Ride Details</Text>
           <Badge
-            label={ride.vehicleType === 'carpool' ? '🚗 Carpool' : '🚲 Bike Pool'}
+            label={ride.vehicleType === 'carpool' ? 'Carpool' : 'Bike Pool'}
             variant={ride.vehicleType === 'carpool' ? 'primary' : 'success'}
           />
         </View>
@@ -78,7 +79,7 @@ export default function RideDetailsScreen() {
             <View style={styles.timelineRow}>
               <View style={styles.timeBox}>
                 <Text style={styles.timeText}>22:00</Text>
-                <Text style={styles.durationText}>3h 30m 🌙</Text>
+                <Text style={styles.durationText}>3h 30m</Text>
               </View>
 
               <View style={styles.nodeCircleOuter}>
@@ -89,10 +90,13 @@ export default function RideDetailsScreen() {
                 <View style={styles.locationTitleRow}>
                   <Text style={styles.locationName}>{ride.pickup}</Text>
                   <TouchableOpacity onPress={() => handleOpenMap(ride.pickup)} style={styles.mapBtn} activeOpacity={0.7}>
-                    <Text style={styles.mapIcon}>🗺️</Text>
+                    <Ionicons name="map-outline" size={18} color={Colors.primary} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.locationPlusCode}>📍 {ride.meetingPoint}</Text>
+                <View style={styles.subLocRow}>
+                  <Ionicons name="location-outline" size={14} color={Colors.primary} style={{ marginRight: 4 }} />
+                  <Text style={styles.locationPlusCode}>{ride.meetingPoint}</Text>
+                </View>
               </View>
             </View>
 
@@ -110,10 +114,13 @@ export default function RideDetailsScreen() {
                 <View style={styles.locationTitleRow}>
                   <Text style={styles.locationName}>{ride.destination}</Text>
                   <TouchableOpacity onPress={() => handleOpenMap(ride.destination)} style={styles.mapBtn} activeOpacity={0.7}>
-                    <Text style={styles.mapIcon}>🗺️</Text>
+                    <Ionicons name="map-outline" size={18} color={Colors.primary} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.locationPlusCode}>🏁 Drop-off location</Text>
+                <View style={styles.subLocRow}>
+                  <Ionicons name="flag-outline" size={14} color="#0F172A" style={{ marginRight: 4 }} />
+                  <Text style={styles.locationPlusCode}>Drop-off location</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -124,7 +131,7 @@ export default function RideDetailsScreen() {
           <View style={styles.priceRow}>
             <Text style={styles.passengerCount}>1 passenger ({ride.availableSeats} seats left)</Text>
             <Text style={styles.priceAmount}>
-              {ride.suggestedContribution > 0 ? `\$${ride.suggestedContribution}` : 'Free'}
+              {ride.suggestedContribution > 0 ? `$${ride.suggestedContribution}` : 'Free'}
             </Text>
           </View>
         </Card>
@@ -147,22 +154,22 @@ export default function RideDetailsScreen() {
           {/* Verification & Preferences Badges */}
           <View style={styles.preferencesList}>
             <View style={styles.prefItem}>
-              <Text style={styles.prefIcon}>🛡️</Text>
+              <Ionicons name="shield-checkmark-outline" size={18} color="#047857" style={styles.prefIcon} />
               <Text style={styles.prefText}>Verified Community Profile</Text>
             </View>
 
             <View style={styles.prefItem}>
-              <Text style={styles.prefIcon}>⚡</Text>
+              <Ionicons name="flash-outline" size={18} color={Colors.primary} style={styles.prefIcon} />
               <Text style={styles.prefText}>Your booking request will be confirmed instantly</Text>
             </View>
 
             <View style={styles.prefItem}>
-              <Text style={styles.prefIcon}>🚭</Text>
+              <Ionicons name="close-circle-outline" size={18} color={Colors.error} style={styles.prefIcon} />
               <Text style={styles.prefText}>No smoking inside vehicle</Text>
             </View>
 
             <View style={styles.prefItem}>
-              <Text style={styles.prefIcon}>🎒</Text>
+              <Ionicons name="briefcase-outline" size={18} color={Colors.primary} style={styles.prefIcon} />
               <Text style={styles.prefText}>Small luggage permitted</Text>
             </View>
           </View>
@@ -171,15 +178,15 @@ export default function RideDetailsScreen() {
         {/* Vehicle & Trip Rules */}
         <Card>
           <Text style={styles.sectionTitle}>Vehicle & Trip Rules</Text>
-          <Text style={styles.detailItem}>🚘 <Text style={styles.boldText}>Vehicle:</Text> {ride.vehicleDetails}</Text>
-          <Text style={styles.detailItem}>📜 <Text style={styles.boldText}>Rules:</Text> {ride.rules}</Text>
-          <Text style={styles.detailItem}>📝 <Text style={styles.boldText}>Notes:</Text> {ride.notes}</Text>
+          <Text style={styles.detailItem}><Text style={styles.boldText}>Vehicle:</Text> {ride.vehicleDetails}</Text>
+          <Text style={styles.detailItem}><Text style={styles.boldText}>Rules:</Text> {ride.rules}</Text>
+          <Text style={styles.detailItem}><Text style={styles.boldText}>Notes:</Text> {ride.notes}</Text>
         </Card>
 
         {/* Request / Negotiate Modals or Actions */}
         {bookingSubmitted ? (
           <View style={styles.submittedBox}>
-            <Text style={styles.submittedTitle}>✅ Request Submitted</Text>
+            <Text style={styles.submittedTitle}>Request Submitted</Text>
             <Text style={styles.submittedText}>
               Your booking request has been sent to {driver.displayName}. You will receive a notification as soon as it is confirmed.
             </Text>
@@ -243,6 +250,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: Spacing.md,
+    paddingBottom: Spacing.xl * 2,
   },
   topHeader: {
     flexDirection: 'row',
@@ -257,11 +265,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
-  },
-  backIcon: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.onSurface,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   headerTitle: {
     ...Typography.headlineLg,
@@ -270,6 +275,7 @@ const styles = StyleSheet.create({
   },
   dateHeader: {
     ...Typography.displayLg,
+    fontSize: 26,
     color: Colors.onBackground,
     marginVertical: Spacing.xs,
   },
@@ -340,13 +346,14 @@ const styles = StyleSheet.create({
   mapBtn: {
     padding: 2,
   },
-  mapIcon: {
-    fontSize: 16,
+  subLocRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
   },
   locationPlusCode: {
     ...Typography.labelSm,
     color: Colors.onSurfaceVariant,
-    marginTop: 2,
   },
   priceCard: {
     marginVertical: Spacing.xs,
@@ -405,7 +412,7 @@ const styles = StyleSheet.create({
   },
   driverDivider: {
     height: 1,
-    backgroundColor: Colors.surfaceContainer,
+    backgroundColor: '#F1F5F9',
     marginVertical: Spacing.md,
   },
   preferencesList: {
@@ -414,10 +421,9 @@ const styles = StyleSheet.create({
   prefItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
   },
   prefIcon: {
-    fontSize: 18,
+    marginRight: Spacing.sm,
   },
   prefText: {
     ...Typography.bodyMd,
@@ -427,6 +433,7 @@ const styles = StyleSheet.create({
     ...Typography.headlineMd,
     color: Colors.onBackground,
     marginBottom: Spacing.sm,
+    fontWeight: '800',
   },
   detailItem: {
     ...Typography.bodyMd,
@@ -456,15 +463,18 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   submittedBox: {
-    backgroundColor: Colors.successContainer,
+    backgroundColor: '#ECFDF5',
     padding: Spacing.lg,
     borderRadius: 16,
     marginVertical: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
   submittedTitle: {
     ...Typography.headlineMd,
-    color: Colors.success,
+    color: '#047857',
     marginBottom: Spacing.xs,
+    fontWeight: '800',
   },
   submittedText: {
     ...Typography.bodyMd,
@@ -473,6 +483,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   viewBookingsBtn: {
-    backgroundColor: Colors.success,
+    backgroundColor: '#047857',
   },
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
@@ -39,7 +40,8 @@ export default function ProfileScreen() {
           <Text style={styles.userEmail}>{email}</Text>
 
           <View style={styles.verificationBadge}>
-            <Text style={styles.verifiedText}>🛡️ Verified Community Member</Text>
+            <Ionicons name="shield-checkmark-outline" size={15} color="#047857" style={{ marginRight: 4 }} />
+            <Text style={styles.verifiedText}>Verified Community Member</Text>
           </View>
 
           <View style={styles.statsRow}>
@@ -60,22 +62,34 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Account & Profile</Text>
 
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/auth/onboarding')}>
-            <Text style={styles.menuText}>✏️ Edit Profile Info</Text>
+            <View style={styles.menuLabelGroup}>
+              <Ionicons name="create-outline" size={20} color={Colors.primary} style={styles.menuIcon} />
+              <Text style={styles.menuText}>Edit Profile Info</Text>
+            </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/safety/blocks')}>
-            <Text style={styles.menuText}>🛡️ Blocked Users & Safety</Text>
+            <View style={styles.menuLabelGroup}>
+              <Ionicons name="shield-outline" size={20} color={Colors.primary} style={styles.menuIcon} />
+              <Text style={styles.menuText}>Blocked Users & Safety</Text>
+            </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/safety/report')}>
-            <Text style={styles.menuText}>⚠️ Report an Issue</Text>
+            <View style={styles.menuLabelGroup}>
+              <Ionicons name="warning-outline" size={20} color={Colors.warning} style={styles.menuIcon} />
+              <Text style={styles.menuText}>Report an Issue</Text>
+            </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItemLast} onPress={() => Alert.alert('Safety Guidelines', 'Go Together uses real identity checks. Always verify driver and vehicle details before entering.')}>
-            <Text style={styles.menuText}>ℹ️ Community Safety Guidelines</Text>
+            <View style={styles.menuLabelGroup}>
+              <Ionicons name="information-circle-outline" size={20} color={Colors.primary} style={styles.menuIcon} />
+              <Text style={styles.menuText}>Community Safety Guidelines</Text>
+            </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
         </Card>
@@ -134,6 +148,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   verificationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#ECFDF5',
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -193,6 +209,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: Spacing.md,
+  },
+  menuLabelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuIcon: {
+    marginRight: Spacing.sm,
   },
   menuText: {
     ...Typography.bodyLg,

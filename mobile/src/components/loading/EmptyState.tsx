@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, Spacing } from '../../theme';
 
 interface EmptyStateProps {
-  icon?: string;
+  icon?: keyof typeof Ionicons.glyphMap | string;
   title?: string;
   message?: string;
   actionLabel?: string;
@@ -11,16 +12,18 @@ interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
-  icon = '🧭',
+  icon = 'compass-outline',
   title = 'No rides found near your route',
   message = 'Try adjusting your pickup landmark, departure time, or travel date.',
   actionLabel = 'Try Again',
   onAction,
 }) => {
+  const iconName = (typeof icon === 'string' && icon in Ionicons.glyphMap ? icon : 'compass-outline') as keyof typeof Ionicons.glyphMap;
+
   return (
     <View style={styles.container}>
       <View style={styles.iconCircle}>
-        <Text style={styles.icon}>{icon}</Text>
+        <Ionicons name={iconName} size={32} color={Colors.primary} />
       </View>
 
       <Text style={styles.title}>{title}</Text>
@@ -44,19 +47,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginVertical: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.surfaceContainer,
+    borderColor: '#E2E8F0',
   },
   iconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.md,
-  },
-  icon: {
-    fontSize: 32,
   },
   title: {
     ...Typography.headlineMd,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography } from '../src/theme';
 
 export default function WelcomeScreen() {
@@ -12,11 +13,11 @@ export default function WelcomeScreen() {
         {/* Top Hero Section */}
         <View style={styles.heroContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoEmoji}>🚗</Text>
+            <Ionicons name="car-outline" size={42} color={Colors.primary} />
           </View>
 
           <View style={styles.badgePill}>
-            <Text style={styles.badgeText}>✦ COMMUNITY CARPOOL & BIKE POOL</Text>
+            <Text style={styles.badgeText}>COMMUNITY CARPOOL & BIKE POOL</Text>
           </View>
 
           <Text style={styles.brandTitle}>Go Together</Text>
@@ -28,7 +29,9 @@ export default function WelcomeScreen() {
         {/* Feature Cards Grid */}
         <View style={styles.featuresGrid}>
           <View style={styles.featureCard}>
-            <Text style={styles.featureIcon}>🛡️</Text>
+            <View style={styles.featureIconBadge}>
+              <Ionicons name="shield-checkmark-outline" size={22} color="#047857" />
+            </View>
             <View style={styles.featureTextMeta}>
               <Text style={styles.featureTitle}>Verified Community</Text>
               <Text style={styles.featureSubtitle}>Real identity checks & ratings</Text>
@@ -36,7 +39,9 @@ export default function WelcomeScreen() {
           </View>
 
           <View style={styles.featureCard}>
-            <Text style={styles.featureIcon}>⚡</Text>
+            <View style={styles.featureIconBadgeBlue}>
+              <Ionicons name="flash-outline" size={22} color={Colors.primary} />
+            </View>
             <View style={styles.featureTextMeta}>
               <Text style={styles.featureTitle}>Instant Confirmation</Text>
               <Text style={styles.featureSubtitle}>Direct chat & seat booking</Text>
@@ -44,7 +49,7 @@ export default function WelcomeScreen() {
           </View>
         </View>
 
-        {/* Bottom Production Action Buttons (NO DEMO BUTTON) */}
+        {/* Bottom Production Action Buttons */}
         <View style={styles.actionSection}>
           <TouchableOpacity
             style={styles.primaryBtn}
@@ -100,9 +105,6 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 6,
   },
-  logoEmoji: {
-    fontSize: 42,
-  },
   badgePill: {
     backgroundColor: '#EFF6FF',
     paddingHorizontal: Spacing.md,
@@ -115,7 +117,7 @@ const styles = StyleSheet.create({
   badgeText: {
     ...Typography.labelSm,
     color: '#1E40AF',
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
   brandTitle: {
@@ -151,8 +153,22 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  featureIcon: {
-    fontSize: 24,
+  featureIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ECFDF5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  featureIconBadgeBlue: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: Spacing.md,
   },
   featureTextMeta: {

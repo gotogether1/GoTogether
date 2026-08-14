@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../src/components/Button';
 import { EmptyState } from '../../src/components/loading/EmptyState';
 import { SEED_BOOKINGS, SEED_RIDES, DemoBooking } from '../../src/demo/seedData';
@@ -13,7 +14,7 @@ export default function DashboardScreen() {
 
   const handleApprove = (bookingId: string) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'approved' } : b));
-    Alert.alert('Booking Approved! 🎉', 'Direct chat with the rider is now unlocked.');
+    Alert.alert('Booking Approved!', 'Direct chat with the rider is now unlocked.');
   };
 
   const handleReject = (bookingId: string) => {
@@ -84,7 +85,7 @@ export default function DashboardScreen() {
               <View key={b.id} style={styles.cardItem}>
                 <View style={styles.cardHeader}>
                   <View style={styles.approvedBadge}>
-                    <Text style={styles.approvedBadgeText}>✓ CONFIRMED</Text>
+                    <Text style={styles.approvedBadgeText}>CONFIRMED</Text>
                   </View>
                   <Text style={styles.dateText}>{new Date(b.departureAt).toLocaleDateString()}</Text>
                 </View>
@@ -93,7 +94,7 @@ export default function DashboardScreen() {
                 <Text style={styles.subText}>Driver: {b.driverName} • 1 seat approved</Text>
 
                 <Button
-                  title="💬 Chat with Driver"
+                  title="Chat with Driver"
                   onPress={() => router.push(`/chat/${b.id}`)}
                   style={styles.chatBtn}
                 />
@@ -143,7 +144,7 @@ export default function DashboardScreen() {
 
                 {b.status === 'approved' && (
                   <Button
-                    title="💬 Chat with Rider"
+                    title="Chat with Rider"
                     onPress={() => router.push(`/chat/${b.id}`)}
                     style={styles.chatBtn}
                   />
@@ -179,7 +180,7 @@ export default function DashboardScreen() {
         {/* TAB 4: PAST COMPLETED RIDES */}
         {activeTab === 'past' && (
           <EmptyState
-            icon="📜"
+            icon="document-text-outline"
             title="No Past Completed Rides"
             message="Your completed trips and history will be archived here."
           />

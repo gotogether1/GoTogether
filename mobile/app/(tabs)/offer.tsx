@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
@@ -57,22 +58,22 @@ export default function OfferRideScreen() {
         rules: 'No smoking, punctuality required',
         notes: `Route: ${selectedRouteVariant}. Stopovers: ${stopovers.join(', ') || 'None'}`,
       });
-      Alert.alert('Ride Offer Published! 🚗', 'Your trip and route options are now live for riders!');
+      Alert.alert('Ride Offer Published!', 'Your trip and route options are now live for riders!');
       router.push('/(tabs)/dashboard');
     } catch {
-      Alert.alert('Ride Offer Published! 🚗', 'Your trip and route options are now live for riders!');
+      Alert.alert('Ride Offer Published!', 'Your trip and route options are now live for riders!');
       router.push('/(tabs)/dashboard');
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* STEP 1: PICK-UP ADDRESS SEARCH (Screens 1 & 2) */}
+      {/* STEP 1: PICK-UP ADDRESS SEARCH */}
       {step === 1 && (
         <View style={styles.stepContainer}>
           <View style={styles.wizardHeader}>
             <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
-              <Text style={styles.closeIcon}>✕</Text>
+              <Ionicons name="close" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
             <Text style={styles.wizardTitle}>Pick-up</Text>
           </View>
@@ -87,7 +88,7 @@ export default function OfferRideScreen() {
 
             <TouchableOpacity style={styles.currentLocRow} onPress={handleUseCurrentLocationForPickup} activeOpacity={0.8}>
               <View style={styles.targetIconCircle}>
-                <Text style={styles.targetIcon}>🎯</Text>
+                <Ionicons name="locate-outline" size={18} color={Colors.primary} />
               </View>
               <Text style={styles.currentLocText}>Use current location</Text>
               <Text style={styles.chevron}>›</Text>
@@ -97,24 +98,24 @@ export default function OfferRideScreen() {
           {pickup.length > 0 && (
             <View style={styles.bottomBarContainer}>
               <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(2)} activeOpacity={0.85}>
-                <Text style={styles.arrowIcon}>➔</Text>
+                <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
         </View>
       )}
 
-      {/* STEP 2: PICK-UP MAP PIN CONFIRMATION (Screen 3) */}
+      {/* STEP 2: PICK-UP MAP PIN CONFIRMATION */}
       {step === 2 && (
         <View style={styles.stepContainer}>
           <View style={styles.topBarOverlay}>
             <TouchableOpacity onPress={() => setStep(1)} style={styles.backCircleBtn}>
-              <Text style={styles.backIcon}>←</Text>
+              <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
             <View style={styles.topBarInputBox}>
               <Text style={styles.topBarInputText} numberOfLines={1}>{pickup || 'Banswada, Telangana'}</Text>
               <TouchableOpacity onPress={() => setStep(1)}>
-                <Text style={styles.clearIcon}>✕</Text>
+                <Ionicons name="close-circle-outline" size={18} color={Colors.outline} />
               </TouchableOpacity>
             </View>
           </View>
@@ -124,9 +125,8 @@ export default function OfferRideScreen() {
               <Text style={styles.suggestionsText}>See suggestions</Text>
             </View>
 
-            {/* Map Pin Marker */}
             <View style={styles.centeredMarkerPin}>
-              <View style={styles.pinCircle}>
+              <View style={styles.pinCircleDark}>
                 <View style={styles.pinInnerDot} />
               </View>
               <View style={styles.pinLabelCard}>
@@ -138,18 +138,18 @@ export default function OfferRideScreen() {
 
           <View style={styles.bottomBarContainer}>
             <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(3)} activeOpacity={0.85}>
-              <Text style={styles.arrowIcon}>➔</Text>
+              <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* STEP 3: DROP-OFF ADDRESS SEARCH (Screens 4 & 5) */}
+      {/* STEP 3: DROP-OFF ADDRESS SEARCH */}
       {step === 3 && (
         <View style={styles.stepContainer}>
           <View style={styles.wizardHeader}>
             <TouchableOpacity onPress={() => setStep(2)} style={styles.closeBtn}>
-              <Text style={styles.backIcon}>←</Text>
+              <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
             <Text style={styles.wizardTitle}>Drop-off</Text>
           </View>
@@ -164,7 +164,7 @@ export default function OfferRideScreen() {
 
             <TouchableOpacity style={styles.currentLocRow} onPress={handleUseCurrentLocationForDropoff} activeOpacity={0.8}>
               <View style={styles.targetIconCircle}>
-                <Text style={styles.targetIcon}>🎯</Text>
+                <Ionicons name="locate-outline" size={18} color={Colors.primary} />
               </View>
               <Text style={styles.currentLocText}>Use current location</Text>
               <Text style={styles.chevron}>›</Text>
@@ -174,24 +174,24 @@ export default function OfferRideScreen() {
           {destination.length > 0 && (
             <View style={styles.bottomBarContainer}>
               <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(4)} activeOpacity={0.85}>
-                <Text style={styles.arrowIcon}>➔</Text>
+                <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           )}
         </View>
       )}
 
-      {/* STEP 4: DROP-OFF MAP PIN CONFIRMATION (Screen 6) */}
+      {/* STEP 4: DROP-OFF MAP PIN CONFIRMATION */}
       {step === 4 && (
         <View style={styles.stepContainer}>
           <View style={styles.topBarOverlay}>
             <TouchableOpacity onPress={() => setStep(3)} style={styles.backCircleBtn}>
-              <Text style={styles.backIcon}>←</Text>
+              <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
             <View style={styles.topBarInputBox}>
               <Text style={styles.topBarInputText} numberOfLines={1}>{destination || 'Ibrahimpet, Telangana'}</Text>
               <TouchableOpacity onPress={() => setStep(3)}>
-                <Text style={styles.clearIcon}>✕</Text>
+                <Ionicons name="close-circle-outline" size={18} color={Colors.outline} />
               </TouchableOpacity>
             </View>
           </View>
@@ -201,7 +201,6 @@ export default function OfferRideScreen() {
               <Text style={styles.suggestionsText}>See suggestions</Text>
             </View>
 
-            {/* Map Pin Marker */}
             <View style={styles.centeredMarkerPin}>
               <View style={styles.pinCircleDark}>
                 <View style={styles.pinInnerDot} />
@@ -215,18 +214,18 @@ export default function OfferRideScreen() {
 
           <View style={styles.bottomBarContainer}>
             <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(5)} activeOpacity={0.85}>
-              <Text style={styles.arrowIcon}>➔</Text>
+              <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* STEP 5: WHAT IS YOUR ROUTE? (Screen 7) */}
+      {/* STEP 5: WHAT IS YOUR ROUTE? */}
       {step === 5 && (
         <View style={styles.stepContainer}>
           <View style={styles.topMapPreview}>
             <TouchableOpacity onPress={() => setStep(4)} style={styles.backCircleBtnTop}>
-              <Text style={styles.backIcon}>←</Text>
+              <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
             <View style={styles.simulatedRouteTrack} />
           </View>
@@ -264,19 +263,19 @@ export default function OfferRideScreen() {
 
             <View style={styles.bottomBarContainer}>
               <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(6)} activeOpacity={0.85}>
-                <Text style={styles.arrowIcon}>➔</Text>
+                <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
         </View>
       )}
 
-      {/* STEP 6: ADD STOPOVERS (Screen 8) */}
+      {/* STEP 6: ADD STOPOVERS */}
       {step === 6 && (
         <View style={styles.stepContainer}>
           <View style={styles.wizardHeader}>
             <TouchableOpacity onPress={() => setStep(5)} style={styles.closeBtn}>
-              <Text style={styles.backIcon}>←</Text>
+              <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
@@ -285,7 +284,10 @@ export default function OfferRideScreen() {
 
             {stopovers.map((city, idx) => (
               <View key={idx} style={styles.stopoverItem}>
-                <Text style={styles.stopoverText}>📍 {city}</Text>
+                <View style={styles.stopoverLabelGroup}>
+                  <Ionicons name="location-outline" size={16} color={Colors.primary} style={{ marginRight: 6 }} />
+                  <Text style={styles.stopoverText}>{city}</Text>
+                </View>
                 <TouchableOpacity onPress={() => setStopovers(prev => prev.filter((_, i) => i !== idx))}>
                   <Text style={styles.removeText}>Remove</Text>
                 </TouchableOpacity>
@@ -300,45 +302,83 @@ export default function OfferRideScreen() {
                   value={newStopover}
                   onChangeText={setNewStopover}
                 />
-                <Button title="Confirm Stopover" onPress={handleAddStopover} />
+                <Button title="Add This Stopover" onPress={handleAddStopover} />
               </View>
             ) : (
-              <TouchableOpacity style={styles.addCityBtn} onPress={() => setShowAddStopoverInput(true)} activeOpacity={0.8}>
-                <Text style={styles.addCityText}>+ Add city</Text>
+              <TouchableOpacity style={styles.addStopoverBtn} onPress={() => setShowAddStopoverInput(true)} activeOpacity={0.8}>
+                <Ionicons name="add" size={20} color={Colors.primary} style={{ marginRight: 4 }} />
+                <Text style={styles.addStopoverText}>Add city</Text>
               </TouchableOpacity>
             )}
           </ScrollView>
 
           <View style={styles.bottomBarContainer}>
             <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(7)} activeOpacity={0.85}>
-              <Text style={styles.arrowIcon}>➔</Text>
+              <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* STEP 7: SEATS, VEHICLE & PUBLISH */}
+      {/* STEP 7: RIDE DETAILS & PUBLISH */}
       {step === 7 && (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.stopoverTitle}>Final Trip Details</Text>
+          <View style={styles.wizardHeader}>
+            <TouchableOpacity onPress={() => setStep(6)} style={styles.closeBtn}>
+              <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
+            </TouchableOpacity>
+            <Text style={styles.wizardTitle}>Trip Details & Pricing</Text>
+          </View>
 
-          <Card style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 8, color: Colors.primary }}>
-              {pickup || 'Banswada'} → {destination || 'Ibrahimpet'}
-            </Text>
-            <Text style={{ fontSize: 13, color: Colors.onSurfaceVariant }}>
-              Route: {selectedRouteVariant} • Stopovers: {stopovers.join(', ') || 'Direct Route'}
-            </Text>
-          </Card>
+          <Card style={styles.publishCard}>
+            <Text style={styles.sectionTitle}>Mode & Capacity</Text>
 
-          <Card>
-            <Input label="Vehicle Type" value={vehicleType.toUpperCase()} editable={false} />
-            <Input label="Available Seats" value={totalSeats} onChangeText={setTotalSeats} keyboardType="number-pad" />
-            <Input label="Suggested Contribution ($)" value={suggestedContribution} onChangeText={setSuggestedContribution} keyboardType="number-pad" />
-            <Input label="Vehicle Model & Details" placeholder="e.g. 2024 Honda City (White)" value={vehicleDetails} onChangeText={setVehicleDetails} />
+            <View style={styles.modeRow}>
+              <TouchableOpacity
+                style={[styles.modeBtn, vehicleType === 'carpool' && styles.activeModeBtn]}
+                onPress={() => setVehicleType('carpool')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="car-outline" size={18} color={vehicleType === 'carpool' ? Colors.primary : Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
+                <Text style={[styles.modeText, vehicleType === 'carpool' && styles.activeModeText]}>Carpool</Text>
+              </TouchableOpacity>
 
-            <Button title="Publish Ride Offer" onPress={handlePublishRide} loading={createRideMutation.isPending} style={{ marginTop: 16 }} />
-            <Button title="Back" variant="outline" onPress={() => setStep(6)} style={{ marginTop: 8 }} />
+              <TouchableOpacity
+                style={[styles.modeBtn, vehicleType === 'bike_pool' && styles.activeModeBtn]}
+                onPress={() => setVehicleType('bike_pool')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="bicycle-outline" size={18} color={vehicleType === 'bike_pool' ? Colors.primary : Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
+                <Text style={[styles.modeText, vehicleType === 'bike_pool' && styles.activeModeText]}>Bike Pool</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Input
+              label="Available Seats"
+              value={totalSeats}
+              onChangeText={setTotalSeats}
+              keyboardType="number-pad"
+            />
+
+            <Input
+              label="Suggested Price Contribution ($)"
+              value={suggestedContribution}
+              onChangeText={setSuggestedContribution}
+              keyboardType="number-pad"
+            />
+
+            <Input
+              label="Vehicle Make & Model"
+              placeholder="e.g. Honda Civic 2023"
+              value={vehicleDetails}
+              onChangeText={setVehicleDetails}
+            />
+
+            <Button
+              title="Publish Ride Offer"
+              onPress={handlePublishRide}
+              style={styles.publishBtn}
+            />
           </Card>
         </ScrollView>
       )}
@@ -349,83 +389,90 @@ export default function OfferRideScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   stepContainer: {
     flex: 1,
     position: 'relative',
   },
   wizardHeader: {
-    padding: Spacing.md,
-    marginTop: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  closeIcon: {
-    fontSize: 22,
-    color: Colors.primary,
-    fontWeight: '700',
-  },
-  backIcon: {
-    fontSize: 22,
-    color: Colors.primary,
-    fontWeight: '700',
+    padding: Spacing.xs,
+    marginRight: Spacing.sm,
   },
   wizardTitle: {
-    ...Typography.displayLg,
-    color: Colors.onBackground,
+    ...Typography.headlineLg,
+    fontSize: 22,
     fontWeight: '800',
+    color: Colors.onSurface,
   },
   searchBoxCard: {
     padding: Spacing.md,
   },
   searchInput: {
-    backgroundColor: '#EEF2F6',
-    borderRadius: 16,
-    height: 52,
-    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.surface,
   },
   currentLocRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: Spacing.md,
-    marginTop: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
   },
   targetIconCircle: {
     width: 32,
     height: 32,
     borderRadius: 16,
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: Spacing.md,
   },
-  targetIcon: {
-    fontSize: 20,
-  },
   currentLocText: {
-    ...Typography.bodyLg,
-    fontWeight: '700',
-    color: Colors.onSurface,
     flex: 1,
+    ...Typography.bodyLg,
+    fontWeight: '600',
+    color: Colors.primary,
   },
   chevron: {
-    fontSize: 24,
+    fontSize: 20,
     color: Colors.outline,
   },
-  topBarOverlay: {
+  bottomBarContainer: {
     position: 'absolute',
-    top: Spacing.md,
-    left: Spacing.md,
-    right: Spacing.md,
+    bottom: 90,
+    right: 24,
+  },
+  floatingArrowBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  topBarOverlay: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
     zIndex: 10,
-    gap: Spacing.xs,
   },
   backCircleBtn: {
     width: 40,
@@ -434,88 +481,79 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
+    marginRight: Spacing.xs,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   topBarInputBox: {
     flex: 1,
-    height: 48,
-    backgroundColor: Colors.surface,
-    borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.md,
-    elevation: 4,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   topBarInputText: {
-    flex: 1,
     ...Typography.bodyMd,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.onSurface,
-  },
-  clearIcon: {
-    fontSize: 16,
-    color: Colors.outline,
+    flex: 1,
   },
   mapPinCanvas: {
     flex: 1,
-    backgroundColor: '#F5F5F0',
+    backgroundColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'center',
   },
   suggestionsPill: {
     position: 'absolute',
-    top: 90,
+    top: 64,
     backgroundColor: Colors.surface,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     borderRadius: 20,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   suggestionsText: {
-    ...Typography.labelLg,
-    color: Colors.primary,
+    ...Typography.labelSm,
     fontWeight: '700',
+    color: Colors.onSurface,
   },
   centeredMarkerPin: {
     alignItems: 'center',
   },
-  pinCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#0284C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-  },
   pinCircleDark: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
   },
   pinInnerDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.surface,
   },
   pinLabelCard: {
     backgroundColor: Colors.surface,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: 8,
-    marginTop: 6,
-    elevation: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   pinTitle: {
     ...Typography.labelLg,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.onSurface,
   },
   pinSubtitle: {
@@ -523,63 +561,61 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   topMapPreview: {
-    height: '45%',
-    backgroundColor: '#F5F5F0',
+    height: 220,
+    backgroundColor: '#CBD5E1',
     position: 'relative',
   },
   backCircleBtnTop: {
     position: 'absolute',
-    top: Spacing.md,
-    left: Spacing.md,
+    top: 16,
+    left: 16,
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
-    elevation: 4,
   },
   simulatedRouteTrack: {
     position: 'absolute',
-    top: '30%',
-    left: '20%',
-    right: '20%',
-    height: 120,
-    borderLeftWidth: 6,
-    borderTopWidth: 6,
-    borderColor: '#0284C7',
-    borderTopLeftRadius: 30,
+    top: 90,
+    left: 40,
+    right: 40,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.primary,
   },
   bottomSheetCard: {
     flex: 1,
     backgroundColor: Colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    marginTop: -20,
     padding: Spacing.lg,
   },
   sheetTitle: {
-    ...Typography.displayLg,
-    color: Colors.onBackground,
+    ...Typography.headlineLg,
+    fontWeight: '800',
+    color: Colors.onSurface,
     marginBottom: Spacing.md,
   },
   routeOptionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.md,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.surfaceContainer,
-    marginBottom: Spacing.sm,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    marginBottom: Spacing.md,
   },
   selectedRouteOption: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: '#EFF6FF',
   },
   radioCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
     borderColor: Colors.outline,
     alignItems: 'center',
@@ -590,9 +626,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   radioInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: Colors.primary,
   },
   routeMeta: {
@@ -600,74 +636,105 @@ const styles = StyleSheet.create({
   },
   routeTimeText: {
     ...Typography.bodyLg,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.onSurface,
   },
   routeDetailText: {
-    ...Typography.bodyMd,
+    ...Typography.labelSm,
     color: Colors.onSurfaceVariant,
     marginTop: 2,
   },
   scrollContent: {
-    padding: Spacing.lg,
+    padding: Spacing.md,
+    paddingBottom: Spacing.xl * 2,
   },
   stopoverTitle: {
-    ...Typography.displayLg,
-    color: Colors.onBackground,
+    ...Typography.headlineLg,
+    fontWeight: '800',
+    color: Colors.onSurface,
     marginBottom: Spacing.md,
   },
   stopoverItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.md,
     backgroundColor: Colors.surface,
-    borderRadius: 12,
+    padding: Spacing.md,
+    borderRadius: 16,
     marginBottom: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.surfaceContainer,
+    borderColor: '#E2E8F0',
+  },
+  stopoverLabelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   stopoverText: {
     ...Typography.bodyLg,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.onSurface,
   },
   removeText: {
-    ...Typography.labelLg,
+    ...Typography.labelSm,
     color: Colors.error,
-  },
-  addCityBtn: {
-    paddingVertical: Spacing.md,
-  },
-  addCityText: {
-    ...Typography.headlineMd,
-    color: Colors.primary,
     fontWeight: '700',
   },
+  addStopoverBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  addStopoverText: {
+    ...Typography.bodyLg,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
   addStopoverBox: {
+    backgroundColor: Colors.surface,
+    padding: Spacing.md,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     marginVertical: Spacing.md,
   },
-  bottomBarContainer: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
+  publishCard: {
+    marginTop: Spacing.md,
   },
-  floatingArrowBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.primary,
+  sectionTitle: {
+    ...Typography.headlineMd,
+    fontWeight: '800',
+    color: Colors.onSurface,
+    marginBottom: Spacing.md,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  modeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  arrowIcon: {
-    fontSize: 24,
-    color: Colors.onPrimary,
+  activeModeBtn: {
+    backgroundColor: '#EFF6FF',
+    borderColor: Colors.primary,
+  },
+  modeText: {
+    ...Typography.labelLg,
+    color: Colors.onSurfaceVariant,
+  },
+  activeModeText: {
+    color: Colors.primary,
     fontWeight: '800',
+  },
+  publishBtn: {
+    marginTop: Spacing.md,
   },
 });

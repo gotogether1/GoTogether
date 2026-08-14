@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { useRidesQuery } from '../../src/api/hooks';
 import { SkeletonCard } from '../../src/components/loading/SkeletonCard';
@@ -26,15 +27,15 @@ export default function DashboardScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
-        {/* Apple-style Top Bar */}
+        {/* Top Header */}
         <View style={styles.topHeader}>
           <View style={styles.userGreetingMeta}>
-            <Text style={styles.greetingSub}>Welcome back 👋</Text>
+            <Text style={styles.greetingSub}>Welcome back</Text>
             <Text style={styles.userTitle} numberOfLines={1}>{displayName}</Text>
           </View>
 
           <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/(tabs)/notifications')} activeOpacity={0.8}>
-            <Text style={styles.bellIcon}>🔔</Text>
+            <Ionicons name="notifications-outline" size={20} color="#0F172A" />
             <View style={styles.notificationDot} />
           </TouchableOpacity>
         </View>
@@ -43,7 +44,7 @@ export default function DashboardScreen() {
         <View style={styles.dualCardRow}>
           <TouchableOpacity style={styles.heroCardPrimary} onPress={() => router.push('/(tabs)/find')} activeOpacity={0.88}>
             <View style={styles.heroIconBadge}>
-              <Text style={styles.heroIcon}>🔍</Text>
+              <Ionicons name="search-outline" size={20} color={Colors.primary} />
             </View>
             <Text style={styles.heroCardTitle}>Find a Ride</Text>
             <Text style={styles.heroCardSub}>Search carpool or bike pool</Text>
@@ -51,7 +52,7 @@ export default function DashboardScreen() {
 
           <TouchableOpacity style={styles.heroCardAccent} onPress={() => router.push('/(tabs)/offer')} activeOpacity={0.88}>
             <View style={styles.heroIconBadgeDark}>
-              <Text style={styles.heroIcon}>➕</Text>
+              <Ionicons name="add-outline" size={20} color="#FFFFFF" />
             </View>
             <Text style={styles.heroCardTitleDark}>Offer a Ride</Text>
             <Text style={styles.heroCardSubDark}>Share your route & seats</Text>
@@ -77,7 +78,10 @@ export default function DashboardScreen() {
             onPress={() => setFilter('carpool')}
             activeOpacity={0.8}
           >
-            <Text style={[styles.segmentText, filter === 'carpool' && styles.segmentTextActive]}>🚗 Carpool</Text>
+            <View style={styles.filterBtnRow}>
+              <Ionicons name="car-outline" size={15} color={filter === 'carpool' ? Colors.primary : Colors.onSurfaceVariant} />
+              <Text style={[styles.segmentText, filter === 'carpool' && styles.segmentTextActive]}>Carpool</Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -85,7 +89,10 @@ export default function DashboardScreen() {
             onPress={() => setFilter('bike_pool')}
             activeOpacity={0.8}
           >
-            <Text style={[styles.segmentText, filter === 'bike_pool' && styles.segmentTextActive]}>🚲 Bike Pool</Text>
+            <View style={styles.filterBtnRow}>
+              <Ionicons name="bicycle-outline" size={15} color={filter === 'bike_pool' ? Colors.primary : Colors.onSurfaceVariant} />
+              <Text style={[styles.segmentText, filter === 'bike_pool' && styles.segmentTextActive]}>Bike Pool</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -102,8 +109,14 @@ export default function DashboardScreen() {
             >
               <View style={styles.rideCardHeader}>
                 <View style={styles.typeBadge}>
+                  <Ionicons
+                    name={ride.vehicleType === 'bike_pool' ? 'bicycle-outline' : 'car-outline'}
+                    size={14}
+                    color="#1E40AF"
+                    style={{ marginRight: 4 }}
+                  />
                   <Text style={styles.typeBadgeText}>
-                    {ride.vehicleType === 'bike_pool' ? '🚲 BIKE POOL' : '🚗 CARPOOL'}
+                    {ride.vehicleType === 'bike_pool' ? 'BIKE POOL' : 'CARPOOL'}
                   </Text>
                 </View>
 
@@ -119,8 +132,14 @@ export default function DashboardScreen() {
                 </View>
 
                 <View style={styles.locationsMeta}>
-                  <Text style={styles.pickupText} numberOfLines={1}>📍 {ride.pickup}</Text>
-                  <Text style={styles.destText} numberOfLines={1}>🏁 {ride.destination}</Text>
+                  <View style={styles.locationRow}>
+                    <Ionicons name="location-outline" size={14} color={Colors.primary} style={styles.locIcon} />
+                    <Text style={styles.pickupText} numberOfLines={1}>{ride.pickup}</Text>
+                  </View>
+                  <View style={styles.locationRow}>
+                    <Ionicons name="flag-outline" size={14} color="#0F172A" style={styles.locIcon} />
+                    <Text style={styles.destText} numberOfLines={1}>{ride.destination}</Text>
+                  </View>
                 </View>
               </View>
 
@@ -145,7 +164,7 @@ export default function DashboardScreen() {
           ))
         ) : (
           <EmptyState
-            icon="🧭"
+            icon="compass-outline"
             title="No upcoming rides available"
             message="Be the first to offer a ride or search nearby routes!"
             actionLabel="Offer a Ride"
@@ -204,9 +223,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  bellIcon: {
-    fontSize: 20,
-  },
   notificationDot: {
     position: 'absolute',
     top: 10,
@@ -237,9 +253,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
-  },
-  heroIcon: {
-    fontSize: 18,
   },
   heroCardTitle: {
     ...Typography.headlineMd,
@@ -301,6 +314,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
   },
+  filterBtnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   segmentActive: {
     backgroundColor: Colors.surface,
     shadowColor: '#000',
@@ -338,6 +356,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#DBEAFE',
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -388,6 +408,13 @@ const styles = StyleSheet.create({
   locationsMeta: {
     flex: 1,
     gap: 4,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locIcon: {
+    marginRight: 6,
   },
   pickupText: {
     ...Typography.bodyMd,
