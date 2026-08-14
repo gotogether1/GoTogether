@@ -72,6 +72,13 @@ export default function LoginScreen() {
             loading={loading}
             style={styles.loginBtn}
           />
+
+          <Button
+            title="Explore as Guest"
+            variant="outline"
+            onPress={() => router.replace('/(tabs)')}
+            style={styles.guestBtn}
+          />
         </View>
 
         <View style={styles.footerRow}>
@@ -142,6 +149,9 @@ const styles = StyleSheet.create({
   },
   loginBtn: {
     marginTop: Spacing.xs,
+  },
+  guestBtn: {
+    marginTop: Spacing.sm,
   },
   footerRow: {
     flexDirection: 'row',
