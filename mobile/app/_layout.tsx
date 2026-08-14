@@ -33,6 +33,7 @@ function AppContent() {
       <Stack.Screen name="auth/onboarding" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="ride/[id]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
+      <Stack.Screen name="ride/map" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="chat/[bookingId]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
       <Stack.Screen name="review/[bookingId]" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       <Stack.Screen name="profile/[userId]" options={{ presentation: 'card', animation: 'slide_from_right' }} />
