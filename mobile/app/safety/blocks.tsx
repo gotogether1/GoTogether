@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
+import { EmptyState } from '../../src/components/loading/EmptyState';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function BlockedUsersScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [blockedUsers, setBlockedUsers] = useState([
     { id: 'block_1', uid: 'blocked_user_99', name: 'Spam User' },
   ]);
@@ -21,27 +25,39 @@ export default function BlockedUsersScreen() {
     ]);
   };
 
+  const topInsetHeight = Math.max(insets.top + 12, 42);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>← Back</Text>
+      {/* Top Status Bar Spacer */}
+      <View style={{ height: topInsetHeight }} />
+
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Top Header Row with Back Button */}
+        <View style={styles.topHeader}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
+            <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
-          <Text style={styles.title}>Blocked Users</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>Blocked Users</Text>
         </View>
 
         {blockedUsers.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🛡️</Text>
-            <Text style={styles.emptyTitle}>No Blocked Users</Text>
-            <Text style={styles.emptySubtitle}>Users you block will appear here. Blocked users cannot view or request your rides.</Text>
-          </View>
+          <EmptyState
+            icon="shield-outline"
+            title="No Blocked Users"
+            message="Users you block will appear here. Blocked users cannot view or request your rides."
+          />
         ) : (
           blockedUsers.map(b => (
-            <Card key={b.id}>
+            <Card key={b.id} style={{ marginBottom: Spacing.sm }}>
               <View style={styles.userRow}>
-                <Text style={styles.userName}>{b.name}</Text>
+                <View style={styles.userMetaRow}>
+                  <View style={styles.avatarCircle}>
+                    <Ionicons name="person-outline" size={18} color={Colors.onSurfaceVariant} />
+                  </View>
+                  <Text style={styles.userName}>{b.name}</Text>
+                </View>
+
                 <Button
                   title="Unblock"
                   variant="outline"
@@ -60,58 +76,61 @@ export default function BlockedUsersScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.xl * 2,
   },
-  header: {
+  topHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: Spacing.md,
-    marginTop: Spacing.xs,
   },
   backBtn: {
-    marginBottom: Spacing.xs,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  backText: {
-    ...Typography.labelLg,
-    color: Colors.primary,
-  },
-  title: {
+  headerTitle: {
     ...Typography.displayLg,
+    fontSize: 24,
+    fontWeight: '800',
     color: Colors.onBackground,
+    flex: 1,
   },
   userRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  userMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
   userName: {
     ...Typography.headlineMd,
+    fontSize: 16,
+    fontWeight: '700',
     color: Colors.onSurface,
   },
   unblockBtn: {
-    width: 100,
-    height: 36,
-  },
-  emptyState: {
-    backgroundColor: Colors.surface,
-    padding: Spacing.xl,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.xs,
-  },
-  emptyTitle: {
-    ...Typography.headlineMd,
-    color: Colors.onSurface,
-  },
-  emptySubtitle: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginTop: 4,
+    width: 96,
+    height: 38,
   },
 });
