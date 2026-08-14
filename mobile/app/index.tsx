@@ -43,29 +43,6 @@ export default function WelcomeScreen() {
               </Text>
             </View>
 
-            {/* Feature Cards Grid (Glassmorphism) */}
-            <View style={styles.featuresGrid}>
-              <View style={styles.glassFeatureCard}>
-                <View style={styles.featureIconBadge}>
-                  <Ionicons name="shield-checkmark-outline" size={22} color="#047857" />
-                </View>
-                <View style={styles.featureTextMeta}>
-                  <Text style={styles.featureTitle}>Verified Community</Text>
-                  <Text style={styles.featureSubtitle}>Real identity checks & ratings</Text>
-                </View>
-              </View>
-
-              <View style={styles.glassFeatureCard}>
-                <View style={styles.featureIconBadgeBlue}>
-                  <Ionicons name="flash-outline" size={22} color={Colors.primary} />
-                </View>
-                <View style={styles.featureTextMeta}>
-                  <Text style={styles.featureTitle}>Instant Confirmation</Text>
-                  <Text style={styles.featureSubtitle}>Direct chat & seat booking</Text>
-                </View>
-              </View>
-            </View>
-
             {/* Bottom Action Buttons */}
             <View style={styles.actionSection}>
               <TouchableOpacity
@@ -118,7 +95,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.28)',
+    backgroundColor: 'rgba(15, 23, 42, 0.22)',
   },
   safeArea: {
     flex: 1,
@@ -184,55 +161,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
-  },
-  featuresGrid: {
-    gap: Spacing.sm,
-    marginVertical: Spacing.md,
-  },
-  glassFeatureCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    padding: Spacing.md,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  featureIconBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#ECFDF5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  featureIconBadgeBlue: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
-  featureTextMeta: {
-    flex: 1,
-  },
-  featureTitle: {
-    ...Typography.labelLg,
-    fontWeight: '800',
-    color: Colors.onSurface,
-  },
-  featureSubtitle: {
-    ...Typography.labelSm,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
   },
   actionSection: {
     gap: Spacing.xs + 2,
