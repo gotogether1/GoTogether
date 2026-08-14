@@ -18,7 +18,8 @@ export default function DashboardScreen() {
   const queryParams = filter === 'all' ? undefined : { vehicleType: filter };
   const { data: rides, isLoading, refetch, isRefetching } = useRidesQuery(queryParams);
 
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Community Member';
+  const isLoggedIn = !!user;
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Guest';
 
   const handlePublishPress = () => {
     if (!user) {
@@ -47,14 +48,20 @@ export default function DashboardScreen() {
         {/* Top Header */}
         <View style={styles.topHeader}>
           <View style={styles.userGreetingMeta}>
-            <Text style={styles.greetingSub}>Welcome back</Text>
+            <Text style={styles.greetingSub}>{isLoggedIn ? 'Welcome back' : 'Welcome to GoTogether'}</Text>
             <Text style={styles.userTitle} numberOfLines={1}>{displayName}</Text>
           </View>
 
-          <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/(tabs)/notifications')} activeOpacity={0.8}>
-            <Ionicons name="notifications-outline" size={20} color="#0F172A" />
-            <View style={styles.notificationDot} />
-          </TouchableOpacity>
+          {isLoggedIn ? (
+            <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/(tabs)/notifications')} activeOpacity={0.8}>
+              <Ionicons name="notifications-outline" size={20} color="#0F172A" />
+              <View style={styles.notificationDot} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.loginPillHeader} onPress={() => router.push('/auth/login')} activeOpacity={0.85}>
+              <Text style={styles.loginPillHeaderText}>Log In</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Dual Hero Action Cards */}
@@ -537,5 +544,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: Colors.onSurface,
+  },
+  loginPillHeader: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  loginPillHeaderText: {
+    ...Typography.labelLg,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

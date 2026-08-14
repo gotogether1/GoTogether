@@ -13,8 +13,9 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
 
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Community Member';
-  const email = user?.email || 'user@example.com';
+  const isLoggedIn = !!user;
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Guest User';
+  const email = user?.email || 'Log in to view account details';
 
   const handleLogout = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out of Go Together?', [
@@ -24,49 +25,70 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await logout();
-          router.replace('/');
+          router.replace('/auth/login');
         },
       },
     ]);
   };
 
+  const topInsetPadding = Math.max(insets.top, 24) + 12;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 24) + 12 }]}
+        contentContainerStyle={[styles.container, { paddingTop: topInsetPadding }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Apple-style Profile Card */}
+        {/* Profile Card */}
         <View style={styles.profileHeaderCard}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarInitial}>{displayName.charAt(0).toUpperCase()}</Text>
+          <View style={[styles.avatarCircle, !isLoggedIn && styles.guestAvatarCircle]}>
+            {isLoggedIn ? (
+              <Text style={styles.avatarInitial}>{displayName.charAt(0).toUpperCase()}</Text>
+            ) : (
+              <Ionicons name="person-outline" size={36} color="#64748B" />
+            )}
           </View>
           <Text style={styles.userName}>{displayName}</Text>
           <Text style={styles.userEmail}>{email}</Text>
 
-          <View style={styles.verificationBadge}>
-            <Ionicons name="shield-checkmark-outline" size={15} color="#047857" style={{ marginRight: 4 }} />
-            <Text style={styles.verifiedText}>Verified Community Member</Text>
-          </View>
+          {isLoggedIn ? (
+            <View style={styles.verificationBadge}>
+              <Ionicons name="shield-checkmark-outline" size={15} color="#047857" style={{ marginRight: 4 }} />
+              <Text style={styles.verifiedText}>Verified Member</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.loginPillBtn}
+              onPress={() => router.push('/auth/login')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.loginPillText}>Log In or Sign Up</Text>
+            </TouchableOpacity>
+          )}
 
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statVal}>★ 5.0</Text>
-              <Text style={styles.statLbl}>Rating</Text>
+          {isLoggedIn && (
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statVal}>★ 5.0</Text>
+                <Text style={styles.statLbl}>Rating</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statVal}>12</Text>
+                <Text style={styles.statLbl}>Rides Completed</Text>
+              </View>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statVal}>12</Text>
-              <Text style={styles.statLbl}>Rides Completed</Text>
-            </View>
-          </View>
+          )}
         </View>
 
         {/* Grouped Settings Menu */}
         <Card style={{ marginBottom: 16 }}>
           <Text style={styles.sectionTitle}>Account & Profile</Text>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/auth/onboarding')}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => (isLoggedIn ? router.push('/auth/onboarding') : router.push('/auth/login'))}
+          >
             <View style={styles.menuLabelGroup}>
               <Ionicons name="create-outline" size={20} color={Colors.primary} style={styles.menuIcon} />
               <Text style={styles.menuText}>Edit Profile Info</Text>
@@ -74,7 +96,10 @@ export default function ProfileScreen() {
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/safety/blocks')}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => (isLoggedIn ? router.push('/safety/blocks') : router.push('/auth/login'))}
+          >
             <View style={styles.menuLabelGroup}>
               <Ionicons name="shield-outline" size={20} color={Colors.primary} style={styles.menuIcon} />
               <Text style={styles.menuText}>Blocked Users & Safety</Text>
@@ -82,7 +107,10 @@ export default function ProfileScreen() {
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/safety/report')}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => (isLoggedIn ? router.push('/safety/report') : router.push('/auth/login'))}
+          >
             <View style={styles.menuLabelGroup}>
               <Ionicons name="warning-outline" size={20} color={Colors.warning} style={styles.menuIcon} />
               <Text style={styles.menuText}>Report an Issue</Text>
@@ -90,7 +118,10 @@ export default function ProfileScreen() {
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItemLast} onPress={() => Alert.alert('Safety Guidelines', 'Go Together uses real identity checks. Always verify driver and vehicle details before entering.')}>
+          <TouchableOpacity
+            style={styles.menuItemLast}
+            onPress={() => Alert.alert('Safety Guidelines', 'Go Together uses real identity checks. Always verify driver and vehicle details before entering.')}
+          >
             <View style={styles.menuLabelGroup}>
               <Ionicons name="information-circle-outline" size={20} color={Colors.primary} style={styles.menuIcon} />
               <Text style={styles.menuText}>Community Safety Guidelines</Text>
@@ -99,7 +130,11 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </Card>
 
-        <Button title="Log Out" variant="outline" onPress={handleLogout} style={styles.logoutBtn} />
+        {isLoggedIn ? (
+          <Button title="Log Out" variant="outline" onPress={handleLogout} style={styles.logoutBtn} />
+        ) : (
+          <Button title="Log In / Register" onPress={() => router.push('/auth/login')} style={styles.logoutBtn} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -138,6 +173,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: Spacing.sm,
   },
+  guestAvatarCircle: {
+    backgroundColor: '#F1F5F9',
+  },
   avatarInitial: {
     fontSize: 36,
     fontWeight: '800',
@@ -167,6 +205,18 @@ const styles = StyleSheet.create({
   verifiedText: {
     ...Typography.labelSm,
     color: '#047857',
+    fontWeight: '700',
+  },
+  loginPillBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+  loginPillText: {
+    ...Typography.labelLg,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   statsRow: {
