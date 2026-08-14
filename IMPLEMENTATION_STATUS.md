@@ -1,6 +1,6 @@
 # Go Together — Implementation Status
 
-## Current Phase: Phase 6 Completed -> Entering Phase 7
+## Current Phase: Phase 7 Completed -> Entering Phase 8
 
 ---
 
@@ -10,11 +10,11 @@
 - **Phase 3: Firebase Auth Integration**: AuthProvider + Bearer token REST API client.
 - **Phase 4: Render Backend Infrastructure**: `/health` endpoint + Firebase token middleware.
 - **Phase 5: Domain Features**: Rides, Search, Bookings transactions, Reviews, Reports, Blocks.
-- **Phase 6: Confirmed-Ride-Only Direct Chat System**:
-  - `ChatService` (`backend/src/services/chat.service.ts`).
-  - Strict 1-to-1 confirmed-booking-only messaging validation.
-  - Rate limiting & character validation (1–1,000 characters).
-  - `/v1/chats`, `/v1/chats/:bookingId`, `/v1/chats/:bookingId/messages` endpoints.
+- **Phase 6: Confirmed-Ride-Only Direct Chat System**: `ChatService` & `/v1/chats` endpoints.
+- **Phase 7: In-App Notifications & Android Launcher App-Icon Badge**:
+  - `NotificationService` (`backend/src/services/notification.service.ts`).
+  - `/v1/notifications`, `/v1/notifications/unread-count`, `/v1/notifications/:id/read`, `/v1/notifications/read-all`.
+  - Android launcher app badge sync (`mobile/src/notifications/badge.ts`) using `expo-notifications` `setBadgeCountAsync`.
 
 ---
 
@@ -30,12 +30,12 @@
 ---
 
 ### Next Phase
-- **Phase 7: In-App Notifications, Red Dot, Unread Counts, and Android Launcher Badge**:
-  - Implement `NotificationService` (`backend/src/services/notification.service.ts`).
-  - `/v1/notifications`, `/v1/notifications/unread-count`, `/v1/notifications/:id/read`, `/v1/notifications/read-all`.
-  - Android launcher badge sync with `expo-notifications` `setBadgeCountAsync`.
+- **Phase 8: Socket.IO Real-Time Updates & Fallback Sync**:
+  - Socket.IO connection manager with Firebase ID token handshake authentication.
+  - Private user room event emitters (`user:{uid}`).
+  - `RealtimeProvider` in mobile app with TanStack Query invalidation & REST polling fallback.
 
 ---
 
 ### Required User Credentials / Actions
-- None at this stage. (Proceeding to Phase 7 automatically).
+- None at this stage. (Proceeding to Phase 8 automatically).
