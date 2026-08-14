@@ -26,13 +26,13 @@ export function usePushNotifications() {
 
     // Listener for notifications received while app is in foreground
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      console.log('🔔 Push notification received in foreground:', notification);
+      console.log('🔔 Push notification received:', notification);
     });
 
-    // Listener for user tapping on a push notification banner/alert
+    // Listener for user tapping on a push notification on Lock Screen, Home Screen, or Banner
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data;
-      console.log('📲 Notification tapped with data:', data);
+      console.log('📲 Lock screen / Home screen notification tapped:', data);
 
       if (data?.targetType === 'booking') {
         router.push('/(tabs)/dashboard');
@@ -89,12 +89,16 @@ async function registerForPushNotificationsAsync(): Promise<string | undefined> 
       });
     }
 
+    // Configure Android MAX importance channel for Lock Screen & Home Screen heads-up popups
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+        name: 'Go Together Notifications',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#2563EB',
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        bypassDnd: true,
+        sound: 'default',
       });
     }
 
