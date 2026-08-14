@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../src/components/Card';
 import { Badge } from '../../src/components/Badge';
@@ -11,6 +12,7 @@ import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function RideDetailsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const ride = SEED_RIDES.find(r => r.id === id) || SEED_RIDES[0];
   const driver = SEED_USERS.find(u => u.uid === ride.driverId) || SEED_USERS[0];
@@ -51,13 +53,16 @@ export default function RideDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingTop: Math.max(insets.top, 16) + 8 }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Top Header Row */}
         <View style={styles.topHeader}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.8}>
             <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Ride Details</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>Ride Details</Text>
           <Badge
             label={ride.vehicleType === 'carpool' ? 'Carpool' : 'Bike Pool'}
             variant={ride.vehicleType === 'carpool' ? 'primary' : 'success'}
@@ -246,16 +251,17 @@ export default function RideDetailsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#F8FAFC',
   },
   container: {
     padding: Spacing.md,
-    paddingBottom: Spacing.xl * 2,
+    paddingBottom: Spacing.xl * 2.5,
   },
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.sm,
+    marginTop: 4,
   },
   backBtn: {
     width: 36,
@@ -447,6 +453,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.sm,
     marginVertical: Spacing.md,
+    paddingBottom: Spacing.md,
   },
   negotiateBtn: {
     flex: 1,
