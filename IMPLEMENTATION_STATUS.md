@@ -1,25 +1,26 @@
 # Go Together — Implementation Status
 
-## Current Phase: Phase 3 Completed -> Entering Phase 4
+## Current Phase: Phase 4 Completed -> Entering Phase 5
 
 ---
 
 ### Completed Work
-- **Phase 1: Monorepo Restructuring**:
-  - `mobile/` (React Native + Expo SDK 57 + Expo Router) and `backend/` (Node.js + Express + Socket.IO + Firebase Admin).
-- **Phase 2: Stitch-Based Mobile UI & Navigation**:
-  - Theme tokens, reusable components, Expo Router layout, seed data, and 15 complete mobile screens.
-- **Phase 3: Firebase Authentication Integration**:
-  - AuthContext & AuthProvider (`mobile/src/auth/AuthProvider.tsx`).
-  - Email/Password sign-up, sign-in, password reset, logout, and token retrieval.
-  - Standardized Firebase error code mapping to user-friendly messages.
-  - HTTP REST client (`mobile/src/api/client.ts`) with `Authorization: Bearer <Firebase ID token>` support.
+- **Phase 1: Monorepo Restructuring**: `mobile/` and `backend/` monorepo.
+- **Phase 2: Stitch-Based Mobile UI**: 15 complete screens + Expo Router navigation.
+- **Phase 3: Firebase Auth Integration**: AuthProvider + Bearer token REST API client.
+- **Phase 4: Render Backend & Firestore Admin Integration**:
+  - `authenticate.ts` Firebase Bearer token verification middleware.
+  - `ApiError` class and centralized `errorHandler` middleware.
+  - `UserService` for Firestore profile management.
+  - `/v1/me` GET, PATCH, and DELETE endpoints.
+  - Verified `GET /health` HTTP 200 response on `http://localhost:10000/health`.
 
 ---
 
 ### Tests Run & Verification
+- **Backend Build & Typecheck**: Passed (`npm run build` & `npm run typecheck` in `backend/` -> 0 errors).
+- **Backend /health Endpoint Test**: Passed (`curl http://localhost:10000/health` -> HTTP 200 OK).
 - **Mobile TypeScript Typecheck**: Passed (`npx tsc --noEmit` in `mobile/` -> 0 errors).
-- **Backend TypeScript Typecheck**: Passed (`npm run typecheck` in `backend/` -> 0 errors).
 
 ---
 
@@ -29,12 +30,12 @@
 ---
 
 ### Next Phase
-- **Phase 4: Render Backend & Firestore Admin Integration**:
-  - Build `authenticate.ts` Bearer token verification middleware using Firebase Admin SDK.
-  - Build Firestore schemas & indexes (`users`, `rides`, `bookings`, `reviews`, `notifications`, `reports`, `blockedUsers`).
-  - Implement `/v1/me` profile REST endpoints (GET, PATCH, DELETE).
+- **Phase 5: Domain Features (Rides, Search, Bookings, Reviews, Reports, Blocks)**:
+  - Implement `/v1/rides` (Search filters, Create, Detail, Edit, Cancel).
+  - Implement `/v1/bookings` with atomic seat transactions & block checks.
+  - Implement `/v1/reviews`, `/v1/reports`, `/v1/blocks`.
 
 ---
 
 ### Required User Credentials / Actions
-- None at this stage. (Proceeding to Phase 4 automatically).
+- None at this stage. (Proceeding to Phase 5 automatically).

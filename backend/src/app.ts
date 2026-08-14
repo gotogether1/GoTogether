@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import meRoutes from './routes/me.routes.js';
+import { errorHandler } from './middleware/error-handler.js';
 
 const app = express();
 
@@ -18,5 +20,11 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Mounted v1 API routes
+app.use('/v1/me', meRoutes);
+
+// Error Handler Middleware
+app.use(errorHandler as any);
 
 export default app;
