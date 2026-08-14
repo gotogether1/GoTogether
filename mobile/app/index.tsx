@@ -1,19 +1,27 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography } from '../src/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  const topInsetPadding = Math.max(insets.top, 24) + 12;
+  const bottomInsetPadding = Math.max(insets.bottom, 16);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Top Hero Section */}
         <View style={styles.heroContainer}>
           <View style={styles.logoCircle}>
-            <Ionicons name="car-outline" size={42} color={Colors.primary} />
+            <Ionicons name="car" size={42} color={Colors.primary} />
           </View>
 
           <View style={styles.badgePill}>
@@ -67,11 +75,19 @@ export default function WelcomeScreen() {
             <Text style={styles.secondaryBtnText}>Log In</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.guestBtn}
+            onPress={() => router.replace('/(tabs)')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.guestBtnText}>Explore as Guest →</Text>
+          </TouchableOpacity>
+
           <Text style={styles.termsFooter}>
             By continuing, you agree to our Terms of Service & Privacy Policy.
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -82,14 +98,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: Spacing.lg,
     justifyContent: 'space-between',
-    paddingVertical: Spacing.lg,
   },
   heroContainer: {
     alignItems: 'center',
-    marginTop: Spacing.xl,
+    marginTop: Spacing.sm,
   },
   logoCircle: {
     width: 88,
@@ -185,11 +200,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   actionSection: {
-    gap: Spacing.sm,
+    gap: Spacing.xs + 2,
     marginBottom: Spacing.sm,
   },
   primaryBtn: {
-    height: 54,
+    height: 52,
     backgroundColor: Colors.primary,
     borderRadius: 16,
     alignItems: 'center',
@@ -207,7 +222,7 @@ const styles = StyleSheet.create({
     color: Colors.onPrimary,
   },
   secondaryBtn: {
-    height: 54,
+    height: 52,
     backgroundColor: Colors.surface,
     borderRadius: 16,
     alignItems: 'center',
@@ -221,10 +236,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.onSurface,
   },
+  guestBtn: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestBtnText: {
+    ...Typography.labelLg,
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
   termsFooter: {
     ...Typography.labelSm,
     color: Colors.outline,
     textAlign: 'center',
-    marginTop: Spacing.xs,
+    marginTop: 2,
   },
 });
