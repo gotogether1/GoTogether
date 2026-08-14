@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { useRidesQuery } from '../../src/api/hooks';
 import { SkeletonCard } from '../../src/components/loading/SkeletonCard';
@@ -9,6 +10,7 @@ import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [filter, setFilter] = useState<'all' | 'carpool' | 'bike_pool'>('all');
 
@@ -20,14 +22,15 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: Math.max(insets.top, 16) + 8 }]}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.primary} />}
+        showsVerticalScrollIndicator={false}
       >
         {/* Apple-style Top Bar */}
         <View style={styles.topHeader}>
           <View style={styles.userGreetingMeta}>
             <Text style={styles.greetingSub}>Welcome back 👋</Text>
-            <Text style={styles.userTitle}>{displayName}</Text>
+            <Text style={styles.userTitle} numberOfLines={1}>{displayName}</Text>
           </View>
 
           <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/(tabs)/notifications')} activeOpacity={0.8}>
@@ -161,7 +164,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
     paddingBottom: Spacing.xl * 2,
   },
   topHeader: {
@@ -169,11 +171,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: Spacing.lg,
+    marginTop: 4,
   },
-  userGreetingMeta: {},
+  userGreetingMeta: {
+    flex: 1,
+    paddingRight: Spacing.md,
+  },
   greetingSub: {
     ...Typography.bodyMd,
     color: Colors.onSurfaceVariant,
+    fontWeight: '600',
   },
   userTitle: {
     ...Typography.displayLg,
@@ -191,7 +198,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -237,7 +243,7 @@ const styles = StyleSheet.create({
   },
   heroCardTitle: {
     ...Typography.headlineMd,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: Colors.primary,
   },
@@ -265,7 +271,7 @@ const styles = StyleSheet.create({
   },
   heroCardTitleDark: {
     ...Typography.headlineMd,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: Colors.onBackground,
   },

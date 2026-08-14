@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Colors, Typography } from '../../src/theme';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopColor: '#E2E8F0',
     borderTopWidth: 1,
-    height: 64,
-    paddingBottom: 8,
+    height: Platform.OS === 'ios' ? 82 : 68,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
     paddingTop: 6,
     elevation: 8,
     shadowColor: '#000',
@@ -100,18 +100,19 @@ const styles = StyleSheet.create({
   },
   labelStyle: {
     ...Typography.labelSm,
-    fontWeight: '600',
-    fontSize: 11,
+    fontWeight: '700',
+    fontSize: 10,
+    marginTop: 2,
   },
   iconContainer: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   iconActiveContainer: {
     backgroundColor: '#DBEAFE',
   },
   iconText: {
-    fontSize: 18,
+    fontSize: 17,
   },
 });
