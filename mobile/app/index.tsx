@@ -15,11 +15,11 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.root}>
       <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=1200&q=80' }}
+        source={{ uri: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80' }}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* Soft Dark Aesthetic Gradient Overlay */}
+        {/* Soft Dark Aesthetic Overlay */}
         <View style={styles.overlay} />
 
         <SafeAreaView style={styles.safeArea}>
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    backgroundColor: 'rgba(15, 23, 42, 0.42)',
   },
   safeArea: {
     flex: 1,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     ...Typography.bodyLg,
-    color: 'rgba(255, 255, 255, 0.92)',
+    color: 'rgba(255, 255, 255, 0.95)',
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 320,
@@ -189,14 +189,14 @@ const styles = StyleSheet.create({
   glassFeatureCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 255, 255, 0.94)',
     padding: Spacing.md,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
+    borderColor: 'rgba(255, 255, 255, 0.8)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 4,
   },
