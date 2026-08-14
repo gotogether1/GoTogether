@@ -9,7 +9,7 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const topInsetPadding = Math.max(insets.top, 24);
+  const topInsetPadding = Math.max(insets.top, 24) + 4;
   const bottomInsetPadding = Math.max(insets.bottom, 12);
 
   return (
@@ -27,9 +27,9 @@ export default function WelcomeScreen() {
             contentContainerStyle={[styles.container, { paddingTop: topInsetPadding, paddingBottom: bottomInsetPadding }]}
             showsVerticalScrollIndicator={false}
           >
-            {/* Centered Hero Section */}
+            {/* Top Hero Section (Sits in Sky Area Above Riders' Faces) */}
             <View style={styles.heroContainer}>
-              {/* Official 4K GoTogether Logo (Tilted to Right Side) */}
+              {/* Official 4K GoTogether Logo */}
               <View style={styles.logoWrapper}>
                 <Image
                   source={require('../assets/logo.png')}
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
-    transform: [{ scale: 1.15 }],
+    transform: [{ scale: 1.25 }, { rotate: '4deg' }],
   },
   overlay: {
     position: 'absolute',
@@ -113,35 +113,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   heroContainer: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: Spacing.lg,
+    marginTop: 0,
   },
   logoWrapper: {
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 4, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    marginBottom: 6,
   },
   logoImage: {
-    width: 110,
-    height: 110,
-    borderRadius: 28,
-    transform: [{ rotate: '6deg' }],
+    width: 96,
+    height: 96,
+    borderRadius: 24,
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.65)',
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   badgeText: {
     ...Typography.labelSm,
@@ -155,11 +147,11 @@ const styles = StyleSheet.create({
   },
   tagline: {
     ...Typography.bodyMd,
-    fontSize: 13,
+    fontSize: 12.5,
     color: 'rgba(255, 255, 255, 0.95)',
     textAlign: 'center',
-    lineHeight: 18,
-    maxWidth: 290,
+    lineHeight: 17,
+    maxWidth: 280,
     textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
