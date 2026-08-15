@@ -8,23 +8,49 @@ import { auth } from '../config/firebase';
 /**
  * Public discovery search query (Find a Ride)
  */
-export function useRidesQuery(filters?: { vehicleType?: string; pickup?: string; destination?: string; date?: string }) {
+export function useRidesQuery(filters?: {
+  vehicleType?: string;
+  pickup?: string;
+  destination?: string;
+  date?: string;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
+  dropoffLatitude?: number;
+  dropoffLongitude?: number;
+}) {
   return useQuery({
     queryKey: ['rides', filters],
     queryFn: async () => {
-      try {
-        const queryParams = new URLSearchParams(filters as any).toString();
-        const res = await fetchWithAuth(`/v1/rides?${queryParams}`);
-        return res.data;
-      } catch {
-        return SEED_RIDES.filter(r => {
-          if (filters?.vehicleType && filters.vehicleType !== 'all' && r.vehicleType !== filters.vehicleType) return false;
-          if (filters?.pickup && !r.pickup.toLowerCase().includes(filters.pickup.toLowerCase())) return false;
-          if (filters?.destination && !r.destination.toLowerCase().includes(filters.destination.toLowerCase())) return false;
-          if (filters?.date && !r.departureAt.startsWith(filters.date)) return false;
-          return true;
-        });
+      const cleanParams: Record<string, string> = {};
+      if (filters?.vehicleType && filters.vehicleType !== 'all' && filters.vehicleType !== 'undefined') {
+        cleanParams.vehicleType = filters.vehicleType;
       }
+      if (filters?.pickup && filters.pickup.trim()) {
+        cleanParams.pickup = filters.pickup.trim();
+      }
+      if (filters?.destination && filters.destination.trim()) {
+        cleanParams.destination = filters.destination.trim();
+      }
+      if (filters?.date && filters.date.trim()) {
+        cleanParams.date = filters.date.trim();
+      }
+      if (typeof filters?.pickupLatitude === 'number') {
+        cleanParams.pickupLatitude = String(filters.pickupLatitude);
+      }
+      if (typeof filters?.pickupLongitude === 'number') {
+        cleanParams.pickupLongitude = String(filters.pickupLongitude);
+      }
+      if (typeof filters?.dropoffLatitude === 'number') {
+        cleanParams.dropoffLatitude = String(filters.dropoffLatitude);
+      }
+      if (typeof filters?.dropoffLongitude === 'number') {
+        cleanParams.dropoffLongitude = String(filters.dropoffLongitude);
+      }
+
+      const queryString = new URLSearchParams(cleanParams).toString();
+      const url = `/v1/rides${queryString ? `?${queryString}` : ''}`;
+      const res = await fetchWithAuth(url);
+      return res.data || [];
     },
   });
 }

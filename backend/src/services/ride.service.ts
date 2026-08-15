@@ -171,8 +171,8 @@ export class RideService {
 
     const pickupQuery = filters.pickup ? filters.pickup.trim().toLowerCase() : null;
     const destQuery = filters.destination ? filters.destination.trim().toLowerCase() : null;
-    const vehicleFilter = filters.vehicleType && filters.vehicleType !== 'all' ? filters.vehicleType : null;
-    const dateFilter = filters.date ? filters.date.trim() : null;
+    const vehicleFilter = (filters.vehicleType && filters.vehicleType !== 'all' && filters.vehicleType !== 'undefined') ? filters.vehicleType : null;
+    const dateFilter = (filters.date && filters.date !== 'undefined') ? filters.date.trim() : null;
 
     // Stage 1: Fast Candidate Query (Active rides, available seats > 0, excludes caller's own rides)
     const sql = `
@@ -236,13 +236,18 @@ export class RideService {
     let dropoffIndex = -1;
 
     if (pickupName) {
-      pickupIndex = waypoints.findIndex(w => w.includes(pickupName) || pickupName.includes(w));
+      const pTokens = pickupName.split(/[\s,]+/).filter(t => t.length > 2);
+      pickupIndex = waypoints.findIndex(w => {
+        if (w.includes(pickupName) || pickupName.includes(w)) return true;
+        return pTokens.some(tok => w.includes(tok));
+      });
     }
 
     if (destName) {
-      // Find latest dropoff match
+      const dTokens = destName.split(/[\s,]+/).filter(t => t.length > 2);
       for (let i = waypoints.length - 1; i >= 0; i--) {
-        if (waypoints[i].includes(destName) || destName.includes(waypoints[i])) {
+        const w = waypoints[i];
+        if (w.includes(destName) || destName.includes(w) || dTokens.some(tok => w.includes(tok))) {
           dropoffIndex = i;
           break;
         }
@@ -280,13 +285,6 @@ export class RideService {
     }
 
     const fullPolyline = polyline.length > 0 ? polyline : coordsList;
-    if (fullPolyline.length < 2) {
-      // Fallback: If no coordinates or polyline, check text substring matching
-      if (pickupName && destName) {
-        return waypoints.some(w => w.includes(pickupName)) && waypoints.some(w => w.includes(destName));
-      }
-      return true;
-    }
 
     // Evaluate coordinate proximity if passenger coordinates passed
     if (typeof pickupLat === 'number' && typeof pickupLng === 'number' && typeof dropoffLat === 'number' && typeof dropoffLng === 'number') {
