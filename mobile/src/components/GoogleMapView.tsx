@@ -46,7 +46,7 @@ export function GoogleMapView({
     <!DOCTYPE html>
     <html>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=20.0, user-scalable=yes" />
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
@@ -55,6 +55,7 @@ export function GoogleMapView({
             margin: 0;
             padding: 0;
             background-color: #f8fafc;
+            touch-action: manipulation;
           }
           .leaflet-control-attribution {
             display: none !important;
@@ -81,11 +82,13 @@ export function GoogleMapView({
             window.map = L.map('map', {
               zoomControl: false,
               attributionControl: false,
-              touchZoom: true,
+              touchZoom: 'center',
+              bounceAtZoomLimits: false,
               scrollWheelZoom: true,
               doubleClickZoom: true,
               boxZoom: true,
               dragging: true,
+              tap: true,
               fadeAnimation: true,
               zoomAnimation: true
             }).setView([${latitude}, ${longitude}], ${zoom});
@@ -123,6 +126,9 @@ export function GoogleMapView({
         style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        scalesPageToFit={true}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         onMessage={(event: any) => {
           try {
             const data = JSON.parse(event.nativeEvent.data);
