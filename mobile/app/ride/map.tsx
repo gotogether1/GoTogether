@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { GoogleMapView } from '../../src/components/GoogleMapView';
 import { SEED_RIDES } from '../../src/demo/seedData';
+import { calculateRoutes } from '../../src/services/locationService';
+import { RouteOption } from '../../src/types/location';
 import { Colors, Spacing, Typography } from '../../src/theme';
 import { safeBack } from '../../src/utils/navigation';
 
@@ -21,6 +23,22 @@ export default function RouteMapModalScreen() {
   const pickupLng = ride.pickupLongitude || 78.4867;
   const dropoffLat = ride.dropoffLatitude || 18.6725;
   const dropoffLng = ride.dropoffLongitude || 78.0941;
+
+  const [routes, setRoutes] = useState<RouteOption[]>([]);
+
+  useEffect(() => {
+    async function loadRoute() {
+      try {
+        const originLoc = { name: ride.pickup, address: ride.pickup, latitude: pickupLat, longitude: pickupLng };
+        const destLoc = { name: ride.destination, address: ride.destination, latitude: dropoffLat, longitude: dropoffLng };
+        const calculated = await calculateRoutes(originLoc, destLoc);
+        setRoutes(calculated);
+      } catch {
+        setRoutes([]);
+      }
+    }
+    loadRoute();
+  }, [pickupLat, pickupLng, dropoffLat, dropoffLng]);
 
   const handleOpenGoogleMaps = async () => {
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${pickupLat},${pickupLng}&destination=${dropoffLat},${dropoffLng}&travelmode=driving`;
@@ -40,6 +58,14 @@ export default function RouteMapModalScreen() {
   const topInsetPadding = Math.max(insets.top, 16) + 4;
   const bottomInsetPadding = Math.max(insets.bottom, 24);
 
+  // Map calculated route geometries to GoogleMapView polylines format
+  const routePolylines = routes.length > 0
+    ? [{
+        id: routes[0].id,
+        points: routes[0].polylinePoints || [],
+      }]
+    : [];
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header Bar */}
@@ -53,7 +79,7 @@ export default function RouteMapModalScreen() {
         </View>
       </View>
 
-      {/* Real Interactive Route Map Canvas with Markers & Polyline */}
+      {/* Real Interactive Route Map Canvas with Turn-by-Turn Road Polylines */}
       <View style={styles.mapCanvasContainer}>
         <GoogleMapView
           latitude={(pickupLat + dropoffLat) / 2}
@@ -62,6 +88,8 @@ export default function RouteMapModalScreen() {
           isProgrammatic={true}
           pickupCoords={{ latitude: pickupLat, longitude: pickupLng, name: ride.pickup }}
           dropoffCoords={{ latitude: dropoffLat, longitude: dropoffLng, name: ride.destination }}
+          routes={routePolylines}
+          activeRouteId={routes[0]?.id}
         />
       </View>
 
@@ -117,7 +145,7 @@ const styles = StyleSheet.create({
   },
   mapCanvasContainer: {
     flex: 1,
-    backgroundColor: '#74BBE3',
+    backgroundColor: '#F5EFE6',
   },
   bottomFloatingBar: {
     position: 'absolute',
