@@ -207,13 +207,17 @@ export class BookingService {
       throw ApiError.conflict(`Cannot approve a booking in '${b.status}' status`);
     }
 
-    if (b.available_seats < b.seats_requested) {
+    // Atomic update to decrement available seats with race-condition check
+    const updateRideRes = await query(
+      "UPDATE rides SET available_seats = available_seats - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND available_seats >= $1 RETURNING available_seats;",
+      [b.seats_requested, b.ride_id]
+    );
+
+    if (!updateRideRes.rows || updateRideRes.rows.length === 0) {
       throw ApiError.conflict('Not enough seats available to approve this request');
     }
 
-    // Update booking status and decrement available seats
     await query("UPDATE bookings SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1;", [bookingId]);
-    await query("UPDATE rides SET available_seats = available_seats - $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2;", [b.seats_requested, b.ride_id]);
 
     // Create conversation record for chat
     const convId = `conv_${bookingId}`;

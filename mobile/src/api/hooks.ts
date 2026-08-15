@@ -144,10 +144,17 @@ export function useBookingsQuery(type?: 'rider' | 'driver') {
 export function useCreateBookingMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (bookingData: any) => {
-      const res = await fetchWithAuth('/v1/bookings', {
+    mutationFn: async (bookingData: { rideId: string; seatsRequested?: number; riderMessage?: string; negotiatedPrice?: number }) => {
+      const { rideId, seatsRequested, riderMessage, negotiatedPrice } = bookingData;
+      const endpoint = rideId ? `/v1/rides/${rideId}/bookings` : '/v1/bookings';
+      const res = await fetchWithAuth(endpoint, {
         method: 'POST',
-        body: JSON.stringify(bookingData),
+        body: JSON.stringify({
+          rideId,
+          seatsRequested: seatsRequested || 1,
+          riderMessage: riderMessage || '',
+          negotiatedPrice,
+        }),
       });
       return res.data;
     },

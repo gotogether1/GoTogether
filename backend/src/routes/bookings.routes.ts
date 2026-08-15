@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { BookingService } from '../services/booking.service.js';
+import { ApiError } from '../utils/api-error.js';
 
 const router = Router();
 
@@ -11,6 +12,26 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const uid = req.auth!.uid;
     const bookings = await BookingService.listUserBookings(uid);
     res.json({ data: bookings });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const uid = req.auth!.uid;
+    const { rideId, seatsRequested, riderMessage, negotiatedPrice } = req.body;
+    if (!rideId) {
+      throw ApiError.badRequest('rideId is required');
+    }
+    const booking = await BookingService.createBooking(
+      uid,
+      rideId,
+      seatsRequested || 1,
+      riderMessage,
+      negotiatedPrice
+    );
+    res.status(201).json({ data: booking });
   } catch (err) {
     next(err);
   }
