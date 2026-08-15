@@ -43,11 +43,11 @@ export function GoogleMapView({
             padding: 0;
             background-color: #e5e3df;
           }
-          .gmnoprint, .gm-style-cc {
+          .gmnoprint, .gm-style-cc, .gm-fullscreen-control {
             display: none !important;
           }
         </style>
-        <script src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&v=weekly"></script>
       </head>
       <body>
         <div id="map"></div>
@@ -88,7 +88,7 @@ export function GoogleMapView({
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
-        source={{ html: htmlContent, baseUrl: 'https://maps.googleapis.com' }}
+        source={{ html: htmlContent, baseUrl: 'https://localhost' }}
         style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}
