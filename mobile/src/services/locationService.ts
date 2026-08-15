@@ -6,6 +6,41 @@ const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 // Regional quick locations for instant fallback
 const FALLBACK_PLACES: GoTogetherLocation[] = [
   {
+    placeId: 'fallback-nizamabad-bus-stand',
+    name: 'Nizamabad New Bus Stand (TSRTC)',
+    address: 'Nizamabad New Bus Stand, Nizamabad, Telangana 503001, India',
+    latitude: 18.6738,
+    longitude: 78.0984,
+  },
+  {
+    placeId: 'fallback-nizamabad-old-bus-stand',
+    name: 'Nizamabad Old Bus Stand',
+    address: 'Old Bus Stand, Phulong, Nizamabad, Telangana 503001, India',
+    latitude: 18.6782,
+    longitude: 78.0965,
+  },
+  {
+    placeId: 'fallback-bodhan-bus-stand',
+    name: 'Bodhan TSRTC Bus Stand',
+    address: 'Bodhan Bus Stand, Bodhan, Nizamabad District, Telangana 503185, India',
+    latitude: 18.6654,
+    longitude: 77.9012,
+  },
+  {
+    placeId: 'fallback-bodhan-town',
+    name: 'Bodhan',
+    address: 'Bodhan, Nizamabad District, Telangana 503185, India',
+    latitude: 18.6631,
+    longitude: 77.8994,
+  },
+  {
+    placeId: 'fallback-banswada-bus-stand',
+    name: 'Banswada Bus Stand',
+    address: 'Banswada TSRTC Bus Station, Banswada, Kamareddy District, Telangana 503187, India',
+    latitude: 18.3855,
+    longitude: 77.8834,
+  },
+  {
     placeId: 'fallback-banswada',
     name: 'Banswada',
     address: 'Banswada, Kamareddy District, Telangana, India',
@@ -13,18 +48,18 @@ const FALLBACK_PLACES: GoTogetherLocation[] = [
     longitude: 77.8821,
   },
   {
-    placeId: 'fallback-ibrahimpet',
-    name: 'Ibrahimpet',
-    address: 'Ibrahimpet, Telangana 503187, India',
-    latitude: 18.3965,
-    longitude: 77.9124,
+    placeId: 'fallback-hyderabad-mgbs',
+    name: 'Mahatma Gandhi Bus Station (MGBS)',
+    address: 'MGBS, Gowliguda, Hyderabad, Telangana 500012, India',
+    latitude: 17.3787,
+    longitude: 78.4807,
   },
   {
-    placeId: 'fallback-devarakonda',
-    name: 'Devarakonda',
-    address: 'Devarakonda, Nalgonda District, Telangana, India',
-    latitude: 16.6983,
-    longitude: 78.9324,
+    placeId: 'fallback-hyderabad-jbs',
+    name: 'Jubilee Bus Station (JBS)',
+    address: 'JBS, Secunderabad, Hyderabad, Telangana 500003, India',
+    latitude: 17.4478,
+    longitude: 78.4984,
   },
   {
     placeId: 'fallback-hyderabad',
@@ -41,13 +76,6 @@ const FALLBACK_PLACES: GoTogetherLocation[] = [
     longitude: 78.3489,
   },
   {
-    placeId: 'fallback-hitech-city',
-    name: 'HITECH City',
-    address: 'HITECH City, Madhapur, Hyderabad, Telangana, India',
-    latitude: 17.4435,
-    longitude: 78.3772,
-  },
-  {
     placeId: 'fallback-nizamabad',
     name: 'Nizamabad',
     address: 'Nizamabad, Telangana, India',
@@ -55,81 +83,129 @@ const FALLBACK_PLACES: GoTogetherLocation[] = [
     longitude: 78.0941,
   },
   {
-    placeId: 'fallback-warangal',
-    name: 'Warangal',
-    address: 'Warangal, Telangana, India',
-    latitude: 17.9689,
-    longitude: 79.5941,
+    placeId: 'fallback-warangal-bus-stand',
+    name: 'Warangal Hanamkonda Bus Stand',
+    address: 'Hanamkonda Bus Station, Warangal, Telangana 506001, India',
+    latitude: 17.9942,
+    longitude: 79.5583,
   },
 ];
 
 /**
- * Fetch Worldwide Places Autocomplete Suggestions (Google Places API + OpenStreetMap Nominatim Global Engine)
+ * Normalize and expand search queries (handles "busstand" -> "bus stand", district + town combinations)
+ */
+function expandSearchTerms(query: string): string[] {
+  const clean = query.trim().toLowerCase();
+  const queries = [clean];
+
+  // Expand "busstand" or "bus stand"
+  if (clean.includes('busstand') || clean.includes('bus stand') || clean.includes('busstop')) {
+    const base = clean.replace('busstand', '').replace('bus stand', '').replace('busstop', '').trim();
+    if (base) {
+      queries.push(`${base} bus stand`);
+      queries.push(`${base} bus station`);
+      queries.push(`${base} tsrtc bus stand`);
+    }
+  }
+
+  // Handle multi-word queries like "nizamabad bodhan" -> "bodhan, nizamabad"
+  const words = clean.split(/\s+/).filter(w => w.length > 1);
+  if (words.length >= 2) {
+    queries.push(words.join(', '));
+    queries.push(`${words[1]}, ${words[0]}`);
+  }
+
+  return [...new Set(queries)];
+}
+
+/**
+ * Fetch Worldwide Places Autocomplete Suggestions (Google Places + OpenStreetMap Nominatim + Multi-Token Parsing)
  */
 export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutocompleteSuggestion[]> {
   if (!query || query.trim().length < 2) return [];
 
-  const cleanQuery = query.trim();
+  const searchVariants = expandSearchTerms(query);
+  const results: PlaceAutocompleteSuggestion[] = [];
+  const seenPlaceIds = new Set<string>();
 
-  // 1. Try Google Places API first if Key is present
+  // Helper to add suggestion uniquely
+  const addSuggestion = (item: PlaceAutocompleteSuggestion) => {
+    if (!seenPlaceIds.has(item.placeId)) {
+      seenPlaceIds.add(item.placeId);
+      results.push(item);
+    }
+  };
+
+  // 1. Try Google Places API for query variants
   if (GOOGLE_MAPS_API_KEY) {
+    for (const q of searchVariants.slice(0, 2)) {
+      try {
+        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&types=geocode|establishment&key=${GOOGLE_MAPS_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.status === 'OK' && Array.isArray(data.predictions)) {
+          data.predictions.forEach((p: any) => {
+            addSuggestion({
+              placeId: p.place_id,
+              name: p.structured_formatting?.main_text || p.description.split(',')[0],
+              address: p.description,
+              secondaryText: p.structured_formatting?.secondary_text || '',
+            });
+          });
+        }
+      } catch (err) {
+        console.warn('Google Places Autocomplete API error:', err);
+      }
+    }
+  }
+
+  // 2. Query Nominatim OpenStreetMap for search variants
+  for (const q of searchVariants) {
+    if (results.length >= 10) break;
     try {
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(cleanQuery)}&types=geocode|establishment&key=${GOOGLE_MAPS_API_KEY}`;
-      const res = await fetch(url);
+      const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=8`;
+      const res = await fetch(nomUrl, {
+        headers: {
+          'User-Agent': 'GoTogetherMobileApp/1.0',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+      });
       const data = await res.json();
 
-      if (data.status === 'OK' && Array.isArray(data.predictions) && data.predictions.length > 0) {
-        return data.predictions.map((p: any) => ({
-          placeId: p.place_id,
-          name: p.structured_formatting?.main_text || p.description.split(',')[0],
-          address: p.description,
-          secondaryText: p.structured_formatting?.secondary_text || '',
-        }));
+      if (Array.isArray(data)) {
+        data.forEach((item: any) => {
+          const mainName = item.name || item.address?.bus_stop || item.address?.amenity || item.address?.city || item.address?.town || item.address?.village || item.display_name.split(',')[0];
+          const fullAddr = item.display_name;
+          addSuggestion({
+            placeId: `nom-${item.place_id}-${item.lat}-${item.lon}`,
+            name: mainName,
+            address: fullAddr,
+            secondaryText: fullAddr.replace(`${mainName}, `, ''),
+          });
+        });
       }
     } catch (err) {
-      console.warn('Google Places Autocomplete API call failed:', err);
+      console.warn('Nominatim search call failed:', err);
     }
   }
 
-  // 2. Query Nominatim Global OpenStreetMap Geocoding Engine (1.2+ Billion worldwide addresses)
-  try {
-    const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanQuery)}&format=json&addressdetails=1&limit=10`;
-    const res = await fetch(nomUrl, {
-      headers: {
-        'User-Agent': 'GoTogetherMobileApp/1.0',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-    });
-    const data = await res.json();
-
-    if (Array.isArray(data) && data.length > 0) {
-      return data.map((item: any) => {
-        const mainName = item.name || item.address?.city || item.address?.town || item.address?.village || item.display_name.split(',')[0];
-        const fullAddr = item.display_name;
-        return {
-          placeId: `nom-${item.place_id}-${item.lat}-${item.lon}`,
-          name: mainName,
-          address: fullAddr,
-          secondaryText: fullAddr.replace(`${mainName}, `, ''),
-        };
+  // 3. Fallback matching over regional places list with token matching
+  const cleanTokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+  FALLBACK_PLACES.forEach(p => {
+    const haystack = `${p.name} ${p.address}`.toLowerCase();
+    const allTokensMatch = cleanTokens.every(t => haystack.includes(t));
+    if (allTokensMatch) {
+      addSuggestion({
+        placeId: p.placeId || `loc-${p.latitude}-${p.longitude}`,
+        name: p.name,
+        address: p.address,
+        secondaryText: p.address.replace(`${p.name}, `, ''),
       });
     }
-  } catch (err) {
-    console.warn('Nominatim Global Autocomplete call failed:', err);
-  }
+  });
 
-  // 3. Fallback search over local places list
-  const cleanLower = cleanQuery.toLowerCase();
-  const matches = FALLBACK_PLACES.filter(
-    p => p.name.toLowerCase().includes(cleanLower) || p.address.toLowerCase().includes(cleanLower)
-  );
-
-  return matches.map(p => ({
-    placeId: p.placeId || `loc-${p.latitude}-${p.longitude}`,
-    name: p.name,
-    address: p.address,
-    secondaryText: p.address.replace(`${p.name}, `, ''),
-  }));
+  return results.slice(0, 10);
 }
 
 /**
