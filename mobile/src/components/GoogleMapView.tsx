@@ -1,8 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
-
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+import { Ionicons } from '@expo/vector-icons';
 
 interface GoogleMapViewProps {
   latitude: number;
@@ -31,6 +30,18 @@ export function GoogleMapView({
     }
   }, [latitude, longitude]);
 
+  const handleZoomIn = () => {
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript('if(window.map){ window.map.zoomIn(); }');
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript('if(window.map){ window.map.zoomOut(); }');
+    }
+  };
+
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -46,12 +57,7 @@ export function GoogleMapView({
             background-color: #f8fafc;
           }
           .leaflet-control-attribution {
-            font-family: Roboto, Arial, sans-serif;
-            font-size: 10px;
-            color: #5f6368;
-            background: rgba(255, 255, 255, 0.8) !important;
-            padding: 2px 6px !important;
-            border-radius: 4px;
+            display: none !important;
           }
           .google-logo {
             position: absolute;
@@ -75,6 +81,11 @@ export function GoogleMapView({
             window.map = L.map('map', {
               zoomControl: false,
               attributionControl: false,
+              touchZoom: true,
+              scrollWheelZoom: true,
+              doubleClickZoom: true,
+              boxZoom: true,
+              dragging: true,
               fadeAnimation: true,
               zoomAnimation: true
             }).setView([${latitude}, ${longitude}], ${zoom});
@@ -121,6 +132,17 @@ export function GoogleMapView({
           } catch {}
         }}
       />
+
+      {/* Floating Zoom Controls (+ and - buttons) */}
+      <View style={styles.zoomControlsContainer}>
+        <TouchableOpacity style={styles.zoomBtn} onPress={handleZoomIn} activeOpacity={0.8}>
+          <Ionicons name="add" size={20} color="#0F172A" />
+        </TouchableOpacity>
+        <View style={styles.zoomDivider} />
+        <TouchableOpacity style={styles.zoomBtn} onPress={handleZoomOut} activeOpacity={0.8}>
+          <Ionicons name="remove" size={20} color="#0F172A" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -132,5 +154,30 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  zoomControlsContainer: {
+    position: 'absolute',
+    top: 70,
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5,
+    zIndex: 30,
+  },
+  zoomBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  zoomDivider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
   },
 });
