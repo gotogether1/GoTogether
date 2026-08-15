@@ -7,11 +7,9 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
-  Animated,
-  Image,
   Platform,
 } from 'react-native';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { UrlTile } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoTogetherLocation, PlaceAutocompleteSuggestion } from '../types/location';
@@ -22,8 +20,6 @@ import {
   getCurrentDeviceLocation,
 } from '../services/locationService';
 import { Colors, Spacing, Typography } from '../theme';
-
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 interface LocationPickerProps {
   title: string;
@@ -160,13 +156,6 @@ export function LocationPicker({
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
-  // Fallback map tile imagery using OpenStreetMap / Static Maps if native provider is loading
-  const osmStaticUri = `https://a.tile.openstreetmap.org/15/${Math.floor(
-    ((selectedLocation.longitude + 180) / 360) * Math.pow(2, 15)
-  )}/${Math.floor(
-    ((1 - Math.log(Math.tan((selectedLocation.latitude * Math.PI) / 180) + 1 / Math.cos((selectedLocation.latitude * Math.PI) / 180)) / Math.PI) / 2) * Math.pow(2, 15)
-  )}.png`;
-
   return (
     <View style={styles.container}>
       {/* Search & Header Bar */}
@@ -257,13 +246,11 @@ export function LocationPicker({
         )}
       </View>
 
-      {/* Native Google Map Canvas with Fixed Center Pin */}
+      {/* Native Interactive Map Canvas with Fixed Center Pin */}
       <View style={styles.mapCanvas}>
-        {/* Real Native MapView Container */}
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFill}
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
           initialRegion={{
             latitude: selectedLocation.latitude,
             longitude: selectedLocation.longitude,
@@ -274,7 +261,14 @@ export function LocationPicker({
           showsUserLocation={true}
           showsMyLocationButton={false}
           showsCompass={false}
-        />
+        >
+          {/* Tile Layer Overlay guaranteeing full street maps load in Expo Go & Standalone */}
+          <UrlTile
+            urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maximumZ={19}
+            flipY={false}
+          />
+        </MapView>
 
         {/* Fixed Center Pin & Location Card */}
         <View style={styles.centerPinContainer} pointerEvents="none">

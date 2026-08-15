@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoTogetherLocation, RouteOption } from '../types/location';
@@ -67,7 +67,6 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFill}
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
           initialRegion={{
             latitude: (origin.latitude + destination.latitude) / 2,
             longitude: (origin.longitude + destination.longitude) / 2,
@@ -75,6 +74,12 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
             longitudeDelta: Math.abs(origin.longitude - destination.longitude) * 1.5 || 0.05,
           }}
         >
+          <UrlTile
+            urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maximumZ={19}
+            flipY={false}
+          />
+
           {/* Pickup Marker */}
           <Marker
             coordinate={{ latitude: origin.latitude, longitude: origin.longitude }}
