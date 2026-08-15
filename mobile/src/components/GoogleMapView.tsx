@@ -2,6 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+
 interface GoogleMapViewProps {
   latitude: number;
   longitude: number;
@@ -43,16 +45,31 @@ export function GoogleMapView({
             padding: 0;
             background-color: #f8fafc;
           }
-          .leaflet-control-container .leaflet-routing-container-hide {
-            display: none !important;
-          }
           .leaflet-control-attribution {
-            display: none !important;
+            font-family: Roboto, Arial, sans-serif;
+            font-size: 10px;
+            color: #5f6368;
+            background: rgba(255, 255, 255, 0.8) !important;
+            padding: 2px 6px !important;
+            border-radius: 4px;
+          }
+          .google-logo {
+            position: absolute;
+            bottom: 8px;
+            left: 10px;
+            z-index: 1000;
+            pointer-events: none;
+          }
+          .google-logo img {
+            height: 18px;
           }
         </style>
       </head>
       <body>
         <div id="map"></div>
+        <div class="google-logo">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" />
+        </div>
         <script>
           function initMap() {
             window.map = L.map('map', {
@@ -62,9 +79,10 @@ export function GoogleMapView({
               zoomAnimation: true
             }).setView([${latitude}, ${longitude}], ${zoom});
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              maxZoom: 19,
-              subdomains: ['a', 'b', 'c']
+            // Official Google Maps Vector Roadmap Tiles
+            L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+              maxZoom: 20,
+              subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
             }).addTo(window.map);
 
             window.map.on('moveend', function() {
