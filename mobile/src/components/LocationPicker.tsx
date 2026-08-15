@@ -247,7 +247,7 @@ export function LocationPicker({
           </View>
         </View>
 
-        {/* GPS Locate Button (Clean Stack Position) */}
+        {/* GPS Locate Button */}
         <TouchableOpacity
           style={[styles.gpsLocateBtn, { bottom: bottomInset + 80 }]}
           onPress={handleUseCurrentLocation}
@@ -256,14 +256,14 @@ export function LocationPicker({
           <Ionicons name="locate" size={22} color={Colors.primary} />
         </TouchableOpacity>
 
-        {/* Floating Confirm Button (Blue Arrow Button - Clean Bottom Position) */}
+        {/* Floating Confirm Button (Direction Arrow Button) */}
         <View style={[styles.bottomBarContainer, { paddingBottom: bottomInset + 10 }]}>
           <TouchableOpacity
             style={styles.floatingArrowBtn}
             onPress={() => onConfirm(selectedLocation)}
             activeOpacity={0.88}
           >
-            <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-forward" size={26} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
