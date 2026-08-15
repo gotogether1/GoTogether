@@ -88,11 +88,16 @@ export function GoogleMapView({
         </div>
         <script>
           function initMap() {
+            var wideBounds = L.latLngBounds(L.latLng(-85, -540), L.latLng(85, 540));
+
             window.map = L.map('map', {
               zoomControl: false,
               attributionControl: false,
               minZoom: 3,
               maxZoom: 19,
+              maxBounds: wideBounds,
+              maxBoundsViscosity: 0.8,
+              worldCopyJump: true,
               touchZoom: 'center',
               bounceAtZoomLimits: false,
               scrollWheelZoom: true,
@@ -107,20 +112,22 @@ export function GoogleMapView({
               zoomAnimation: true
             }).setView([${latitude}, ${longitude}], ${zoom});
 
-            // Official Google Maps Vector Roadmap Tiles
+            // Official Google Maps Vector Roadmap Tiles with continuous 360-degree wrapping
             L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
               minZoom: 3,
               maxZoom: 19,
+              noWrap: false,
               subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
             }).addTo(window.map);
 
             window.map.on('moveend', function() {
               var center = window.map.getCenter();
+              var normalizedLng = ((center.lng + 180) % 360 + 360) % 360 - 180;
               if (window.ReactNativeWebView) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                   type: 'centerChange',
                   lat: center.lat,
-                  lng: center.lng
+                  lng: normalizedLng
                 }));
               }
             });
