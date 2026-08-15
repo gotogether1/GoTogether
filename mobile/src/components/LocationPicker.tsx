@@ -46,11 +46,11 @@ export function LocationPicker({
 
   const [selectedLocation, setSelectedLocation] = useState<GoTogetherLocation>(
     initialLocation || {
-      placeId: 'banswada-default',
-      name: 'Current Location (Banswada, Telangana)',
-      address: 'Banswada, Telangana',
-      latitude: 18.3842,
-      longitude: 77.8821,
+      placeId: 'default-hyderabad',
+      name: 'Hyderabad',
+      address: 'Hyderabad, Telangana, India',
+      latitude: 17.3850,
+      longitude: 78.4867,
     }
   );
 
@@ -121,15 +121,15 @@ export function LocationPicker({
     setLoadingSuggestions(true);
 
     try {
-      const details = await fetchPlaceDetails(s.placeId, s.name);
+      const details = await fetchPlaceDetails(s.placeId, s.name || s.address);
       setSelectedLocation(details);
     } catch {
       setSelectedLocation({
         placeId: s.placeId,
         name: s.name,
         address: s.address,
-        latitude: 18.3842,
-        longitude: 77.8821,
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
       });
     } finally {
       setLoadingSuggestions(false);
@@ -153,7 +153,7 @@ export function LocationPicker({
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
-  // Google Static Map Tiles URL
+  // Google Static Map Tiles URL centered on selectedLocation coordinates
   const staticMapUri = GOOGLE_MAPS_API_KEY
     ? `https://maps.googleapis.com/maps/api/staticmap?center=${selectedLocation.latitude},${selectedLocation.longitude}&zoom=15&size=800x800&scale=2&maptype=roadmap&key=${GOOGLE_MAPS_API_KEY}`
     : null;
@@ -184,6 +184,18 @@ export function LocationPicker({
               setIsSearching(true);
             }}
             onFocus={() => setIsSearching(true)}
+            onSubmitEditing={async () => {
+              if (searchQuery.trim().length > 2) {
+                setIsSearching(false);
+                setLoadingSuggestions(true);
+                try {
+                  const details = await fetchPlaceDetails(searchQuery.trim(), searchQuery.trim());
+                  setSelectedLocation(details);
+                } finally {
+                  setLoadingSuggestions(false);
+                }
+              }
+            }}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity

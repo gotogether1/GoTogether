@@ -23,21 +23,8 @@ export default function OfferRideScreen() {
   // Form State with Structured Location Objects
   const [vehicleType, setVehicleType] = useState<'carpool' | 'bike_pool'>('carpool');
 
-  const [pickupLocation, setPickupLocation] = useState<GoTogetherLocation>({
-    placeId: 'fallback-banswada',
-    name: 'Current Location (Banswada, Telangana)',
-    address: 'Banswada, Kamareddy District, Telangana, India',
-    latitude: 18.3842,
-    longitude: 77.8821,
-  });
-
-  const [dropoffLocation, setDropoffLocation] = useState<GoTogetherLocation>({
-    placeId: 'fallback-ibrahimpet',
-    name: 'Ibrahimpet',
-    address: 'Ibrahimpet, Telangana 503187, India',
-    latitude: 18.3965,
-    longitude: 77.9124,
-  });
+  const [pickupLocation, setPickupLocation] = useState<GoTogetherLocation | undefined>(undefined);
+  const [dropoffLocation, setDropoffLocation] = useState<GoTogetherLocation | undefined>(undefined);
 
   const [selectedRoute, setSelectedRoute] = useState<RouteOption | null>(null);
   const [stopovers, setStopovers] = useState<string[]>([]);
@@ -84,6 +71,11 @@ export default function OfferRideScreen() {
         { text: 'Log In', onPress: () => router.replace('/auth/login') },
         { text: 'Cancel', style: 'cancel' },
       ]);
+      return;
+    }
+
+    if (!pickupLocation || !dropoffLocation) {
+      Alert.alert('Incomplete Trip', 'Please select both pick-up and drop-off locations.');
       return;
     }
 
@@ -149,7 +141,7 @@ export default function OfferRideScreen() {
       )}
 
       {/* STEP 3: WHAT IS YOUR ROUTE? (GOOGLE ROUTES API CALCULATED OPTIONS) */}
-      {step === 3 && (
+      {step === 3 && pickupLocation && dropoffLocation && (
         <RouteSelector
           origin={pickupLocation}
           destination={dropoffLocation}
@@ -265,12 +257,14 @@ export default function OfferRideScreen() {
               onChangeText={setVehicleDetails}
             />
 
-            <View style={styles.summaryBox}>
-              <Text style={styles.summaryTitle}>Trip Route Summary</Text>
-              <Text style={styles.summaryItem}>📍 Pickup: {pickupLocation.name}</Text>
-              <Text style={styles.summaryItem}>🏁 Drop-off: {dropoffLocation.name}</Text>
-              <Text style={styles.summaryItem}>🛣️ Route: {selectedRoute?.viaRoads || 'Fastest Route'}</Text>
-            </View>
+            {pickupLocation && dropoffLocation && (
+              <View style={styles.summaryBox}>
+                <Text style={styles.summaryTitle}>Trip Route Summary</Text>
+                <Text style={styles.summaryItem}>📍 Pickup: {pickupLocation.name}</Text>
+                <Text style={styles.summaryItem}>🏁 Drop-off: {dropoffLocation.name}</Text>
+                <Text style={styles.summaryItem}>🛣️ Route: {selectedRoute?.viaRoads || 'Fastest Route'}</Text>
+              </View>
+            )}
 
             <Button
               title="Publish Ride Offer"

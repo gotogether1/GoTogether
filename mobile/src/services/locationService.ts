@@ -105,39 +105,65 @@ export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutoc
 }
 
 /**
- * Get Location details from placeId or fallback
+ * Get Location details from placeId or geocode place name
  */
 export async function fetchPlaceDetails(placeId: string, fallbackName?: string): Promise<GoTogetherLocation> {
-  if (GOOGLE_MAPS_API_KEY && placeId && !placeId.startsWith('fallback-')) {
-    try {
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=place_id,name,formatted_address,geometry&key=${GOOGLE_MAPS_API_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (data.status === 'OK' && data.result) {
-        const r = data.result;
-        return {
-          placeId: r.place_id,
-          name: r.name || fallbackName || 'Selected Location',
-          address: r.formatted_address || '',
-          latitude: r.geometry.location.lat,
-          longitude: r.geometry.location.lng,
-        };
-      }
-    } catch (err) {
-      console.warn('Google Place Details API failed:', err);
-    }
-  }
-
   const match = FALLBACK_PLACES.find(p => p.placeId === placeId);
   if (match) return match;
+
+  if (GOOGLE_MAPS_API_KEY) {
+    // First try Google Place Details API by place_id
+    if (placeId && !placeId.startsWith('fallback-') && !placeId.startsWith('loc-')) {
+      try {
+        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=place_id,name,formatted_address,geometry&key=${GOOGLE_MAPS_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.status === 'OK' && data.result && data.result.geometry) {
+          const r = data.result;
+          return {
+            placeId: r.place_id,
+            name: r.name || fallbackName || 'Selected Location',
+            address: r.formatted_address || '',
+            latitude: r.geometry.location.lat,
+            longitude: r.geometry.location.lng,
+          };
+        }
+      } catch (err) {
+        console.warn('Google Place Details API failed, trying Geocoding API:', err);
+      }
+    }
+
+    // Secondary try Google Geocoding API by address string
+    if (fallbackName || placeId) {
+      try {
+        const queryText = fallbackName || placeId;
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(queryText)}&key=${GOOGLE_MAPS_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.status === 'OK' && data.results && data.results.length > 0) {
+          const topResult = data.results[0];
+          return {
+            placeId: topResult.place_id,
+            name: topResult.address_components?.[0]?.long_name || fallbackName || 'Selected Location',
+            address: topResult.formatted_address,
+            latitude: topResult.geometry.location.lat,
+            longitude: topResult.geometry.location.lng,
+          };
+        }
+      } catch (err) {
+        console.warn('Google Geocoding address fetch failed:', err);
+      }
+    }
+  }
 
   return {
     placeId,
     name: fallbackName || 'Selected Location',
     address: `${fallbackName || 'Selected Point'}, Telangana, India`,
-    latitude: 18.3842,
-    longitude: 77.8821,
+    latitude: 17.3850, // Default to Telangana hub (Hyderabad) instead of hardcoding Banswada
+    longitude: 78.4867,
   };
 }
 
@@ -221,7 +247,7 @@ export async function getCurrentDeviceLocation(): Promise<GoTogetherLocation> {
     const geocoded = await reverseGeocode(lat, lng);
     return {
       ...geocoded,
-      name: geocoded.name !== 'Pinned Point' ? geocoded.name : 'Current Location (Banswada, Telangana)',
+      name: geocoded.name !== 'Pinned Point' ? geocoded.name : 'Current Location',
     };
   } catch (err) {
     console.warn('Current device GPS failed, returning default location:', err);
