@@ -7,7 +7,7 @@ import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
 import { EmptyState } from '../../src/components/loading/EmptyState';
-import { useRideDetailQuery } from '../../src/api/hooks';
+import { useRideDetailQuery, useCreateBookingMutation } from '../../src/api/hooks';
 import { Colors, Spacing, Typography } from '../../src/theme';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { safeBack } from '../../src/utils/navigation';
@@ -19,6 +19,7 @@ export default function RideDetailsScreen() {
   const { id } = useLocalSearchParams();
 
   const { data: ride, isLoading } = useRideDetailQuery((id as string) || '');
+  const createBookingMutation = useCreateBookingMutation();
 
   const [requesting, setRequesting] = useState(false);
   const [negotiating, setNegotiating] = useState(false);
@@ -37,7 +38,9 @@ export default function RideDetailsScreen() {
     }
   };
 
-  const handleBookingSubmit = () => {
+  const isDriver = !!user && !!ride && (user.uid === ride.driverId || `usr_${user.uid}` === ride.driverId);
+
+  const handleBookingSubmit = async () => {
     if (!user) {
       Alert.alert(
         'Login Required',
@@ -50,15 +53,28 @@ export default function RideDetailsScreen() {
       return;
     }
 
+    if (isDriver) {
+      Alert.alert('Action Restricted', 'Drivers cannot book seats on their own published ride.');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await createBookingMutation.mutateAsync({
+        rideId: ride.id,
+        seatsRequested: parseInt(requestedSeats, 10) || 1,
+        riderMessage: message,
+      });
       setLoading(false);
       setBookingSubmitted(true);
       Alert.alert('Booking Request Sent!', 'The driver will review your request.');
-    }, 600);
+    } catch (err: any) {
+      setLoading(false);
+      Alert.alert('Booking Notice', err.message || 'Unable to submit booking request.');
+    }
   };
 
-  const handleNegotiateSubmit = () => {
+  const handleNegotiateSubmit = async () => {
     if (!user) {
       Alert.alert(
         'Login Required',
@@ -71,12 +87,26 @@ export default function RideDetailsScreen() {
       return;
     }
 
+    if (isDriver) {
+      Alert.alert('Action Restricted', 'Drivers cannot negotiate prices on their own published ride.');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await createBookingMutation.mutateAsync({
+        rideId: ride.id,
+        seatsRequested: 1,
+        negotiatedPrice: parseFloat(negotiatePrice) || 10,
+        riderMessage: `Negotiated price offer: $${negotiatePrice}`,
+      });
       setLoading(false);
       setNegotiating(false);
-      Alert.alert('Price Offer Sent!', 'The driver has received your suggested contribution.');
-    }, 600);
+      Alert.alert('Price Offer Sent!', 'The driver has received your suggested contribution offer.');
+    } catch (err: any) {
+      setLoading(false);
+      Alert.alert('Negotiation Notice', err.message || 'Unable to send price offer.');
+    }
   };
 
   const topInsetHeight = Math.max(insets.top + 12, 42);
@@ -239,8 +269,25 @@ export default function RideDetailsScreen() {
           <Text style={styles.detailItem}><Text style={styles.boldText}>Notes:</Text> {ride.notes || 'No extra notes'}</Text>
         </Card>
 
-        {/* Request / Negotiate Actions */}
-        {bookingSubmitted ? (
+        {/* Action Area: Role-Based Branching */}
+        {isDriver ? (
+          <View style={styles.driverActionBar}>
+            <Card style={styles.ownerCard}>
+              <View style={styles.ownerRow}>
+                <Ionicons name="car-outline" size={22} color={Colors.primary} style={{ marginRight: 10 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.ownerTitle}>You are the Driver of this trip</Text>
+                  <Text style={styles.ownerSubText}>Manage requests and rider bookings from your dashboard.</Text>
+                </View>
+              </View>
+            </Card>
+            <Button
+              title="Manage Passengers & Requests"
+              onPress={() => router.push('/(tabs)/dashboard')}
+              style={{ marginTop: 12 }}
+            />
+          </View>
+        ) : bookingSubmitted ? (
           <View style={styles.submittedBox}>
             <Text style={styles.submittedTitle}>Request Submitted</Text>
             <Text style={styles.submittedText}>
@@ -543,6 +590,30 @@ const styles = StyleSheet.create({
   boldText: {
     fontWeight: '700',
     color: '#0F172A',
+  },
+  driverActionBar: {
+    marginTop: Spacing.md,
+  },
+  ownerCard: {
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  ownerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ownerTitle: {
+    ...Typography.headlineLg,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0369A1',
+  },
+  ownerSubText: {
+    ...Typography.bodyMd,
+    fontSize: 12.5,
+    color: '#0284C7',
+    marginTop: 2,
   },
   bottomActionBar: {
     flexDirection: 'row',
