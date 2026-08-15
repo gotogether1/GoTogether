@@ -17,8 +17,43 @@ export default function RideDetailsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { id } = useLocalSearchParams();
-  const ride = SEED_RIDES.find(r => r.id === id) || SEED_RIDES[0];
-  const driver = SEED_USERS.find(u => u.uid === ride.driverId) || SEED_USERS[0];
+  const defaultRide = {
+    id: typeof id === 'string' ? id : 'ride_default',
+    driverId: 'driver_default',
+    driverName: 'Driver',
+    driverRating: 5.0,
+    driverRideCount: 1,
+    vehicleType: 'carpool' as const,
+    pickup: 'Pickup Location',
+    destination: 'Destination',
+    meetingPoint: 'Meeting Point',
+    departureAt: new Date().toISOString(),
+    totalSeats: 3,
+    availableSeats: 2,
+    suggestedContribution: 15,
+    vehicleDetails: 'Vehicle',
+    rules: 'No smoking',
+    notes: 'Safe commute',
+    status: 'published' as const,
+    pickupLatitude: 17.3850,
+    pickupLongitude: 78.4867,
+    dropoffLatitude: 18.6725,
+    dropoffLongitude: 78.0941,
+  };
+
+  const defaultDriver = {
+    uid: 'driver_default',
+    displayName: 'Driver',
+    email: 'driver@example.com',
+    city: 'Hyderabad',
+    bio: 'Verified GoTogether driver',
+    photoURL: null,
+    averageRating: 5.0,
+    completedRideCount: 1,
+  };
+
+  const ride = SEED_RIDES.find(r => r.id === id) || defaultRide;
+  const driver = SEED_USERS.find(u => u.uid === ride.driverId) || defaultDriver;
 
   const [requesting, setRequesting] = useState(false);
   const [negotiating, setNegotiating] = useState(false);

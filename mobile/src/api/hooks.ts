@@ -12,7 +12,7 @@ export function useRidesQuery(filters?: { vehicleType?: string; pickup?: string;
         const res = await fetchWithAuth(`/v1/rides?${queryParams}`);
         return res.data;
       } catch {
-        // Fallback to local demo data if backend is offline/unreachable
+        // Fallback to local rides state (populated dynamically when user publishes a pool)
         return SEED_RIDES.filter(r => {
           if (filters?.vehicleType && filters.vehicleType !== 'all' && r.vehicleType !== filters.vehicleType) return false;
           if (filters?.pickup && !r.pickup.toLowerCase().includes(filters.pickup.toLowerCase())) return false;
@@ -32,7 +32,25 @@ export function useRideDetailQuery(rideId: string) {
         const res = await fetchWithAuth(`/v1/rides/${rideId}`);
         return res.data;
       } catch {
-        return SEED_RIDES.find(r => r.id === rideId) || SEED_RIDES[0];
+        return SEED_RIDES.find(r => r.id === rideId) || {
+          id: rideId,
+          driverId: 'my_driver_id',
+          driverName: 'You',
+          driverRating: 5.0,
+          driverRideCount: 1,
+          vehicleType: 'carpool',
+          pickup: 'Pickup Location',
+          destination: 'Destination',
+          meetingPoint: 'Main Pick-up Point',
+          departureAt: new Date().toISOString(),
+          totalSeats: 3,
+          availableSeats: 3,
+          suggestedContribution: 15,
+          vehicleDetails: 'My Car',
+          rules: 'No smoking',
+          notes: 'Safe ride',
+          status: 'published',
+        };
       }
     },
   });
@@ -42,10 +60,42 @@ export function useCreateRideMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (rideData: any) => {
-      return fetchWithAuth('/v1/rides', {
-        method: 'POST',
-        body: JSON.stringify(rideData),
-      });
+      try {
+        const res = await fetchWithAuth('/v1/rides', {
+          method: 'POST',
+          body: JSON.stringify(rideData),
+        });
+        if (res.data) {
+          SEED_RIDES.unshift(res.data);
+        }
+        return res.data;
+      } catch {
+        const newRide = {
+          id: `ride_${Date.now()}`,
+          driverId: rideData.driverId || 'my_user_id',
+          driverName: rideData.driverName || 'You',
+          driverRating: 5.0,
+          driverRideCount: 1,
+          vehicleType: rideData.vehicleType || 'carpool',
+          pickup: typeof rideData.pickup === 'object' ? (rideData.pickup.name || rideData.pickup.address) : (rideData.pickup || 'Pickup Location'),
+          destination: typeof rideData.destination === 'object' ? (rideData.destination.name || rideData.destination.address) : (rideData.destination || 'Destination'),
+          meetingPoint: rideData.meetingPoint || 'Main Pick-up Point',
+          departureAt: rideData.departureAt || new Date().toISOString(),
+          totalSeats: rideData.totalSeats || 3,
+          availableSeats: rideData.totalSeats || 3,
+          suggestedContribution: rideData.suggestedContribution || 15,
+          vehicleDetails: rideData.vehicleDetails || 'My Vehicle',
+          rules: rideData.rules || 'No smoking',
+          notes: rideData.notes || '',
+          status: 'published' as const,
+          pickupLatitude: rideData.pickup?.latitude || 17.3850,
+          pickupLongitude: rideData.pickup?.longitude || 78.4867,
+          dropoffLatitude: rideData.destination?.latitude || 18.6725,
+          dropoffLongitude: rideData.destination?.longitude || 78.0941,
+        };
+        SEED_RIDES.unshift(newRide);
+        return newRide;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rides'] });
@@ -53,13 +103,13 @@ export function useCreateRideMutation() {
   });
 }
 
-// 2. Bookings Hooks
-export function useBookingsQuery() {
+// 2. Booking Hooks
+export function useBookingsQuery(type?: 'rider' | 'driver') {
   return useQuery({
-    queryKey: ['bookings'],
+    queryKey: ['bookings', type],
     queryFn: async () => {
       try {
-        const res = await fetchWithAuth('/v1/bookings');
+        const res = await fetchWithAuth(`/v1/bookings?type=${type || 'rider'}`);
         return res.data;
       } catch {
         return SEED_BOOKINGS;
@@ -71,143 +121,38 @@ export function useBookingsQuery() {
 export function useCreateBookingMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ rideId, seatsRequested, riderMessage }: { rideId: string; seatsRequested: number; riderMessage?: string }) => {
-      return fetchWithAuth(`/v1/rides/${rideId}/bookings`, {
-        method: 'POST',
-        body: JSON.stringify({ seatsRequested, riderMessage }),
-      });
+    mutationFn: async (bookingData: any) => {
+      try {
+        const res = await fetchWithAuth('/v1/bookings', {
+          method: 'POST',
+          body: JSON.stringify(bookingData),
+        });
+        if (res.data) {
+          SEED_BOOKINGS.unshift(res.data);
+        }
+        return res.data;
+      } catch {
+        const newBooking = {
+          id: `booking_${Date.now()}`,
+          rideId: bookingData.rideId,
+          riderId: bookingData.riderId || 'my_rider_id',
+          riderName: bookingData.riderName || 'You',
+          driverId: bookingData.driverId || 'driver_id',
+          driverName: bookingData.driverName || 'Driver',
+          seatsRequested: bookingData.seatsRequested || 1,
+          status: 'pending' as const,
+          riderMessage: bookingData.riderMessage || '',
+          pickup: bookingData.pickup || 'Pickup Location',
+          destination: bookingData.destination || 'Destination',
+          departureAt: new Date().toISOString(),
+          vehicleType: bookingData.vehicleType || 'carpool',
+        };
+        SEED_BOOKINGS.unshift(newBooking);
+        return newBooking;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['rides'] });
-    },
-  });
-}
-
-export function useApproveBookingMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (bookingId: string) => {
-      return fetchWithAuth(`/v1/bookings/${bookingId}/approve`, { method: 'POST' });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['rides'] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    },
-  });
-}
-
-export function useRejectBookingMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (bookingId: string) => {
-      return fetchWithAuth(`/v1/bookings/${bookingId}/reject`, { method: 'POST' });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
-    },
-  });
-}
-
-// 3. Direct Chat Hooks
-export function useMessagesQuery(bookingId: string) {
-  return useQuery({
-    queryKey: ['messages', bookingId],
-    queryFn: async () => {
-      try {
-        const res = await fetchWithAuth(`/v1/chats/${bookingId}/messages`);
-        return res.data;
-      } catch {
-        return SEED_MESSAGES.filter(m => m.bookingId === bookingId);
-      }
-    },
-  });
-}
-
-export function useSendMessageMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ bookingId, body }: { bookingId: string; body: string }) => {
-      return fetchWithAuth(`/v1/chats/${bookingId}/messages`, {
-        method: 'POST',
-        body: JSON.stringify({ body }),
-      });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['messages', variables.bookingId] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    },
-  });
-}
-
-// 4. Notifications Hooks
-export function useNotificationsQuery() {
-  return useQuery({
-    queryKey: ['notifications'],
-    queryFn: async () => {
-      try {
-        const res = await fetchWithAuth('/v1/notifications');
-        return res.data;
-      } catch {
-        return SEED_NOTIFICATIONS;
-      }
-    },
-  });
-}
-
-// 5. Profile & Safety Hooks
-export function useUserProfileQuery(userId?: string) {
-  return useQuery({
-    queryKey: ['user', userId],
-    queryFn: async () => {
-      try {
-        const endpoint = userId ? `/v1/users/${userId}` : '/v1/me';
-        const res = await fetchWithAuth(endpoint);
-        return res.data;
-      } catch {
-        return SEED_USERS.find(u => u.uid === userId) || SEED_USERS[0];
-      }
-    },
-  });
-}
-
-export function useCreateReviewMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (reviewData: { bookingId: string; recipientId: string; rating: number; text?: string }) => {
-      return fetchWithAuth('/v1/reviews', {
-        method: 'POST',
-        body: JSON.stringify(reviewData),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
-    },
-  });
-}
-
-export function useCreateReportMutation() {
-  return useMutation({
-    mutationFn: async (reportData: { targetType: string; targetId: string; reason: string; details?: string }) => {
-      return fetchWithAuth('/v1/reports', {
-        method: 'POST',
-        body: JSON.stringify(reportData),
-      });
-    },
-  });
-}
-
-export function useBlockedUsersQuery() {
-  return useQuery({
-    queryKey: ['blockedUsers'],
-    queryFn: async () => {
-      try {
-        const res = await fetchWithAuth('/v1/blocks');
-        return res.data;
-      } catch {
-        return [{ id: 'block_1', uid: 'blocked_user_99', name: 'Spam User' }];
-      }
     },
   });
 }

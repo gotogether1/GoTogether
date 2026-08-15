@@ -14,7 +14,16 @@ export default function RouteMapModalScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { rideId, location } = useLocalSearchParams();
-  const ride: any = SEED_RIDES.find(r => r.id === rideId) || SEED_RIDES[0];
+  const defaultMapRide = {
+    id: typeof rideId === 'string' ? rideId : 'ride_default',
+    pickup: 'Nizamabad',
+    destination: 'Hyderabad',
+    pickupLatitude: 18.6725,
+    pickupLongitude: 78.0941,
+    dropoffLatitude: 17.3850,
+    dropoffLongitude: 78.4867,
+  };
+  const ride: any = SEED_RIDES.find(r => r.id === rideId) || defaultMapRide;
 
   const targetLocation = (typeof location === 'string' && location) || ride.pickup;
 

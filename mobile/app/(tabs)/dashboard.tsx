@@ -25,6 +25,13 @@ export default function DashboardScreen() {
     Alert.alert('Booking Rejected', 'The rider has been notified.');
   };
 
+  const upcomingBookings = bookings.filter(b => b.status === 'approved');
+  const pendingRequests = bookings.filter(b => b.status === 'pending');
+  const pastBookings = bookings.filter(b => b.status === 'completed' || b.status === 'cancelled');
+
+  const activeCount = upcomingBookings.length + SEED_RIDES.filter(r => r.status === 'published').length;
+  const completedCount = pastBookings.length;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -36,15 +43,15 @@ export default function DashboardScreen() {
         {/* Top Summary Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>1</Text>
+            <Text style={styles.statNumber}>{activeCount}</Text>
             <Text style={styles.statLabel}>Active Ride</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>28</Text>
+            <Text style={styles.statNumber}>{completedCount}</Text>
             <Text style={styles.statLabel}>Completed</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statNumber}>★ 4.9</Text>
+            <Text style={styles.statNumber}>★ --</Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
         </View>
@@ -87,109 +94,144 @@ export default function DashboardScreen() {
         {/* TAB 1: UPCOMING APPROVED BOOKINGS */}
         {activeTab === 'upcoming' && (
           <View>
-            {bookings.filter(b => b.status === 'approved').map(b => (
-              <View key={b.id} style={styles.cardItem}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.approvedBadge}>
-                    <Text style={styles.approvedBadgeText}>CONFIRMED</Text>
+            {upcomingBookings.length === 0 ? (
+              <EmptyState
+                title="No Upcoming Rides"
+                message="You don't have any confirmed rides right now. Search for rides or publish one!"
+                actionLabel="Publish Ride"
+                onAction={() => router.push('/(tabs)/offer')}
+              />
+            ) : (
+              upcomingBookings.map(b => (
+                <View key={b.id} style={styles.cardItem}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.approvedBadge}>
+                      <Text style={styles.approvedBadgeText}>CONFIRMED</Text>
+                    </View>
+                    <Text style={styles.dateText}>{new Date(b.departureAt).toLocaleDateString()}</Text>
                   </View>
-                  <Text style={styles.dateText}>{new Date(b.departureAt).toLocaleDateString()}</Text>
+
+                  <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
+                  <Text style={styles.subText}>Driver: {b.driverName} • 1 seat approved</Text>
+
+                  <Button
+                    title="Chat with Driver"
+                    onPress={() => router.push(`/chat/${b.id}`)}
+                    style={styles.chatBtn}
+                  />
                 </View>
-
-                <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
-                <Text style={styles.subText}>Driver: {b.driverName} • 1 seat approved</Text>
-
-                <Button
-                  title="Chat with Driver"
-                  onPress={() => router.push(`/chat/${b.id}`)}
-                  style={styles.chatBtn}
-                />
-              </View>
-            ))}
+              ))
+            )}
           </View>
         )}
 
         {/* TAB 2: PENDING PASSENGER REQUESTS */}
         {activeTab === 'requests' && (
           <View>
-            {bookings.map(b => (
-              <View key={b.id} style={styles.cardItem}>
-                <View style={styles.cardHeader}>
-                  <View
-                    style={[
-                      styles.statusPill,
-                      b.status === 'approved' && styles.approvedPill,
-                      b.status === 'pending' && styles.pendingPill,
-                      b.status === 'rejected' && styles.rejectedPill,
-                    ]}
-                  >
-                    <Text
+            {bookings.length === 0 ? (
+              <EmptyState
+                title="No Booking Requests"
+                message="No passengers have requested seats yet. Published rides will appear here."
+              />
+            ) : (
+              bookings.map(b => (
+                <View key={b.id} style={styles.cardItem}>
+                  <View style={styles.cardHeader}>
+                    <View
                       style={[
-                        styles.statusPillText,
-                        b.status === 'approved' && styles.approvedPillText,
-                        b.status === 'pending' && styles.pendingPillText,
-                        b.status === 'rejected' && styles.rejectedPillText,
+                        styles.statusPill,
+                        b.status === 'approved' && styles.approvedPill,
+                        b.status === 'pending' && styles.pendingPill,
+                        b.status === 'rejected' && styles.rejectedPill,
                       ]}
                     >
-                      {b.status.toUpperCase()}
-                    </Text>
+                      <Text
+                        style={[
+                          styles.statusPillText,
+                          b.status === 'approved' && styles.approvedPillText,
+                          b.status === 'pending' && styles.pendingPillText,
+                          b.status === 'rejected' && styles.rejectedPillText,
+                        ]}
+                      >
+                        {b.status.toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text style={styles.dateText}>{b.seatsRequested} seat(s) requested</Text>
                   </View>
-                  <Text style={styles.dateText}>{b.seatsRequested} seat(s) requested</Text>
+
+                  <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
+                  <Text style={styles.subText}>Rider: {b.riderName}</Text>
+                  {b.riderMessage ? <Text style={styles.riderMsg}>"{b.riderMessage}"</Text> : null}
+
+                  {b.status === 'pending' && (
+                    <View style={styles.actionBtns}>
+                      <Button title="Approve" onPress={() => handleApprove(b.id)} style={styles.approveBtn} />
+                      <Button title="Reject" variant="danger" onPress={() => handleReject(b.id)} style={styles.rejectBtn} />
+                    </View>
+                  )}
+
+                  {b.status === 'approved' && (
+                    <Button
+                      title="Chat with Rider"
+                      onPress={() => router.push(`/chat/${b.id}`)}
+                      style={styles.chatBtn}
+                    />
+                  )}
                 </View>
-
-                <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
-                <Text style={styles.subText}>Rider: {b.riderName}</Text>
-                {b.riderMessage ? <Text style={styles.riderMsg}>"{b.riderMessage}"</Text> : null}
-
-                {b.status === 'pending' && (
-                  <View style={styles.actionBtns}>
-                    <Button title="Approve" onPress={() => handleApprove(b.id)} style={styles.approveBtn} />
-                    <Button title="Reject" variant="danger" onPress={() => handleReject(b.id)} style={styles.rejectBtn} />
-                  </View>
-                )}
-
-                {b.status === 'approved' && (
-                  <Button
-                    title="Chat with Rider"
-                    onPress={() => router.push(`/chat/${b.id}`)}
-                    style={styles.chatBtn}
-                  />
-                )}
-              </View>
-            ))}
+              ))
+            )}
           </View>
         )}
 
         {/* TAB 3: DRIVER'S OWN OFFERED RIDES */}
         {activeTab === 'offers' && (
           <View>
-            {SEED_RIDES.map(r => (
-              <TouchableOpacity
-                key={r.id}
-                style={styles.cardItem}
-                onPress={() => router.push(`/ride/${r.id}`)}
-                activeOpacity={0.88}
-              >
-                <View style={styles.cardHeader}>
-                  <View style={styles.typeBadge}>
-                    <Text style={styles.typeBadgeText}>{r.vehicleType.toUpperCase()}</Text>
+            {SEED_RIDES.length === 0 ? (
+              <EmptyState
+                title="No Published Rides"
+                message="Offer a ride to start carpooling or bike pooling with verified commuters!"
+                actionLabel="Publish a Ride"
+                onAction={() => router.push('/(tabs)/offer')}
+              />
+            ) : (
+              SEED_RIDES.map(r => (
+                <TouchableOpacity
+                  key={r.id}
+                  style={styles.cardItem}
+                  onPress={() => router.push(`/ride/${r.id}`)}
+                  activeOpacity={0.88}
+                >
+                  <View style={styles.cardHeader}>
+                    <View style={styles.typeBadge}>
+                      <Text style={styles.typeBadgeText}>{r.vehicleType.toUpperCase()}</Text>
+                    </View>
+                    <Text style={styles.dateText}>{r.availableSeats} of {r.totalSeats} seats open</Text>
                   </View>
-                  <Text style={styles.dateText}>{r.availableSeats} of {r.totalSeats} seats open</Text>
-                </View>
-                <Text style={styles.routeText}>{r.pickup} → {r.destination}</Text>
-                <Text style={styles.subText}>Departure: {new Date(r.departureAt).toLocaleTimeString()}</Text>
-              </TouchableOpacity>
-            ))}
+                  <Text style={styles.routeText}>{r.pickup} → {r.destination}</Text>
+                  <Text style={styles.subText}>Departure: {new Date(r.departureAt).toLocaleTimeString()}</Text>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         )}
 
-        {/* TAB 4: PAST COMPLETED RIDES */}
+        {/* TAB 4: PAST RIDES */}
         {activeTab === 'past' && (
-          <EmptyState
-            icon="document-text-outline"
-            title="No Past Completed Rides"
-            message="Your completed trips and history will be archived here."
-          />
+          <View>
+            {pastBookings.length === 0 ? (
+              <EmptyState
+                title="No Past Rides"
+                message="Your completed and past trip history will show up here."
+              />
+            ) : (
+              pastBookings.map(b => (
+                <View key={b.id} style={styles.cardItem}>
+                  <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
+                  <Text style={styles.subText}>Status: {b.status.toUpperCase()}</Text>
+                </View>
+              ))
+            )}
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -202,180 +244,165 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   container: {
-    padding: Spacing.md,
-    paddingBottom: Spacing.xl * 2,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: 40,
   },
   pageTitle: {
-    ...Typography.displayLg,
+    ...Typography.headlineLg,
     fontSize: 28,
-    color: Colors.onBackground,
-    fontWeight: '800',
-    marginTop: Spacing.xs,
+    fontWeight: '900',
+    color: '#0F172A',
     marginBottom: Spacing.md,
-    letterSpacing: -0.5,
   },
   statsRow: {
     flexDirection: 'row',
     gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   statBox: {
     flex: 1,
-    backgroundColor: Colors.surface,
-    padding: Spacing.md,
-    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
   },
   statNumber: {
     ...Typography.headlineLg,
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: '900',
     color: Colors.primary,
   },
   statLabel: {
-    ...Typography.labelSm,
+    ...Typography.bodyMd,
+    fontSize: 12,
     color: Colors.onSurfaceVariant,
     marginTop: 2,
   },
   segmentedControl: {
     flexDirection: 'row',
     backgroundColor: '#E2E8F0',
-    padding: 3,
-    borderRadius: 14,
-    marginBottom: Spacing.md,
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: Spacing.lg,
   },
   segmentBtn: {
     flex: 1,
     paddingVertical: 8,
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
   },
   segmentActive: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   segmentText: {
-    ...Typography.labelSm,
+    ...Typography.labelLg,
+    fontSize: 12.5,
     fontWeight: '600',
     color: Colors.onSurfaceVariant,
   },
   segmentTextActive: {
     color: Colors.primary,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   cardItem: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: Spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: Spacing.md + 2,
     marginBottom: Spacing.md,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 4,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: 8,
   },
   approvedBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 8,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderRadius: 12,
   },
   approvedBadgeText: {
     ...Typography.labelSm,
-    color: '#047857',
-    fontWeight: '700',
+    color: '#15803D',
+    fontWeight: '800',
   },
   statusPill: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
   },
-  statusPillText: {
-    ...Typography.labelSm,
-    fontWeight: '700',
-  },
-  approvedPill: {
-    backgroundColor: '#ECFDF5',
-  },
-  approvedPillText: {
-    color: '#047857',
-  },
-  pendingPill: {
-    backgroundColor: '#FEF3C7',
-  },
-  pendingPillText: {
-    color: '#D97706',
-  },
-  rejectedPill: {
-    backgroundColor: '#FEF2F2',
-  },
-  rejectedPillText: {
-    color: '#DC2626',
-  },
+  approvedPill: { backgroundColor: '#DCFCE7' },
+  pendingPill: { backgroundColor: '#FEF3C7' },
+  rejectedPill: { backgroundColor: '#FEE2E2' },
+  statusPillText: { ...Typography.labelSm, color: '#475569', fontWeight: '800' },
+  approvedPillText: { color: '#15803D' },
+  pendingPillText: { color: '#B45309' },
+  rejectedPillText: { color: '#B91C1C' },
   typeBadge: {
-    backgroundColor: '#DBEAFE',
-    paddingHorizontal: 8,
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   typeBadgeText: {
     ...Typography.labelSm,
-    color: '#1E40AF',
-    fontWeight: '700',
+    color: Colors.primary,
+    fontWeight: '800',
   },
   dateText: {
-    ...Typography.labelSm,
+    ...Typography.bodyMd,
+    fontSize: 12,
     color: Colors.onSurfaceVariant,
   },
   routeText: {
-    ...Typography.headlineMd,
+    ...Typography.headlineLg,
+    fontSize: 16,
     fontWeight: '800',
-    color: Colors.onSurface,
+    color: '#0F172A',
+    marginBottom: 4,
   },
   subText: {
     ...Typography.bodyMd,
+    fontSize: 13,
     color: Colors.onSurfaceVariant,
-    marginTop: 2,
   },
   riderMsg: {
     ...Typography.bodyMd,
+    fontSize: 13,
     fontStyle: 'italic',
-    color: Colors.onSurface,
-    marginTop: 4,
+    color: '#475569',
+    marginTop: 6,
+    backgroundColor: '#F8FAFC',
+    padding: 8,
+    borderRadius: 12,
   },
   actionBtns: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    marginTop: Spacing.md,
+    gap: 10,
+    marginTop: 12,
   },
-  approveBtn: {
-    flex: 1,
-  },
-  rejectBtn: {
-    flex: 1,
-  },
-  chatBtn: {
-    marginTop: Spacing.md,
-  },
+  approveBtn: { flex: 1, height: 40 },
+  rejectBtn: { flex: 1, height: 40 },
+  chatBtn: { marginTop: 12, height: 42 },
 });
