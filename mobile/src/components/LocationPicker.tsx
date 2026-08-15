@@ -30,12 +30,15 @@ interface LocationPickerProps {
 
 export function LocationPicker({
   title,
-  placeholder = 'Search location',
+  placeholder = 'Enter the full address',
   initialLocation,
   onConfirm,
   onBack,
 }: LocationPickerProps) {
   const insets = useSafeAreaInsets();
+
+  // Mode: 'search' (Screenshots 2,3,4) or 'map' (Interactive Map Canvas with Pin)
+  const [viewMode, setViewMode] = useState<'search' | 'map'>('search');
 
   const [selectedLocation, setSelectedLocation] = useState<GoTogetherLocation>(
     initialLocation || {
@@ -47,16 +50,15 @@ export function LocationPicker({
     }
   );
 
-  const [searchQuery, setSearchQuery] = useState(initialLocation?.address || selectedLocation.address);
+  const [searchQuery, setSearchQuery] = useState(initialLocation?.address || '');
   const [suggestions, setSuggestions] = useState<PlaceAutocompleteSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [geocodingMap, setGeocodingMap] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isProgrammatic, setIsProgrammatic] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   // Debounced Places Autocomplete Search
   useEffect(() => {
-    if (!isSearching || !searchQuery || searchQuery.trim().length < 2) {
+    if (!searchQuery || searchQuery.trim().length < 2) {
       setSuggestions([]);
       return;
     }
@@ -74,18 +76,15 @@ export function LocationPicker({
     }, 280);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, isSearching]);
+  }, [searchQuery]);
 
   const handleSelectSuggestion = async (s: PlaceAutocompleteSuggestion) => {
-    setIsSearching(false);
     setSearchQuery(s.address);
     setLoadingSuggestions(true);
-    setIsProgrammatic(true);
 
     try {
       const details = await fetchPlaceDetails(s.placeId, s.name || s.address);
       setSelectedLocation(details);
-      setSearchQuery(details.address || details.name);
     } catch {
       setSelectedLocation(prev => ({
         ...prev,
@@ -95,13 +94,12 @@ export function LocationPicker({
       }));
     } finally {
       setLoadingSuggestions(false);
+      setViewMode('map'); // Transition to Map view centered on selected place
     }
   };
 
   const handleUseCurrentLocation = async () => {
-    setIsSearching(false);
     setLoadingSuggestions(true);
-    setIsProgrammatic(true);
     try {
       const gpsLocation = await getCurrentDeviceLocation();
       setSelectedLocation(gpsLocation);
@@ -110,11 +108,11 @@ export function LocationPicker({
       // fallback
     } finally {
       setLoadingSuggestions(false);
+      setViewMode('map'); // Transition to Map view centered on GPS location
     }
   };
 
   const handleCenterChange = async (lat: number, lng: number) => {
-    setIsProgrammatic(false);
     const dist = Math.abs(lat - selectedLocation.latitude) + Math.abs(lng - selectedLocation.longitude);
     if (dist < 0.0002) return;
 
@@ -122,9 +120,7 @@ export function LocationPicker({
     try {
       const revGeocoded = await reverseGeocode(lat, lng);
       setSelectedLocation(revGeocoded);
-      if (!isSearching) {
-        setSearchQuery(revGeocoded.address || revGeocoded.name);
-      }
+      setSearchQuery(revGeocoded.address || revGeocoded.name);
     } catch {
       setSelectedLocation(prev => ({
         ...prev,
@@ -139,38 +135,45 @@ export function LocationPicker({
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
-  return (
-    <View style={styles.container}>
-      {/* Floating Pill Search & Header Bar */}
-      <View style={[styles.headerContainer, { paddingTop: headerPaddingTop }]}>
-        <View style={styles.inputCard}>
-          {onBack ? (
-            <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
-              <Ionicons name="chevron-back" size={22} color="#0F172A" />
+  // VIEW 1: SEARCH SCREEN (Matching Screenshots 2, 3 & 4)
+  if (viewMode === 'search') {
+    return (
+      <View style={[styles.container, { paddingTop: headerPaddingTop }]}>
+        {/* Top Header Bar */}
+        <View style={styles.searchHeaderRow}>
+          {onBack && (
+            <TouchableOpacity onPress={onBack} style={styles.topBackBtn} activeOpacity={0.8}>
+              <Ionicons name="close" size={26} color={Colors.primary} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <Text style={styles.screenTitle}>{title}</Text>
+
+        {/* Search Input Box (Screenshot 2 & 3) */}
+        <View style={[styles.searchInputBox, isFocused && styles.searchInputBoxActive]}>
+          {isFocused ? (
+            <TouchableOpacity onPress={() => setIsFocused(false)} style={{ marginRight: 8 }}>
+              <Ionicons name="chevron-back" size={20} color={Colors.onSurfaceVariant} />
             </TouchableOpacity>
           ) : (
-            <Ionicons name="search-outline" size={18} color={Colors.primary} style={styles.searchIcon} />
+            <Ionicons name="search-outline" size={20} color={Colors.outline} style={{ marginRight: 10 }} />
           )}
 
           <TextInput
-            style={styles.input}
+            style={styles.searchInputText}
             placeholder={placeholder}
             placeholderTextColor={Colors.outline}
             value={searchQuery}
-            onChangeText={txt => {
-              setSearchQuery(txt);
-              setIsSearching(true);
-            }}
-            onFocus={() => setIsSearching(true)}
+            onChangeText={setSearchQuery}
+            onFocus={() => setIsFocused(true)}
             onSubmitEditing={async () => {
               if (searchQuery.trim().length > 2) {
-                setIsSearching(false);
                 setLoadingSuggestions(true);
-                setIsProgrammatic(true);
                 try {
                   const details = await fetchPlaceDetails(searchQuery.trim(), searchQuery.trim());
                   setSelectedLocation(details);
-                  setSearchQuery(details.address || details.name);
+                  setViewMode('map');
                 } finally {
                   setLoadingSuggestions(false);
                 }
@@ -179,62 +182,81 @@ export function LocationPicker({
           />
 
           {searchQuery.length > 0 && (
-            <TouchableOpacity
-              onPress={() => {
-                setSearchQuery('');
-                setIsSearching(true);
-              }}
-              style={styles.clearBtn}
-            >
-              <Ionicons name="close" size={20} color="#64748B" />
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={{ padding: 4 }}>
+              <Ionicons name="close-circle" size={20} color={Colors.outline} />
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Places Autocomplete Suggestions Dropdown */}
-        {isSearching && (
-          <View style={styles.autocompleteDropdown}>
-            <TouchableOpacity style={styles.currentLocRow} onPress={handleUseCurrentLocation} activeOpacity={0.8}>
-              <View style={styles.targetIconCircle}>
-                <Ionicons name="locate-outline" size={18} color={Colors.primary} />
+        {/* Content Below Input */}
+        <ScrollView keyboardShouldPersistTaps="handled" style={styles.searchContentScroll}>
+          {/* Always show "Use current location" option at top when focused or query empty (Screenshot 3) */}
+          {(isFocused || searchQuery.trim().length < 2) && (
+            <TouchableOpacity style={styles.useCurrentLocRow} onPress={handleUseCurrentLocation} activeOpacity={0.8}>
+              <View style={styles.locateIconCircle}>
+                <Ionicons name="locate-outline" size={20} color="#0F172A" />
               </View>
-              <Text style={styles.currentLocText}>Use current location</Text>
-              <Ionicons name="chevron-forward" size={16} color={Colors.outline} />
+              <Text style={styles.useCurrentLocTitle}>Use current location</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.outline} />
             </TouchableOpacity>
+          )}
 
-            {loadingSuggestions ? (
-              <View style={styles.loaderRow}>
-                <ActivityIndicator size="small" color={Colors.primary} />
-                <Text style={styles.loaderText}>Searching locations...</Text>
+          {/* Loading Indicator */}
+          {loadingSuggestions && (
+            <View style={styles.suggestionsLoaderRow}>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={styles.suggestionsLoaderText}>Searching places...</Text>
+            </View>
+          )}
+
+          {/* Autocomplete Suggestions List (Screenshot 4) */}
+          {suggestions.map(s => (
+            <TouchableOpacity
+              key={s.placeId}
+              style={styles.suggestionRowItem}
+              onPress={() => handleSelectSuggestion(s)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.suggestionTextGroup}>
+                <Text style={styles.suggestionMainTitle} numberOfLines={1}>{s.name}</Text>
+                <Text style={styles.suggestionSubAddress} numberOfLines={1}>{s.address}</Text>
               </View>
-            ) : (
-              <ScrollView keyboardShouldPersistTaps="handled" style={styles.suggestionsList}>
-                {suggestions.map(s => (
-                  <TouchableOpacity
-                    key={s.placeId}
-                    style={styles.suggestionItem}
-                    onPress={() => handleSelectSuggestion(s)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="location-outline" size={18} color={Colors.primary} style={{ marginRight: 10 }} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.suggestionName} numberOfLines={1}>{s.name}</Text>
-                      <Text style={styles.suggestionAddress} numberOfLines={1}>{s.address}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-        )}
+              <Ionicons name="chevron-forward" size={18} color={Colors.outline} />
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // VIEW 2: INTERACTIVE MAP CANVAS WITH 📍 PIN (Triggered by selecting place or Use Current Location)
+  return (
+    <View style={styles.container}>
+      {/* Top Floating Map Header Bar */}
+      <View style={[styles.mapHeaderContainer, { paddingTop: headerPaddingTop }]}>
+        <View style={styles.mapInputCard}>
+          <TouchableOpacity onPress={() => setViewMode('search')} style={styles.mapBackBtn} activeOpacity={0.8}>
+            <Ionicons name="chevron-back" size={22} color="#0F172A" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setViewMode('search')} activeOpacity={0.9}>
+            <Text style={styles.mapInputText} numberOfLines={1}>
+              {searchQuery || selectedLocation.address}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setViewMode('search')} style={{ padding: 4 }}>
+            <Ionicons name="close" size={20} color="#64748B" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Real Interactive Google Map Canvas with Fixed Center Pin */}
+      {/* Real Interactive Google Map Canvas */}
       <View style={styles.mapCanvas}>
         <GoogleMapView
           latitude={selectedLocation.latitude}
           longitude={selectedLocation.longitude}
-          isProgrammatic={isProgrammatic}
+          isProgrammatic={true}
           onCenterChange={handleCenterChange}
         />
 
@@ -253,7 +275,7 @@ export function LocationPicker({
           </View>
         </View>
 
-        {/* GPS Locate Button (Floating cleanly above bottom tab bar on right) */}
+        {/* GPS Locate Button (Bottom Right) */}
         <TouchableOpacity
           style={[styles.gpsLocateBtn, { bottom: bottomInset + 75 }]}
           onPress={handleUseCurrentLocation}
@@ -262,7 +284,7 @@ export function LocationPicker({
           <Ionicons name="locate" size={22} color={Colors.primary} />
         </TouchableOpacity>
 
-        {/* Floating Next Button (Floating cleanly above bottom tab bar on left) */}
+        {/* Floating Next Button at Bottom Left */}
         <View style={[styles.bottomBarContainerLeft, { bottom: bottomInset + 75 }]}>
           <TouchableOpacity
             style={styles.nextPillBtn}
@@ -281,9 +303,109 @@ export function LocationPicker({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
-  headerContainer: {
+  searchHeaderRow: {
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  topBackBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
+  screenTitle: {
+    ...Typography.headlineLg,
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  searchInputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    height: 52,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  searchInputBoxActive: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+  },
+  searchInputText: {
+    flex: 1,
+    ...Typography.bodyLg,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#0F172A',
+  },
+  searchContentScroll: {
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+  },
+  useCurrentLocRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  locateIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  useCurrentLocTitle: {
+    ...Typography.labelLg,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    flex: 1,
+  },
+  suggestionsLoaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    gap: 8,
+  },
+  suggestionsLoaderText: {
+    ...Typography.bodyMd,
+    fontSize: 13,
+    color: Colors.onSurfaceVariant,
+  },
+  suggestionRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
+  },
+  suggestionTextGroup: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  suggestionMainTitle: {
+    ...Typography.labelLg,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  suggestionSubAddress: {
+    ...Typography.bodyMd,
+    fontSize: 12.5,
+    color: Colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  mapHeaderContainer: {
     paddingHorizontal: Spacing.md,
     backgroundColor: 'transparent',
     position: 'absolute',
@@ -292,7 +414,7 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 50,
   },
-  inputCard: {
+  mapInputCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
@@ -307,91 +429,14 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  backBtn: {
+  mapBackBtn: {
     paddingRight: 6,
   },
-  searchIcon: {
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
+  mapInputText: {
     ...Typography.bodyLg,
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: '600',
     color: '#0F172A',
-  },
-  clearBtn: {
-    padding: 4,
-  },
-  autocompleteDropdown: {
-    marginTop: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    maxHeight: 240,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  currentLocRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.sm + 2,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  targetIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  currentLocText: {
-    ...Typography.labelLg,
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '700',
-    flex: 1,
-  },
-  loaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.md,
-    gap: 8,
-  },
-  loaderText: {
-    ...Typography.bodyMd,
-    fontSize: 13,
-    color: Colors.onSurfaceVariant,
-  },
-  suggestionsList: {
-    maxHeight: 180,
-  },
-  suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F8FAFC',
-  },
-  suggestionName: {
-    ...Typography.labelLg,
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  suggestionAddress: {
-    ...Typography.bodyMd,
-    fontSize: 11.5,
-    color: Colors.onSurfaceVariant,
-    marginTop: 1,
   },
   mapCanvas: {
     flex: 1,
