@@ -8,16 +8,17 @@ const index_js_1 = require("../validators/index.js");
 const router = (0, express_1.Router)();
 router.use(authenticate_js_1.authenticate);
 /**
- * Public search endpoint for Find a Ride (Discovery)
+ * Public search endpoint for Find a Ride (Discovery with Date Filtering)
  */
 router.get('/', async (req, res, next) => {
     try {
         const uid = req.auth.uid;
-        const { vehicleType, pickup, destination } = req.query;
+        const { vehicleType, pickup, destination, date } = req.query;
         const rides = await ride_service_js_1.RideService.listRides(uid, {
             vehicleType: vehicleType,
             pickup: pickup,
             destination: destination,
+            date: date,
         });
         res.json({ data: rides });
     }

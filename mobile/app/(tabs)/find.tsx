@@ -16,6 +16,7 @@ export default function FindRideScreen() {
   const insets = useSafeAreaInsets();
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
+  const [travelDate, setTravelDate] = useState('');
   const [seats, setSeats] = useState('1');
   const [tripType, setTripType] = useState<'all' | 'carpool' | 'bike_pool'>('all');
 
@@ -23,6 +24,7 @@ export default function FindRideScreen() {
     vehicleType: tripType !== 'all' ? tripType : undefined,
     pickup: pickup || undefined,
     destination: destination || undefined,
+    date: travelDate || undefined,
   });
 
   const results = rides || [];
@@ -53,6 +55,35 @@ export default function FindRideScreen() {
             value={destination}
             onChangeText={setDestination}
             onClear={() => setDestination('')}
+          />
+
+          {/* Date Filter Quick Chips */}
+          <Text style={styles.filterLabel}>Travel Date Filter</Text>
+          <View style={styles.dateChipRow}>
+            {[
+              { label: 'Any Date', date: '' },
+              { label: 'Today', date: new Date().toISOString().split('T')[0] },
+              { label: 'Tomorrow', date: new Date(Date.now() + 86400000).toISOString().split('T')[0] },
+            ].map((chip, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={[styles.dateFilterChip, travelDate === chip.date && styles.dateFilterChipActive]}
+                onPress={() => setTravelDate(chip.date)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.dateFilterChipText, travelDate === chip.date && styles.dateFilterChipTextActive]}>
+                  {chip.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Input
+            label="Specific Travel Date (YYYY-MM-DD)"
+            placeholder="e.g. 2026-08-20"
+            value={travelDate}
+            onChangeText={setTravelDate}
+            onClear={() => setTravelDate('')}
           />
 
           <View style={styles.row}>
@@ -94,109 +125,78 @@ export default function FindRideScreen() {
             </View>
           </View>
 
-          <Button title="Search Matching Rides" onPress={() => refetch()} style={styles.searchBtn} />
+          <Button title="Search Rides" onPress={() => refetch()} style={{ marginTop: Spacing.xs }} />
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Available Trips ({results.length})
+        {/* Results Header */}
+        <View style={styles.resultsHeader}>
+          <Text style={styles.resultsTitle}>
+            Available Pools {results.length > 0 ? `(${results.length})` : ''}
           </Text>
         </View>
 
+        {/* Results List */}
         {isLoading ? (
-          <SkeletonCard type="trip" count={3} />
+          <View style={{ gap: Spacing.md }}>
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
         ) : results.length === 0 ? (
           <EmptyState
             icon="search-outline"
-            title="No Matching Trips Found"
-            message="Try widening your search terms or clearing your pickup location filter."
-            actionLabel="Reset Search"
-            onAction={() => {
-              setPickup('');
-              setDestination('');
-              setTripType('all');
-              refetch();
-            }}
+            title="No Matching Rides Found"
+            message="Try adjusting your travel date or route search criteria."
           />
         ) : (
-          results.map((ride: any) => (
-            <TouchableOpacity
-              key={ride.id}
-              style={styles.rideResultCard}
-              onPress={() => router.push(`/ride/${ride.id}`)}
-              activeOpacity={0.88}
-            >
-              {/* Top Bar: Time Badge, Seats Info, Vehicle Pill */}
-              <View style={styles.cardTopBar}>
-                <View style={styles.timeBadgePill}>
-                  <Text style={styles.timeBadgeText}>
-                    Today, {new Date(ride.departureAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </View>
-
-                <View style={styles.seatsInfoRow}>
-                  <Ionicons name="people-outline" size={16} color="#475569" style={{ marginRight: 4 }} />
-                  <Text style={styles.seatsInfoText}>{ride.availableSeats || 2} seats left</Text>
-                </View>
-
-                <View style={styles.vehicleTypePillBtn}>
-                  <Ionicons
-                    name={ride.vehicleType === 'bike_pool' ? 'bicycle-outline' : 'car-outline'}
-                    size={14}
-                    color="#FFFFFF"
-                    style={{ marginRight: 4 }}
-                  />
-                  <Text style={styles.vehicleTypePillText}>
-                    {ride.vehicleType === 'bike_pool' ? 'BIKE' : 'CAR'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Route Timeline: Pickup & Destination */}
-              <View style={styles.routeSection}>
-                <View style={styles.timelineGraphic}>
-                  <View style={styles.hollowCircle} />
-                  <View style={styles.timelineLineTrack} />
-                  <View style={styles.solidCircle} />
-                </View>
-
-                <View style={styles.locationsColumn}>
-                  <View style={styles.locationBlock}>
-                    <Text style={styles.cityNameText} numberOfLines={1}>{ride.pickup?.split(',')[0] || ride.pickup}</Text>
-                    <Text style={styles.landmarkSubText} numberOfLines={1}>{ride.pickup?.split(',')[1] || ride.meetingPoint || 'Main Pick-up Point'}</Text>
-                  </View>
-
-                  <View style={styles.locationBlock}>
-                    <Text style={styles.cityNameText} numberOfLines={1}>{ride.destination?.split(',')[0] || ride.destination}</Text>
-                    <Text style={styles.landmarkSubText} numberOfLines={1}>{ride.destination?.split(',')[1] || 'Drop-off Landmark'}</Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.dividerLine} />
-
-              {/* Footer Row: Driver Info & View Details Button */}
-              <View style={styles.cardFooterRow}>
-                <View style={styles.driverInfoMeta}>
-                  <View style={styles.driverAvatarCircle}>
-                    <Text style={styles.driverAvatarInitial}>{ride.driverName?.charAt(0) || 'D'}</Text>
-                  </View>
-
-                  <View style={styles.driverNameRatingColumn}>
-                    <Text style={styles.driverNameText} numberOfLines={1}>{ride.driverName || 'Rajesh K.'}</Text>
-                    <View style={styles.starRatingRow}>
-                      <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 3 }} />
-                      <Text style={styles.ratingNumberText}>4.8</Text>
+          <View style={{ gap: Spacing.md }}>
+            {results.map((ride: any) => (
+              <TouchableOpacity
+                key={ride.id}
+                style={styles.rideCard}
+                onPress={() => router.push(`/ride/${ride.id}`)}
+                activeOpacity={0.88}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.driverInfo}>
+                    <View style={styles.avatarMini}>
+                      <Text style={styles.avatarMiniText}>{(ride.driverName || 'D').charAt(0)}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.driverName}>{ride.driverName || 'Driver'}</Text>
+                      <Text style={styles.driverRating}>★ {ride.driverRating || '5.0'}</Text>
                     </View>
                   </View>
+
+                  <View style={styles.priceTag}>
+                    <Text style={styles.priceText}>
+                      {ride.suggestedContribution > 0 ? `$${ride.suggestedContribution}` : 'Free'}
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.viewDetailsPillBtn}>
-                  <Text style={styles.viewDetailsPillText}>View Details</Text>
+                {/* Route Line */}
+                <View style={styles.routeContainer}>
+                  <View style={styles.locationRow}>
+                    <Ionicons name="ellipse" size={10} color={Colors.primary} style={{ marginRight: 8, marginTop: 3 }} />
+                    <Text style={styles.locationText}>{ride.pickup}</Text>
+                  </View>
+                  <View style={styles.routeConnector} />
+                  <View style={styles.locationRow}>
+                    <Ionicons name="location" size={12} color="#EF4444" style={{ marginRight: 8, marginTop: 2 }} />
+                    <Text style={styles.locationText}>{ride.destination}</Text>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))
+
+                {/* Schedule & Seats Footer */}
+                <View style={styles.cardFooter}>
+                  <Text style={styles.departureText}>
+                    📅 {new Date(ride.departureAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • ⏰ {new Date(ride.departureAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                  <Text style={styles.seatsText}>{ride.availableSeats} seat(s) left</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -209,255 +209,221 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   container: {
-    padding: Spacing.md,
-    paddingBottom: Spacing.xl * 2,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xxl,
   },
   pageTitle: {
-    ...Typography.displayLg,
+    ...Typography.headlineLg,
     fontSize: 28,
-    color: Colors.onBackground,
-    fontWeight: '800',
-    marginTop: Spacing.xs,
-    letterSpacing: -0.5,
+    fontWeight: '900',
+    color: '#0F172A',
   },
   pageSubtitle: {
     ...Typography.bodyMd,
+    fontSize: 14,
     color: Colors.onSurfaceVariant,
-    marginBottom: Spacing.md,
+    marginTop: 4,
+    marginBottom: Spacing.lg,
   },
   searchCardBox: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: Spacing.md,
+    padding: Spacing.lg,
     marginBottom: Spacing.lg,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  filterLabel: {
+    ...Typography.labelLg,
+    fontSize: 12,
+    color: '#475569',
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  dateChipRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: Spacing.sm,
+  },
+  dateFilterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  dateFilterChipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  dateFilterChipText: {
+    ...Typography.labelLg,
+    fontSize: 12,
+    color: '#334155',
+    fontWeight: '700',
+  },
+  dateFilterChipTextActive: {
+    color: '#FFFFFF',
   },
   row: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   halfInput: {
     flex: 1,
   },
   typeLabel: {
-    ...Typography.labelMd,
+    ...Typography.labelLg,
+    fontSize: 12,
+    color: '#475569',
     fontWeight: '700',
-    color: Colors.onSurface,
-    marginBottom: Spacing.xs,
+    marginBottom: 6,
   },
   typeToggle: {
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 3,
-    height: 52,
+    height: 48,
     alignItems: 'center',
   },
   typeBtn: {
     flex: 1,
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100%',
-    borderRadius: 10,
+    borderRadius: 11,
   },
   activeTypeBtn: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2,
+    elevation: 1,
   },
   typeBtnText: {
-    ...Typography.labelSm,
-    fontWeight: '600',
+    ...Typography.labelLg,
+    fontSize: 12,
     color: Colors.onSurfaceVariant,
+    fontWeight: '700',
   },
   activeTypeBtnText: {
     color: Colors.primary,
-    fontWeight: '700',
   },
-  searchBtn: {
-    marginTop: Spacing.xs,
-  },
-  sectionHeader: {
-    marginBottom: Spacing.sm,
-  },
-  sectionTitle: {
-    ...Typography.headlineMd,
-    fontWeight: '800',
-    color: Colors.onBackground,
-  },
-  rideResultCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 24,
-    padding: Spacing.lg,
+  resultsHeader: {
     marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
   },
-  cardTopBar: {
+  resultsTitle: {
+    ...Typography.headlineLg,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  rideCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  driverInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
   },
-  timeBadgePill: {
+  avatarMini: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  avatarMiniText: {
+    ...Typography.headlineLg,
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  driverName: {
+    ...Typography.headlineLg,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  driverRating: {
+    ...Typography.bodyMd,
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+  },
+  priceTag: {
     backgroundColor: '#EFF6FF',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
   },
-  timeBadgeText: {
-    ...Typography.labelSm,
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.primary,
-  },
-  seatsInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  seatsInfoText: {
-    ...Typography.labelSm,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  vehicleTypePillBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-  vehicleTypePillText: {
-    ...Typography.labelSm,
-    fontSize: 12,
-    fontWeight: '800',
-    color: Colors.onPrimary,
-    letterSpacing: 0.5,
-  },
-  routeSection: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    marginVertical: Spacing.xs,
-  },
-  timelineGraphic: {
-    alignItems: 'center',
-    width: 24,
-    marginRight: Spacing.sm,
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  hollowCircle: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2.5,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.surface,
-  },
-  timelineLineTrack: {
-    flex: 1,
-    width: 2,
-    backgroundColor: '#CBD5E1',
-    marginVertical: 4,
-  },
-  solidCircle: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: Colors.primary,
-  },
-  locationsColumn: {
-    flex: 1,
-    gap: 16,
-  },
-  locationBlock: {},
-  cityNameText: {
-    ...Typography.headlineMd,
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.onSurface,
-  },
-  landmarkSubText: {
-    ...Typography.bodyMd,
-    fontSize: 13,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  dividerLine: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: Spacing.md,
-  },
-  cardFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  driverInfoMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  driverAvatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#DBEAFE',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.sm + 2,
-  },
-  driverAvatarInitial: {
-    ...Typography.headlineMd,
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
-  driverNameRatingColumn: {},
-  driverNameText: {
-    ...Typography.bodyLg,
+  priceText: {
+    ...Typography.headlineLg,
     fontSize: 16,
-    fontWeight: '700',
-    color: Colors.onSurface,
+    fontWeight: '900',
+    color: Colors.primary,
   },
-  starRatingRow: {
+  routeContainer: {
+    marginBottom: Spacing.md,
+  },
+  locationRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  locationText: {
+    ...Typography.bodyMd,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  routeConnector: {
+    width: 2,
+    height: 14,
+    backgroundColor: '#CBD5E1',
+    marginLeft: 4,
+    marginVertical: 2,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 2,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
-  ratingNumberText: {
-    ...Typography.labelSm,
-    fontSize: 13,
-    fontWeight: '700',
+  departureText: {
+    ...Typography.bodyMd,
+    fontSize: 12,
     color: Colors.onSurfaceVariant,
+    fontWeight: '600',
   },
-  viewDetailsPillBtn: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  viewDetailsPillText: {
+  seatsText: {
     ...Typography.labelLg,
-    fontSize: 14,
+    fontSize: 12,
+    color: '#059669',
     fontWeight: '700',
-    color: Colors.onSurface,
   },
 });

@@ -9,16 +9,17 @@ const router = Router();
 router.use(authenticate as any);
 
 /**
- * Public search endpoint for Find a Ride (Discovery)
+ * Public search endpoint for Find a Ride (Discovery with Date Filtering)
  */
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const uid = req.auth!.uid;
-    const { vehicleType, pickup, destination } = req.query;
+    const { vehicleType, pickup, destination, date } = req.query;
     const rides = await RideService.listRides(uid, {
       vehicleType: vehicleType as string,
       pickup: pickup as string,
       destination: destination as string,
+      date: date as string,
     });
     res.json({ data: rides });
   } catch (err) {

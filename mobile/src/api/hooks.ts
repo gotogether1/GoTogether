@@ -8,7 +8,7 @@ import { auth } from '../config/firebase';
 /**
  * Public discovery search query (Find a Ride)
  */
-export function useRidesQuery(filters?: { vehicleType?: string; pickup?: string; destination?: string }) {
+export function useRidesQuery(filters?: { vehicleType?: string; pickup?: string; destination?: string; date?: string }) {
   return useQuery({
     queryKey: ['rides', filters],
     queryFn: async () => {
@@ -21,6 +21,7 @@ export function useRidesQuery(filters?: { vehicleType?: string; pickup?: string;
           if (filters?.vehicleType && filters.vehicleType !== 'all' && r.vehicleType !== filters.vehicleType) return false;
           if (filters?.pickup && !r.pickup.toLowerCase().includes(filters.pickup.toLowerCase())) return false;
           if (filters?.destination && !r.destination.toLowerCase().includes(filters.destination.toLowerCase())) return false;
+          if (filters?.date && !r.departureAt.startsWith(filters.date)) return false;
           return true;
         });
       }

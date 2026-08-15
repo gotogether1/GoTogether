@@ -140,17 +140,18 @@ export class RideService {
   }
 
   /**
-   * Search Public Rides in Neon PostgreSQL (Find a Ride)
+   * Search Public Rides in Neon PostgreSQL (Find a Ride with Date Filtering)
    */
   static async listRides(
     callerUid: string,
-    filters: { vehicleType?: string; pickup?: string; destination?: string }
+    filters: { vehicleType?: string; pickup?: string; destination?: string; date?: string }
   ): Promise<RideData[]> {
     const blockedUserIds = await BlockService.getBlockedUsers(callerUid);
 
     const pickupQuery = filters.pickup ? filters.pickup.trim() : null;
     const destQuery = filters.destination ? filters.destination.trim() : null;
     const vehicleFilter = filters.vehicleType && filters.vehicleType !== 'all' ? filters.vehicleType : null;
+    const dateFilter = filters.date ? filters.date.trim() : null;
 
     const sql = `
       SELECT r.*, u.display_name AS driver_name, u.average_rating AS driver_rating
@@ -171,10 +172,11 @@ export class RideService {
             WHERE elem->>'name' ILIKE '%' || $3 || '%' OR elem->>'address' ILIKE '%' || $3 || '%'
           )
         )
+        AND ($4::VARCHAR IS NULL OR DATE(r.departure_at) = $4::DATE)
       ORDER BY r.departure_at ASC;
     `;
 
-    const res = await query(sql, [vehicleFilter, pickupQuery, destQuery]);
+    const res = await query(sql, [vehicleFilter, pickupQuery, destQuery, dateFilter]);
 
     const rides = (res.rows || []).map(r => this.mapRideRow(r));
     return rides.filter(r => !blockedUserIds.includes(r.driverId));

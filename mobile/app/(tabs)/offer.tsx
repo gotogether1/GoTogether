@@ -19,7 +19,7 @@ export default function OfferRideScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6>(1);
 
   // Form State with Structured Location Objects
   const [vehicleType, setVehicleType] = useState<'carpool' | 'bike_pool'>('carpool');
@@ -31,6 +31,12 @@ export default function OfferRideScreen() {
   const [stopovers, setStopovers] = useState<string[]>([]);
   const [newStopover, setNewStopover] = useState('');
   const [showAddStopoverInput, setShowAddStopoverInput] = useState(false);
+
+  // Date & Time Scheduling State
+  const tomorrow = new Date(Date.now() + 86400000);
+  const defaultDateStr = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD
+  const [selectedDate, setSelectedDate] = useState<string>(defaultDateStr);
+  const [selectedTime, setSelectedTime] = useState<string>('08:30 AM');
 
   const [totalSeats, setTotalSeats] = useState('3');
   const [suggestedContribution, setSuggestedContribution] = useState('10');
@@ -45,15 +51,8 @@ export default function OfferRideScreen() {
         'Login Required',
         'Please log in or create an account to publish a ride.',
         [
-          {
-            text: 'Log In',
-            onPress: () => router.replace('/auth/login'),
-          },
-          {
-            text: 'Cancel',
-            style: 'cancel',
-            onPress: () => safeBack(router),
-          },
+          { text: 'Log In', onPress: () => router.replace('/auth/login') },
+          { text: 'Cancel', style: 'cancel', onPress: () => safeBack(router) },
         ]
       );
     }
@@ -64,6 +63,27 @@ export default function OfferRideScreen() {
     setStopovers(prev => [...prev, newStopover.trim()]);
     setNewStopover('');
     setShowAddStopoverInput(false);
+  };
+
+  const computeDepartureAt = (dateStr: string, timeStr: string): string => {
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      let hours = 8;
+      let minutes = 30;
+
+      if (timeStr.includes(':')) {
+        const parts = timeStr.replace(/(AM|PM)/i, '').trim().split(':');
+        hours = parseInt(parts[0], 10) || 8;
+        minutes = parseInt(parts[1], 10) || 0;
+        if (timeStr.toLowerCase().includes('pm') && hours < 12) hours += 12;
+        if (timeStr.toLowerCase().includes('am') && hours === 12) hours = 0;
+      }
+
+      const d = new Date(year, month - 1, day, hours, minutes);
+      return d.toISOString();
+    } catch {
+      return new Date(Date.now() + 3600000).toISOString();
+    }
   };
 
   const handlePublishRide = async () => {
@@ -77,6 +97,12 @@ export default function OfferRideScreen() {
 
     if (!pickupLocation || !dropoffLocation) {
       Alert.alert('Incomplete Trip', 'Please select both pick-up and drop-off locations.');
+      return;
+    }
+
+    const departureIso = computeDepartureAt(selectedDate, selectedTime);
+    if (new Date(departureIso).getTime() < Date.now() - 300000) {
+      Alert.alert('Invalid Departure Schedule', 'Departure time cannot be in the past. Please select a future departure date and time.');
       return;
     }
 
@@ -94,7 +120,7 @@ export default function OfferRideScreen() {
         dropoffLongitude: dropoffLocation.longitude,
         dropoffPlaceId: dropoffLocation.placeId,
         meetingPoint: pickupLocation.name || 'Main Pick-up Point',
-        departureAt: new Date().toISOString(),
+        departureAt: departureIso,
         totalSeats: parseInt(totalSeats, 10) || 1,
         suggestedContribution: parseFloat(suggestedContribution) || 0,
         stopovers: stopovers.map(s => ({ name: s })),
@@ -102,12 +128,12 @@ export default function OfferRideScreen() {
         routeSummary: selectedRoute?.summary || 'fastest',
         vehicleDetails: vehicleDetails || 'Vehicle 2024',
         rules: 'No smoking, punctuality required',
-        notes: `Route: ${selectedRoute?.summary || 'Fastest'} (${selectedRoute?.viaRoads || ''}). Stopovers: ${stopovers.join(', ') || 'None'}`,
+        notes: `Scheduled: ${selectedDate} ${selectedTime}. Route: ${selectedRoute?.summary || 'Fastest'} (${selectedRoute?.viaRoads || ''}). Stopovers: ${stopovers.join(', ') || 'None'}`,
       });
-      Alert.alert('Ride Published!', 'Your trip and route options are now live for riders!');
+      Alert.alert('Ride Published!', 'Your trip, route, and schedule are live for riders!');
       router.push('/(tabs)/dashboard');
     } catch {
-      Alert.alert('Ride Published!', 'Your trip and route options are now live for riders!');
+      Alert.alert('Ride Published!', 'Your trip, route, and schedule are live for riders!');
       router.push('/(tabs)/dashboard');
     }
   };
@@ -116,7 +142,7 @@ export default function OfferRideScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* STEP 1: PICK-UP LOCATION SEARCH & FIXED PIN MAP */}
+      {/* STEP 1: PICK-UP LOCATION */}
       {step === 1 && (
         <LocationPicker
           title="Pick-up"
@@ -130,7 +156,7 @@ export default function OfferRideScreen() {
         />
       )}
 
-      {/* STEP 2: DROP-OFF LOCATION SEARCH & FIXED PIN MAP */}
+      {/* STEP 2: DROP-OFF LOCATION */}
       {step === 2 && (
         <LocationPicker
           title="Drop-off"
@@ -144,30 +170,17 @@ export default function OfferRideScreen() {
         />
       )}
 
-      {/* STEP 3: WHAT IS YOUR ROUTE? (GOOGLE ROUTES API CALCULATED OPTIONS) */}
-      {step === 3 && pickupLocation && dropoffLocation && (
-        <RouteSelector
-          origin={pickupLocation}
-          destination={dropoffLocation}
-          onSelectRoute={(route) => {
-            setSelectedRoute(route);
-            setStep(4);
-          }}
-          onBack={() => setStep(2)}
-        />
-      )}
-
-      {/* STEP 4: ADD STOPOVERS */}
-      {step === 4 && (
+      {/* STEP 3: ADD STOPOVERS */}
+      {step === 3 && (
         <View style={styles.stepContainer}>
           <View style={[styles.wizardHeader, { paddingTop: headerPaddingTop }]}>
-            <TouchableOpacity onPress={() => setStep(3)} style={styles.closeBtn}>
+            <TouchableOpacity onPress={() => setStep(2)} style={styles.closeBtn}>
               <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.stopoverTitle}>Add stopovers to get more passengers</Text>
+            <Text style={styles.stopoverTitle}>Add stopovers along your route</Text>
 
             {stopovers.map((city, idx) => (
               <View key={idx} style={styles.stopoverItem}>
@@ -185,98 +198,204 @@ export default function OfferRideScreen() {
               <View style={styles.addStopoverBox}>
                 <Input
                   label="City or Landmark Stopover"
-                  placeholder="e.g. Desaipet"
+                  placeholder="e.g. Kamareddy"
                   value={newStopover}
                   onChangeText={setNewStopover}
                 />
-                <Button title="Add This Stopover" onPress={handleAddStopover} />
+                <Button title="Add Stopover" onPress={handleAddStopover} />
               </View>
             ) : (
               <TouchableOpacity style={styles.addStopoverBtn} onPress={() => setShowAddStopoverInput(true)} activeOpacity={0.8}>
                 <Ionicons name="add" size={20} color={Colors.primary} style={{ marginRight: 4 }} />
-                <Text style={styles.addStopoverText}>Add city</Text>
+                <Text style={styles.addStopoverText}>Add intermediate stop</Text>
               </TouchableOpacity>
             )}
           </ScrollView>
 
           <View style={styles.bottomBarContainer}>
-            <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(5)} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(4)} activeOpacity={0.85}>
               <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* STEP 5: RIDE DETAILS & PUBLISH */}
+      {/* STEP 4: ROUTE ALTERNATIVES & ROUTE SELECTOR */}
+      {step === 4 && pickupLocation && dropoffLocation && (
+        <RouteSelector
+          origin={pickupLocation}
+          destination={dropoffLocation}
+          onSelectRoute={(route) => {
+            setSelectedRoute(route);
+            setStep(5);
+          }}
+          onBack={() => setStep(3)}
+        />
+      )}
+
+      {/* STEP 5: SCHEDULING DATE & TIME */}
       {step === 5 && (
+        <View style={styles.stepContainer}>
+          <View style={[styles.wizardHeader, { paddingTop: headerPaddingTop }]}>
+            <TouchableOpacity onPress={() => setStep(4)} style={styles.closeBtn}>
+              <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
+            </TouchableOpacity>
+            <Text style={styles.wizardTitle}>When are you leaving?</Text>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            {/* Date Selection Options */}
+            <Card style={styles.scheduleCard}>
+              <Text style={styles.scheduleSectionTitle}>Select Travel Date</Text>
+              <View style={styles.chipGrid}>
+                {[
+                  { label: 'Today', date: new Date().toISOString().split('T')[0] },
+                  { label: 'Tomorrow', date: new Date(Date.now() + 86400000).toISOString().split('T')[0] },
+                  { label: 'In 2 Days', date: new Date(Date.now() + 172800000).toISOString().split('T')[0] },
+                  { label: 'In 3 Days', date: new Date(Date.now() + 259200000).toISOString().split('T')[0] },
+                ].map((item, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[styles.dateChip, selectedDate === item.date && styles.chipActive]}
+                    onPress={() => setSelectedDate(item.date)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="calendar-outline" size={16} color={selectedDate === item.date ? '#FFFFFF' : Colors.primary} style={{ marginRight: 6 }} />
+                    <Text style={[styles.chipText, selectedDate === item.date && styles.chipTextActive]}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Input
+                label="Custom Date (YYYY-MM-DD)"
+                value={selectedDate}
+                onChangeText={setSelectedDate}
+                placeholder="2026-08-20"
+              />
+            </Card>
+
+            {/* Time Selection Options */}
+            <Card style={styles.scheduleCard}>
+              <Text style={styles.scheduleSectionTitle}>Select Departure Time</Text>
+              <View style={styles.chipGrid}>
+                {['07:00 AM', '08:30 AM', '10:00 AM', '02:00 PM', '05:30 PM', '08:00 PM'].map((t, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[styles.timeChip, selectedTime === t && styles.chipActive]}
+                    onPress={() => setSelectedTime(t)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="time-outline" size={15} color={selectedTime === t ? '#FFFFFF' : Colors.onSurface} style={{ marginRight: 4 }} />
+                    <Text style={[styles.chipText, selectedTime === t && styles.chipTextActive]}>{t}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Input
+                label="Custom Departure Time"
+                value={selectedTime}
+                onChangeText={setSelectedTime}
+                placeholder="e.g. 08:30 AM"
+              />
+            </Card>
+
+            {/* Departure Summary Banner */}
+            <Card style={styles.summaryBannerCard}>
+              <View style={styles.bannerRow}>
+                <Ionicons name="alarm-outline" size={24} color={Colors.primary} style={{ marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.bannerTitle}>Scheduled Departure</Text>
+                  <Text style={styles.bannerText}>
+                    {new Date(computeDepartureAt(selectedDate, selectedTime)).toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })} at {selectedTime}
+                  </Text>
+                </View>
+              </View>
+            </Card>
+          </ScrollView>
+
+          <View style={styles.bottomBarContainer}>
+            <TouchableOpacity style={styles.floatingArrowBtn} onPress={() => setStep(6)} activeOpacity={0.85}>
+              <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* STEP 6: RIDE DETAILS & PUBLISH */}
+      {step === 6 && (
         <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: headerPaddingTop }]}>
           <View style={styles.wizardHeader}>
-            <TouchableOpacity onPress={() => setStep(4)} style={styles.closeBtn}>
+            <TouchableOpacity onPress={() => setStep(5)} style={styles.closeBtn}>
               <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
             </TouchableOpacity>
             <Text style={styles.wizardTitle}>Trip Details & Pricing</Text>
           </View>
 
           <Card style={styles.publishCard}>
-            <Text style={styles.sectionTitle}>Mode & Capacity</Text>
-
-            <View style={styles.modeRow}>
+            <Text style={styles.sectionHeading}>Vehicle Mode</Text>
+            <View style={styles.typeSelectorRow}>
               <TouchableOpacity
-                style={[styles.modeBtn, vehicleType === 'carpool' && styles.activeModeBtn]}
+                style={[styles.typeBtn, vehicleType === 'carpool' && styles.typeBtnActive]}
                 onPress={() => setVehicleType('carpool')}
-                activeOpacity={0.8}
               >
-                <Ionicons name="car-outline" size={18} color={vehicleType === 'carpool' ? Colors.primary : Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
-                <Text style={[styles.modeText, vehicleType === 'carpool' && styles.activeModeText]}>Carpool</Text>
+                <Ionicons name="car-outline" size={20} color={vehicleType === 'carpool' ? '#FFFFFF' : Colors.onSurface} />
+                <Text style={[styles.typeBtnText, vehicleType === 'carpool' && styles.typeBtnTextActive]}>Carpool</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modeBtn, vehicleType === 'bike_pool' && styles.activeModeBtn]}
+                style={[styles.typeBtn, vehicleType === 'bike_pool' && styles.typeBtnActive]}
                 onPress={() => setVehicleType('bike_pool')}
-                activeOpacity={0.8}
               >
-                <Ionicons name="bicycle-outline" size={18} color={vehicleType === 'bike_pool' ? Colors.primary : Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
-                <Text style={[styles.modeText, vehicleType === 'bike_pool' && styles.activeModeText]}>Bike Pool</Text>
+                <Ionicons name="bicycle-outline" size={20} color={vehicleType === 'bike_pool' ? '#FFFFFF' : Colors.onSurface} />
+                <Text style={[styles.typeBtnText, vehicleType === 'bike_pool' && styles.typeBtnTextActive]}>Bike Pool</Text>
               </TouchableOpacity>
             </View>
 
             <Input
-              label="Available Seats"
-              value={totalSeats}
-              onChangeText={setTotalSeats}
-              keyboardType="number-pad"
-            />
-
-            <Input
-              label="Suggested Price Contribution ($)"
-              value={suggestedContribution}
-              onChangeText={setSuggestedContribution}
-              keyboardType="numeric"
-            />
-
-            <Input
               label="Vehicle Make & Model"
-              placeholder="e.g. Royal Enfield Classic 350 / Honda City"
+              placeholder="e.g. Honda City / Royal Enfield"
               value={vehicleDetails}
               onChangeText={setVehicleDetails}
             />
 
-            {pickupLocation && dropoffLocation && (
-              <View style={styles.summaryBox}>
-                <Text style={styles.summaryTitle}>Trip Route Summary</Text>
-                <Text style={styles.summaryItem}>📍 Pickup: {pickupLocation.name}</Text>
-                <Text style={styles.summaryItem}>🏁 Drop-off: {dropoffLocation.name}</Text>
-                <Text style={styles.summaryItem}>🛣️ Route: {selectedRoute?.viaRoads || 'Fastest Route'}</Text>
-              </View>
-            )}
+            <Input
+              label="Available Seats"
+              keyboardType="number-pad"
+              value={totalSeats}
+              onChangeText={setTotalSeats}
+            />
 
-            <Button
-              title="Publish Ride Offer"
-              onPress={handlePublishRide}
-              loading={createRideMutation.isPending}
-              style={{ marginTop: Spacing.md }}
+            <Input
+              label="Suggested Contribution per Seat ($)"
+              keyboardType="number-pad"
+              value={suggestedContribution}
+              onChangeText={setSuggestedContribution}
             />
           </Card>
+
+          {/* Schedule Confirmation Card */}
+          <Card style={styles.scheduleConfirmCard}>
+            <Text style={styles.confirmHeading}>Scheduled Departure</Text>
+            <Text style={styles.confirmValue}>
+              📅 {new Date(computeDepartureAt(selectedDate, selectedTime)).toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              })} • ⏰ {selectedTime}
+            </Text>
+          </Card>
+
+          <Button
+            title="Publish Ride"
+            onPress={handlePublishRide}
+            loading={createRideMutation.isPending}
+            style={{ marginTop: Spacing.md }}
+          />
         </ScrollView>
       )}
     </SafeAreaView>
@@ -290,13 +409,15 @@ const styles = StyleSheet.create({
   },
   stepContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   wizardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
   closeBtn: {
     width: 36,
@@ -305,7 +426,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.sm,
+    marginRight: 12,
   },
   wizardTitle: {
     ...Typography.headlineLg,
@@ -314,119 +435,62 @@ const styles = StyleSheet.create({
     color: Colors.onSurface,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xl * 2,
+    padding: Spacing.lg,
+    paddingBottom: 100,
   },
   stopoverTitle: {
-    ...Typography.displayLg,
-    fontSize: 24,
-    fontWeight: '800',
-    color: Colors.onSurface,
+    ...Typography.headlineLg,
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#0F172A',
     marginBottom: Spacing.lg,
-    lineHeight: 30,
   },
   stopoverItem: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    padding: Spacing.md,
     borderRadius: 16,
+    padding: Spacing.md,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    marginBottom: Spacing.sm,
   },
   stopoverLabelGroup: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   stopoverText: {
-    ...Typography.labelLg,
+    ...Typography.bodyMd,
     fontSize: 15,
     fontWeight: '700',
-    color: Colors.onSurface,
+    color: '#0F172A',
   },
   removeText: {
-    ...Typography.labelMd,
+    ...Typography.bodyMd,
+    fontSize: 13,
     color: Colors.error,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   addStopoverBox: {
-    marginTop: Spacing.sm,
-    gap: Spacing.sm,
+    marginTop: Spacing.md,
   },
   addStopoverBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: 12,
   },
   addStopoverText: {
-    ...Typography.labelLg,
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.primary,
-  },
-  publishCard: {
-    padding: Spacing.lg,
-  },
-  sectionTitle: {
-    ...Typography.headlineLg,
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.onSurface,
-    marginBottom: Spacing.md,
-  },
-  modeRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  modeBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 44,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-  },
-  activeModeBtn: {
-    borderColor: Colors.primary,
-    backgroundColor: '#EFF6FF',
-  },
-  modeText: {
-    ...Typography.labelLg,
-    fontSize: 14,
-    color: Colors.onSurfaceVariant,
-  },
-  activeModeText: {
-    color: Colors.primary,
-    fontWeight: '800',
-  },
-  summaryBox: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 14,
-    padding: Spacing.md,
-    marginTop: Spacing.sm,
-    gap: 4,
-  },
-  summaryTitle: {
-    ...Typography.labelLg,
-    fontWeight: '800',
-    color: Colors.onSurface,
-    marginBottom: 4,
-  },
-  summaryItem: {
     ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    fontSize: 12.5,
+    fontSize: 15,
+    color: Colors.primary,
+    fontWeight: '700',
   },
   bottomBarContainer: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
+    bottom: 24,
+    right: 24,
+    zIndex: 50,
   },
   floatingArrowBtn: {
     width: 56,
@@ -437,8 +501,140 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 8,
+  },
+  scheduleCard: {
+    marginBottom: Spacing.md,
+  },
+  scheduleSectionTitle: {
+    ...Typography.headlineLg,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: Spacing.md,
+  },
+  chipGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: Spacing.md,
+  },
+  dateChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  timeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  chipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  chipText: {
+    ...Typography.labelLg,
+    fontSize: 13,
+    color: '#334155',
+    fontWeight: '700',
+  },
+  chipTextActive: {
+    color: '#FFFFFF',
+  },
+  summaryBannerCard: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    marginBottom: Spacing.md,
+  },
+  bannerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  bannerTitle: {
+    ...Typography.headlineLg,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E40AF',
+  },
+  bannerText: {
+    ...Typography.bodyMd,
+    fontSize: 13,
+    color: '#1D4ED8',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  publishCard: {
+    marginBottom: Spacing.md,
+  },
+  sectionHeading: {
+    ...Typography.headlineLg,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 8,
+  },
+  typeSelectorRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  typeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 8,
+  },
+  typeBtnActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  typeBtnText: {
+    ...Typography.labelLg,
+    fontSize: 14,
+    color: '#0F172A',
+    fontWeight: '700',
+  },
+  typeBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  scheduleConfirmCard: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: Spacing.md,
+  },
+  confirmHeading: {
+    ...Typography.labelLg,
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  confirmValue: {
+    ...Typography.headlineLg,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginTop: 4,
   },
 });
