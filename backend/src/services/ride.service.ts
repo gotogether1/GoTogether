@@ -82,6 +82,13 @@ export class RideService {
       throw ApiError.badRequest('Pickup and Dropoff coordinates are required for ride creation');
     }
 
+    // Resolve target driver ID from users table
+    let targetDriverId = driverId;
+    const userRes = await query('SELECT id FROM users WHERE id = $1 OR firebase_uid = $1 LIMIT 1', [driverId]);
+    if (userRes.rows && userRes.rows.length > 0) {
+      targetDriverId = userRes.rows[0].id;
+    }
+
     const rideId = `ride_${Date.now()}`;
     const stopoversJson = JSON.stringify(input.stopovers || []);
     const polylineJson = JSON.stringify(input.routePolyline || []);
@@ -100,7 +107,7 @@ export class RideService {
 
     const params = [
       rideId,
-      driverId,
+      targetDriverId,
       input.vehicleType,
       input.pickup,
       input.destination,
@@ -133,7 +140,7 @@ export class RideService {
   }
 
   /**
-   * Search Rides in Neon PostgreSQL with Intermediate Waypoint & Stopover Matching
+   * Search Public Rides in Neon PostgreSQL (Find a Ride)
    */
   static async listRides(
     callerUid: string,
@@ -174,6 +181,23 @@ export class RideService {
   }
 
   /**
+   * Get My Published Rides (WHERE driver_id = authenticatedUserId)
+   */
+  static async getMyRides(driverUid: string): Promise<RideData[]> {
+    const sql = `
+      SELECT r.*, u.display_name AS driver_name, u.average_rating AS driver_rating
+      FROM rides r
+      LEFT JOIN users u ON r.driver_id = u.id OR r.driver_id = u.firebase_uid
+      WHERE r.driver_id = $1 
+         OR r.driver_id = (SELECT id FROM users WHERE firebase_uid = $1 LIMIT 1)
+         OR r.driver_id = (SELECT firebase_uid FROM users WHERE id = $1 LIMIT 1)
+      ORDER BY r.created_at DESC;
+    `;
+    const res = await query(sql, [driverUid]);
+    return (res.rows || []).map(r => this.mapRideRow(r));
+  }
+
+  /**
    * Get single Ride Details
    */
   static async getRide(rideId: string): Promise<RideData> {
@@ -202,7 +226,10 @@ export class RideService {
     }
 
     const ride = checkRes.rows[0];
-    if (ride.driver_id !== driverId) {
+    const userRes = await query('SELECT firebase_uid FROM users WHERE id = $1 LIMIT 1', [ride.driver_id]);
+    const driverFbUid = userRes.rows[0]?.firebase_uid;
+
+    if (ride.driver_id !== driverId && driverFbUid !== driverId) {
       throw ApiError.forbidden('Only the driver can cancel this ride');
     }
 

@@ -8,6 +8,9 @@ const router = Router();
 
 router.use(authenticate as any);
 
+/**
+ * Public search endpoint for Find a Ride (Discovery)
+ */
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const uid = req.auth!.uid;
@@ -23,6 +26,22 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+/**
+ * Authenticated user's My Rides endpoint (WHERE driver_id = authenticatedUserId)
+ */
+router.get('/me', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const uid = req.auth!.uid;
+    const myRides = await RideService.getMyRides(uid);
+    res.json({ data: myRides });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Create a new ride (driver_id derived strictly from req.auth.uid)
+ */
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const uid = req.auth!.uid;
@@ -34,6 +53,9 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+/**
+ * Get Ride by ID
+ */
 router.get('/:rideId', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const ride = await RideService.getRide(req.params.rideId);
@@ -43,6 +65,9 @@ router.get('/:rideId', async (req: Request, res: Response, next: NextFunction) =
   }
 });
 
+/**
+ * Cancel Ride
+ */
 router.post('/:rideId/cancel', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const uid = req.auth!.uid;
@@ -53,6 +78,9 @@ router.post('/:rideId/cancel', async (req: Request, res: Response, next: NextFun
   }
 });
 
+/**
+ * Bookings for a Ride
+ */
 router.post('/:rideId/bookings', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const uid = req.auth!.uid;

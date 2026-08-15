@@ -3,17 +3,24 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../../src/components/Button';
 import { EmptyState } from '../../src/components/loading/EmptyState';
-import { SEED_BOOKINGS, SEED_RIDES, DemoBooking } from '../../src/demo/seedData';
+import { SEED_BOOKINGS, DemoBooking } from '../../src/demo/seedData';
+import { useMyRidesQuery } from '../../src/api/hooks';
+import { useAuth } from '../../src/auth/AuthProvider';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'requests' | 'offers' | 'past'>('upcoming');
   const [bookings, setBookings] = useState<DemoBooking[]>(SEED_BOOKINGS);
+
+  const { data: rawMyRides = [] } = useMyRidesQuery();
+
+  // Strictly filter My Rides by authenticated user UID
+  const myRides = user?.uid ? rawMyRides.filter((r: any) => r.driverId === user.uid || r.driverId === `usr_${user.uid}`) : rawMyRides;
 
   const handleApprove = (bookingId: string) => {
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'approved' } : b));
@@ -29,7 +36,7 @@ export default function DashboardScreen() {
   const pendingRequests = bookings.filter(b => b.status === 'pending');
   const pastBookings = bookings.filter(b => b.status === 'completed' || b.status === 'cancelled');
 
-  const activeCount = upcomingBookings.length + SEED_RIDES.filter(r => r.status === 'published').length;
+  const activeCount = upcomingBookings.length + myRides.filter((r: any) => r.status === 'published' || r.status === 'active').length;
   const completedCount = pastBookings.length;
 
   return (
@@ -48,135 +55,123 @@ export default function DashboardScreen() {
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{completedCount}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>★ --</Text>
-            <Text style={styles.statLabel}>Rating</Text>
+            <Text style={styles.statLabel}>Rides Completed</Text>
           </View>
         </View>
 
-        {/* Segmented Tab Filter */}
-        <View style={styles.segmentedControl}>
+        {/* Tab Selector */}
+        <View style={styles.tabContainer}>
           <TouchableOpacity
-            style={[styles.segmentBtn, activeTab === 'upcoming' && styles.segmentActive]}
+            style={[styles.tabItem, activeTab === 'upcoming' && styles.tabActive]}
             onPress={() => setActiveTab('upcoming')}
-            activeOpacity={0.8}
           >
-            <Text style={[styles.segmentText, activeTab === 'upcoming' && styles.segmentTextActive]}>Upcoming</Text>
+            <Text style={[styles.tabText, activeTab === 'upcoming' && styles.tabTextActive]}>Upcoming</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.segmentBtn, activeTab === 'requests' && styles.segmentActive]}
+            style={[styles.tabItem, activeTab === 'requests' && styles.tabActive]}
             onPress={() => setActiveTab('requests')}
-            activeOpacity={0.8}
           >
-            <Text style={[styles.segmentText, activeTab === 'requests' && styles.segmentTextActive]}>Requests</Text>
+            <Text style={[styles.tabText, activeTab === 'requests' && styles.tabTextActive]}>
+              Requests {pendingRequests.length > 0 ? `(${pendingRequests.length})` : ''}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.segmentBtn, activeTab === 'offers' && styles.segmentActive]}
+            style={[styles.tabItem, activeTab === 'offers' && styles.tabActive]}
             onPress={() => setActiveTab('offers')}
-            activeOpacity={0.8}
           >
-            <Text style={[styles.segmentText, activeTab === 'offers' && styles.segmentTextActive]}>Published</Text>
+            <Text style={[styles.tabText, activeTab === 'offers' && styles.tabTextActive]}>
+              Published {myRides.length > 0 ? `(${myRides.length})` : ''}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.segmentBtn, activeTab === 'past' && styles.segmentActive]}
+            style={[styles.tabItem, activeTab === 'past' && styles.tabActive]}
             onPress={() => setActiveTab('past')}
-            activeOpacity={0.8}
           >
-            <Text style={[styles.segmentText, activeTab === 'past' && styles.segmentTextActive]}>Past</Text>
+            <Text style={[styles.tabText, activeTab === 'past' && styles.tabTextActive]}>History</Text>
           </TouchableOpacity>
         </View>
 
-        {/* TAB 1: UPCOMING APPROVED BOOKINGS */}
+        {/* TAB 1: UPCOMING BOOKED TRIPS */}
         {activeTab === 'upcoming' && (
           <View>
             {upcomingBookings.length === 0 ? (
               <EmptyState
-                title="No Upcoming Rides"
-                message="You don't have any confirmed rides right now. Search for rides or publish one!"
-                actionLabel="Publish Ride"
-                onAction={() => router.push('/(tabs)/offer')}
+                title="No Upcoming Trips"
+                message="You haven't booked any rides yet. Search for a route to find a pooler!"
+                actionLabel="Find a Ride"
+                onAction={() => router.push('/(tabs)/find')}
               />
             ) : (
               upcomingBookings.map(b => (
-                <View key={b.id} style={styles.cardItem}>
+                <TouchableOpacity
+                  key={b.id}
+                  style={styles.cardItem}
+                  onPress={() => router.push(`/ride/${b.rideId}`)}
+                  activeOpacity={0.88}
+                >
                   <View style={styles.cardHeader}>
-                    <View style={styles.approvedBadge}>
-                      <Text style={styles.approvedBadgeText}>CONFIRMED</Text>
+                    <View style={styles.badgeApproved}>
+                      <Text style={styles.badgeApprovedText}>CONFIRMED</Text>
                     </View>
                     <Text style={styles.dateText}>{new Date(b.departureAt).toLocaleDateString()}</Text>
                   </View>
-
                   <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
-                  <Text style={styles.subText}>Driver: {b.driverName} • 1 seat approved</Text>
+                  <Text style={styles.subText}>Driver: {b.driverName} • {b.seatsRequested} seat(s)</Text>
 
-                  <Button
-                    title="Chat with Driver"
-                    onPress={() => router.push(`/chat/${b.id}`)}
-                    style={styles.chatBtn}
-                  />
-                </View>
+                  <View style={styles.actionRow}>
+                    <Button
+                      title="Chat with Driver"
+                      variant="secondary"
+                      onPress={() => router.push(`/chat/${b.id}`)}
+                      style={styles.actionBtn}
+                    />
+                  </View>
+                </TouchableOpacity>
               ))
             )}
           </View>
         )}
 
-        {/* TAB 2: PENDING PASSENGER REQUESTS */}
+        {/* TAB 2: PENDING BOOKING REQUESTS (FOR DRIVERS) */}
         {activeTab === 'requests' && (
           <View>
-            {bookings.length === 0 ? (
+            {pendingRequests.length === 0 ? (
               <EmptyState
-                title="No Booking Requests"
-                message="No passengers have requested seats yet. Published rides will appear here."
+                title="No Pending Requests"
+                message="When passengers request to join your offered pool, their requests will show here."
               />
             ) : (
-              bookings.map(b => (
+              pendingRequests.map(b => (
                 <View key={b.id} style={styles.cardItem}>
                   <View style={styles.cardHeader}>
-                    <View
-                      style={[
-                        styles.statusPill,
-                        b.status === 'approved' && styles.approvedPill,
-                        b.status === 'pending' && styles.pendingPill,
-                        b.status === 'rejected' && styles.rejectedPill,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.statusPillText,
-                          b.status === 'approved' && styles.approvedPillText,
-                          b.status === 'pending' && styles.pendingPillText,
-                          b.status === 'rejected' && styles.rejectedPillText,
-                        ]}
-                      >
-                        {b.status.toUpperCase()}
-                      </Text>
+                    <View style={styles.badgePending}>
+                      <Text style={styles.badgePendingText}>PENDING REQUEST</Text>
                     </View>
-                    <Text style={styles.dateText}>{b.seatsRequested} seat(s) requested</Text>
+                    <Text style={styles.dateText}>{b.seatsRequested} seat(s)</Text>
                   </View>
 
-                  <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
-                  <Text style={styles.subText}>Rider: {b.riderName}</Text>
-                  {b.riderMessage ? <Text style={styles.riderMsg}>"{b.riderMessage}"</Text> : null}
+                  <Text style={styles.routeText}>{b.riderName} wants to join</Text>
+                  <Text style={styles.subText}>Route: {b.pickup} → {b.destination}</Text>
+                  {b.riderMessage ? (
+                    <Text style={styles.noteText}>"{b.riderMessage}"</Text>
+                  ) : null}
 
-                  {b.status === 'pending' && (
-                    <View style={styles.actionBtns}>
-                      <Button title="Approve" onPress={() => handleApprove(b.id)} style={styles.approveBtn} />
-                      <Button title="Reject" variant="danger" onPress={() => handleReject(b.id)} style={styles.rejectBtn} />
-                    </View>
-                  )}
-
-                  {b.status === 'approved' && (
+                  <View style={styles.actionRow}>
                     <Button
-                      title="Chat with Rider"
-                      onPress={() => router.push(`/chat/${b.id}`)}
-                      style={styles.chatBtn}
+                      title="Reject"
+                      variant="outline"
+                      onPress={() => handleReject(b.id)}
+                      style={styles.halfBtn}
                     />
-                  )}
+                    <Button
+                      title="Approve Request"
+                      onPress={() => handleApprove(b.id)}
+                      style={styles.halfBtn}
+                    />
+                  </View>
                 </View>
               ))
             )}
@@ -186,7 +181,7 @@ export default function DashboardScreen() {
         {/* TAB 3: DRIVER'S OWN OFFERED RIDES */}
         {activeTab === 'offers' && (
           <View>
-            {SEED_RIDES.length === 0 ? (
+            {myRides.length === 0 ? (
               <EmptyState
                 title="No Published Rides"
                 message="Offer a ride to start carpooling or bike pooling with verified commuters!"
@@ -194,7 +189,7 @@ export default function DashboardScreen() {
                 onAction={() => router.push('/(tabs)/offer')}
               />
             ) : (
-              SEED_RIDES.map(r => (
+              myRides.map((r: any) => (
                 <TouchableOpacity
                   key={r.id}
                   style={styles.cardItem}
@@ -203,12 +198,12 @@ export default function DashboardScreen() {
                 >
                   <View style={styles.cardHeader}>
                     <View style={styles.typeBadge}>
-                      <Text style={styles.typeBadgeText}>{r.vehicleType.toUpperCase()}</Text>
+                      <Text style={styles.typeBadgeText}>{(r.vehicleType || 'carpool').toUpperCase()}</Text>
                     </View>
                     <Text style={styles.dateText}>{r.availableSeats} of {r.totalSeats} seats open</Text>
                   </View>
                   <Text style={styles.routeText}>{r.pickup} → {r.destination}</Text>
-                  <Text style={styles.subText}>Departure: {new Date(r.departureAt).toLocaleTimeString()}</Text>
+                  <Text style={styles.subText}>Departure: {new Date(r.departureAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
                 </TouchableOpacity>
               ))
             )}
@@ -245,7 +240,7 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 40,
+    paddingBottom: Spacing.xxl,
   },
   pageTitle: {
     ...Typography.headlineLg,
@@ -256,26 +251,26 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing.md,
     marginBottom: Spacing.lg,
   },
   statBox: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    padding: Spacing.md,
     borderRadius: 20,
-    paddingVertical: 14,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   statNumber: {
     ...Typography.headlineLg,
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900',
     color: Colors.primary,
   },
@@ -284,50 +279,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.onSurfaceVariant,
     marginTop: 2,
+    fontWeight: '600',
   },
-  segmentedControl: {
+  tabContainer: {
     flexDirection: 'row',
     backgroundColor: '#E2E8F0',
     borderRadius: 16,
     padding: 4,
     marginBottom: Spacing.lg,
   },
-  segmentBtn: {
+  tabItem: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 12,
   },
-  segmentActive: {
+  tabActive: {
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
-  segmentText: {
+  tabText: {
     ...Typography.labelLg,
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: Colors.onSurfaceVariant,
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '700',
   },
-  segmentTextActive: {
+  tabTextActive: {
     color: Colors.primary,
     fontWeight: '800',
   },
   cardItem: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: Spacing.md + 2,
+    borderRadius: 20,
+    padding: Spacing.md,
     marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -335,45 +331,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  approvedBadge: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  approvedBadgeText: {
-    ...Typography.labelSm,
-    color: '#15803D',
-    fontWeight: '800',
-  },
-  statusPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
-  },
-  approvedPill: { backgroundColor: '#DCFCE7' },
-  pendingPill: { backgroundColor: '#FEF3C7' },
-  rejectedPill: { backgroundColor: '#FEE2E2' },
-  statusPillText: { ...Typography.labelSm, color: '#475569', fontWeight: '800' },
-  approvedPillText: { color: '#15803D' },
-  pendingPillText: { color: '#B45309' },
-  rejectedPillText: { color: '#B91C1C' },
   typeBadge: {
     backgroundColor: '#EFF6FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 8,
   },
   typeBadgeText: {
-    ...Typography.labelSm,
+    ...Typography.labelLg,
+    fontSize: 11,
     color: Colors.primary,
+    fontWeight: '800',
+  },
+  badgeApproved: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  badgeApprovedText: {
+    ...Typography.labelLg,
+    fontSize: 11,
+    color: '#15803D',
+    fontWeight: '800',
+  },
+  badgePending: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  badgePendingText: {
+    ...Typography.labelLg,
+    fontSize: 11,
+    color: '#B45309',
     fontWeight: '800',
   },
   dateText: {
     ...Typography.bodyMd,
     fontSize: 12,
-    color: Colors.onSurfaceVariant,
+    color: '#64748B',
+    fontWeight: '600',
   },
   routeText: {
     ...Typography.headlineLg,
@@ -387,7 +385,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.onSurfaceVariant,
   },
-  riderMsg: {
+  noteText: {
     ...Typography.bodyMd,
     fontSize: 13,
     fontStyle: 'italic',
@@ -395,14 +393,18 @@ const styles = StyleSheet.create({
     marginTop: 6,
     backgroundColor: '#F8FAFC',
     padding: 8,
-    borderRadius: 12,
+    borderRadius: 8,
   },
-  actionBtns: {
+  actionRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 12,
+    gap: 8,
+    marginTop: Spacing.md,
   },
-  approveBtn: { flex: 1, height: 40 },
-  rejectBtn: { flex: 1, height: 40 },
-  chatBtn: { marginTop: 12, height: 42 },
+  actionBtn: {
+    height: 42,
+  },
+  halfBtn: {
+    flex: 1,
+    height: 42,
+  },
 });

@@ -16,6 +16,12 @@ class RideService {
             typeof input.dropoffLongitude !== 'number') {
             throw api_error_js_1.ApiError.badRequest('Pickup and Dropoff coordinates are required for ride creation');
         }
+        // Resolve target driver ID from users table
+        let targetDriverId = driverId;
+        const userRes = await (0, index_js_1.query)('SELECT id FROM users WHERE id = $1 OR firebase_uid = $1 LIMIT 1', [driverId]);
+        if (userRes.rows && userRes.rows.length > 0) {
+            targetDriverId = userRes.rows[0].id;
+        }
         const rideId = `ride_${Date.now()}`;
         const stopoversJson = JSON.stringify(input.stopovers || []);
         const polylineJson = JSON.stringify(input.routePolyline || []);
@@ -32,7 +38,7 @@ class RideService {
     `;
         const params = [
             rideId,
-            driverId,
+            targetDriverId,
             input.vehicleType,
             input.pickup,
             input.destination,
@@ -62,7 +68,7 @@ class RideService {
         throw new Error('Failed to create ride record in database');
     }
     /**
-     * Search Rides in Neon PostgreSQL with Intermediate Waypoint & Stopover Matching
+     * Search Public Rides in Neon PostgreSQL (Find a Ride)
      */
     static async listRides(callerUid, filters) {
         const blockedUserIds = await block_service_js_1.BlockService.getBlockedUsers(callerUid);
@@ -95,6 +101,22 @@ class RideService {
         return rides.filter(r => !blockedUserIds.includes(r.driverId));
     }
     /**
+     * Get My Published Rides (WHERE driver_id = authenticatedUserId)
+     */
+    static async getMyRides(driverUid) {
+        const sql = `
+      SELECT r.*, u.display_name AS driver_name, u.average_rating AS driver_rating
+      FROM rides r
+      LEFT JOIN users u ON r.driver_id = u.id OR r.driver_id = u.firebase_uid
+      WHERE r.driver_id = $1 
+         OR r.driver_id = (SELECT id FROM users WHERE firebase_uid = $1 LIMIT 1)
+         OR r.driver_id = (SELECT firebase_uid FROM users WHERE id = $1 LIMIT 1)
+      ORDER BY r.created_at DESC;
+    `;
+        const res = await (0, index_js_1.query)(sql, [driverUid]);
+        return (res.rows || []).map(r => this.mapRideRow(r));
+    }
+    /**
      * Get single Ride Details
      */
     static async getRide(rideId) {
@@ -121,7 +143,9 @@ class RideService {
             throw api_error_js_1.ApiError.notFound('Ride not found');
         }
         const ride = checkRes.rows[0];
-        if (ride.driver_id !== driverId) {
+        const userRes = await (0, index_js_1.query)('SELECT firebase_uid FROM users WHERE id = $1 LIMIT 1', [ride.driver_id]);
+        const driverFbUid = userRes.rows[0]?.firebase_uid;
+        if (ride.driver_id !== driverId && driverFbUid !== driverId) {
             throw api_error_js_1.ApiError.forbidden('Only the driver can cancel this ride');
         }
         const updateSql = `UPDATE rides SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *;`;
