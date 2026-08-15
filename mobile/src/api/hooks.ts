@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchWithAuth } from './client';
-import { SEED_RIDES, SEED_BOOKINGS } from '../demo/seedData';
 import { auth } from '../config/firebase';
 import { useAuth } from '../auth/AuthProvider';
 
@@ -85,9 +84,9 @@ export function useRideDetailQuery(rideId: string) {
       if (!rideId) return null;
       try {
         const res = await fetchWithAuth(`/v1/rides/${rideId}`);
-        return res.data;
+        return res.data || null;
       } catch {
-        return SEED_RIDES.find(r => r.id === rideId) || null;
+        return null;
       }
     },
     enabled: !!rideId,

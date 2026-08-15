@@ -38,7 +38,7 @@ export default function RideDetailsScreen() {
     }
   };
 
-  const isDriver = !!user && !!ride && (user.uid === ride.driverId || `usr_${user.uid}` === ride.driverId);
+  const isDriver = !!user && !!ride && (user.uid === ride.driverId || user.uid === (ride as any).driverFbUid || `usr_${user.uid}` === ride.driverId);
 
   const handleBookingSubmit = async () => {
     if (!user) {
