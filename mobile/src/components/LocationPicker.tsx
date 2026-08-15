@@ -247,17 +247,17 @@ export function LocationPicker({
           </View>
         </View>
 
-        {/* GPS Locate Button */}
+        {/* GPS Locate Button (Bottom Right) */}
         <TouchableOpacity
-          style={[styles.gpsLocateBtn, { bottom: bottomInset + 76 }]}
+          style={[styles.gpsLocateBtn, { bottom: bottomInset + 16 }]}
           onPress={handleUseCurrentLocation}
           activeOpacity={0.8}
         >
           <Ionicons name="locate" size={22} color={Colors.primary} />
         </TouchableOpacity>
 
-        {/* Single Floating Next Button at Bottom Right */}
-        <View style={[styles.bottomBarContainer, { paddingBottom: bottomInset + 16 }]}>
+        {/* Single Floating Next Button at Bottom Left */}
+        <View style={[styles.bottomBarContainerLeft, { paddingBottom: bottomInset + 16 }]}>
           <TouchableOpacity
             style={styles.nextPillBtn}
             onPress={() => onConfirm(selectedLocation)}
@@ -456,9 +456,10 @@ const styles = StyleSheet.create({
     elevation: 6,
     zIndex: 25,
   },
-  bottomBarContainer: {
+  bottomBarContainerLeft: {
     position: 'absolute',
-    right: 20,
+    left: 20,
+    bottom: 0,
     zIndex: 30,
   },
   nextPillBtn: {
