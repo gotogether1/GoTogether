@@ -23,7 +23,7 @@ export function GoogleMapView({
     if (webViewRef.current) {
       const script = `
         if (window.map) {
-          window.map.panTo([${latitude}, ${longitude}]);
+          window.map.setView([${latitude}, ${longitude}], Math.max(window.map.getZoom(), 14));
         }
       `;
       webViewRef.current.injectJavaScript(script);
@@ -54,7 +54,7 @@ export function GoogleMapView({
             height: 100%;
             margin: 0;
             padding: 0;
-            background-color: #f8fafc;
+            background-color: #74BBE3;
             touch-action: manipulation;
           }
           .leaflet-control-attribution {
@@ -62,13 +62,13 @@ export function GoogleMapView({
           }
           .google-logo {
             position: absolute;
-            bottom: 8px;
-            left: 10px;
+            bottom: 12px;
+            left: 14px;
             z-index: 1000;
             pointer-events: none;
           }
           .google-logo img {
-            height: 18px;
+            height: 20px;
           }
         </style>
       </head>
@@ -79,9 +79,15 @@ export function GoogleMapView({
         </div>
         <script>
           function initMap() {
+            var worldBounds = L.latLngBounds(L.latLng(-85, -180), L.latLng(85, 180));
+
             window.map = L.map('map', {
               zoomControl: false,
               attributionControl: false,
+              minZoom: 3,
+              maxZoom: 19,
+              maxBounds: worldBounds,
+              maxBoundsViscosity: 1.0,
               touchZoom: 'center',
               bounceAtZoomLimits: false,
               scrollWheelZoom: true,
@@ -93,9 +99,12 @@ export function GoogleMapView({
               zoomAnimation: true
             }).setView([${latitude}, ${longitude}], ${zoom});
 
-            // Official Google Maps Vector Roadmap Tiles
+            // Official Google Maps Vector Roadmap Tiles with noWrap tile clamping
             L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-              maxZoom: 20,
+              minZoom: 3,
+              maxZoom: 19,
+              noWrap: true,
+              bounds: worldBounds,
               subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
             }).addTo(window.map);
 
@@ -159,7 +168,7 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#74BBE3',
   },
   zoomControlsContainer: {
     position: 'absolute',

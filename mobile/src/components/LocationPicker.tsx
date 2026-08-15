@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -30,7 +30,7 @@ interface LocationPickerProps {
 
 export function LocationPicker({
   title,
-  placeholder = 'Enter the full address',
+  placeholder = 'Search location',
   initialLocation,
   onConfirm,
   onBack,
@@ -52,13 +52,6 @@ export function LocationPicker({
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [geocodingMap, setGeocodingMap] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-
-  // Sync searchQuery when selectedLocation changes
-  useEffect(() => {
-    if (selectedLocation && selectedLocation.address) {
-      setSearchQuery(selectedLocation.address);
-    }
-  }, [selectedLocation]);
 
   // Debounced Places Autocomplete Search
   useEffect(() => {
@@ -90,6 +83,7 @@ export function LocationPicker({
     try {
       const details = await fetchPlaceDetails(s.placeId, s.name || s.address);
       setSelectedLocation(details);
+      setSearchQuery(details.address || details.name);
     } catch {
       setSelectedLocation(prev => ({
         ...prev,
@@ -108,7 +102,7 @@ export function LocationPicker({
     try {
       const gpsLocation = await getCurrentDeviceLocation();
       setSelectedLocation(gpsLocation);
-      setSearchQuery(gpsLocation.name || gpsLocation.address);
+      setSearchQuery(gpsLocation.address || gpsLocation.name);
     } catch {
       // fallback
     } finally {
@@ -118,12 +112,15 @@ export function LocationPicker({
 
   const handleCenterChange = async (lat: number, lng: number) => {
     const dist = Math.abs(lat - selectedLocation.latitude) + Math.abs(lng - selectedLocation.longitude);
-    if (dist < 0.0003) return;
+    if (dist < 0.0002) return;
 
     setGeocodingMap(true);
     try {
       const revGeocoded = await reverseGeocode(lat, lng);
       setSelectedLocation(revGeocoded);
+      if (!isSearching) {
+        setSearchQuery(revGeocoded.address || revGeocoded.name);
+      }
     } catch {
       setSelectedLocation(prev => ({
         ...prev,
@@ -140,20 +137,17 @@ export function LocationPicker({
 
   return (
     <View style={styles.container}>
-      {/* Search & Header Bar */}
+      {/* Floating Pill Search & Header Bar (BlaBlaCar Styling) */}
       <View style={[styles.headerContainer, { paddingTop: headerPaddingTop }]}>
-        <View style={styles.topHeaderRow}>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
-              <Ionicons name="arrow-back" size={22} color={Colors.onSurface} />
-            </TouchableOpacity>
-          )}
-          <Text style={styles.headerTitle}>{title}</Text>
-        </View>
-
-        {/* Input Field with Clear Button */}
         <View style={styles.inputCard}>
-          <Ionicons name="search-outline" size={18} color={Colors.primary} style={styles.searchIcon} />
+          {onBack ? (
+            <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
+              <Ionicons name="chevron-back" size={22} color="#0F172A" />
+            </TouchableOpacity>
+          ) : (
+            <Ionicons name="search-outline" size={18} color={Colors.primary} style={styles.searchIcon} />
+          )}
+
           <TextInput
             style={styles.input}
             placeholder={placeholder}
@@ -171,12 +165,14 @@ export function LocationPicker({
                 try {
                   const details = await fetchPlaceDetails(searchQuery.trim(), searchQuery.trim());
                   setSelectedLocation(details);
+                  setSearchQuery(details.address || details.name);
                 } finally {
                   setLoadingSuggestions(false);
                 }
               }
             }}
           />
+
           {searchQuery.length > 0 && (
             <TouchableOpacity
               onPress={() => {
@@ -185,7 +181,7 @@ export function LocationPicker({
               }}
               style={styles.clearBtn}
             >
-              <Ionicons name="close-circle" size={18} color={Colors.outline} />
+              <Ionicons name="close" size={20} color="#64748B" />
             </TouchableOpacity>
           )}
         </View>
@@ -204,7 +200,7 @@ export function LocationPicker({
             {loadingSuggestions ? (
               <View style={styles.loaderRow}>
                 <ActivityIndicator size="small" color={Colors.primary} />
-                <Text style={styles.loaderText}>Searching Google Places...</Text>
+                <Text style={styles.loaderText}>Searching locations...</Text>
               </View>
             ) : (
               <ScrollView keyboardShouldPersistTaps="handled" style={styles.suggestionsList}>
@@ -228,13 +224,24 @@ export function LocationPicker({
         )}
       </View>
 
-      {/* Real Interactive Google Map Canvas */}
+      {/* Real Interactive Google Map Canvas with Fixed Center Pin */}
       <View style={styles.mapCanvas}>
         <GoogleMapView
           latitude={selectedLocation.latitude}
           longitude={selectedLocation.longitude}
           onCenterChange={handleCenterChange}
         />
+
+        {/* Floating "See suggestions" Pill (Matching BlaBlaCar Reference UI) */}
+        {!isSearching && suggestions.length > 0 && (
+          <TouchableOpacity
+            style={styles.seeSuggestionsBtn}
+            onPress={() => setIsSearching(true)}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.seeSuggestionsText}>See suggestions</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Fixed Center Pin & Location Card */}
         <View style={styles.centerPinContainer} pointerEvents="none">
@@ -244,15 +251,11 @@ export function LocationPicker({
             {geocodingMap && <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 2 }} />}
           </View>
 
-          <View style={styles.pinCircleDark}>
-            <View style={styles.pinInnerDot} />
+          {/* BlaBlaCar Dark Teardrop Location Marker */}
+          <View style={styles.blaBlaPinBody}>
+            <View style={styles.blaBlaPinInnerDot} />
           </View>
           <View style={styles.pinShadow} />
-        </View>
-
-        <View style={styles.dragHintPill}>
-          <Ionicons name="hand-right-outline" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
-          <Text style={styles.dragHintText}>Move map to refine pin location</Text>
         </View>
 
         {/* GPS Locate Button */}
@@ -286,41 +289,30 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: Spacing.md,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    zIndex: 10,
-    paddingBottom: Spacing.sm,
-  },
-  topHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.xs,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.sm,
-  },
-  headerTitle: {
-    ...Typography.headlineLg,
-    fontSize: 20,
-    fontWeight: '800',
-    color: Colors.onSurface,
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 40,
   },
   inputCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 16,
-    paddingHorizontal: Spacing.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 14,
     height: 48,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  backBtn: {
+    paddingRight: 6,
   },
   searchIcon: {
     marginRight: 8,
@@ -328,8 +320,9 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     ...Typography.bodyLg,
-    fontSize: 14.5,
-    color: Colors.onSurface,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
   },
   clearBtn: {
     padding: 4,
@@ -337,15 +330,15 @@ const styles = StyleSheet.create({
   autocompleteDropdown: {
     marginTop: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     maxHeight: 240,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.14,
     shadowRadius: 10,
-    elevation: 6,
+    elevation: 8,
   },
   currentLocRow: {
     flexDirection: 'row',
@@ -406,10 +399,31 @@ const styles = StyleSheet.create({
   },
   mapCanvas: {
     flex: 1,
-    backgroundColor: '#CBD5E1',
+    backgroundColor: '#74BBE3',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  seeSuggestionsBtn: {
+    position: 'absolute',
+    top: 76,
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 6,
+    zIndex: 25,
+  },
+  seeSuggestionsText: {
+    ...Typography.labelLg,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2563EB',
   },
   centerPinContainer: {
     alignItems: 'center',
@@ -446,49 +460,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 2,
   },
-  pinCircleDark: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  blaBlaPinBody: {
+    width: 32,
+    height: 40,
     backgroundColor: '#0F172A',
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 2,
+    transform: [{ rotate: '-45deg' }],
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 6,
-    elevation: 5,
+    elevation: 6,
   },
-  pinInnerDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#60A5FA',
+  blaBlaPinInnerDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FFFFFF',
   },
   pinShadow: {
-    width: 12,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    marginTop: 4,
-  },
-  dragHintPill: {
-    position: 'absolute',
-    top: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  dragHintText: {
-    ...Typography.labelSm,
-    fontSize: 11,
-    color: '#FFFFFF',
-    fontWeight: '700',
+    width: 14,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: 'rgba(15, 23, 42, 0.3)',
+    marginTop: 6,
   },
   gpsLocateBtn: {
     position: 'absolute',
