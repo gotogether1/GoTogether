@@ -8,9 +8,10 @@ import {
   TextInput,
   ActivityIndicator,
   Animated,
-  PanResponder,
   Image,
+  Platform,
 } from 'react-native';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoTogetherLocation, PlaceAutocompleteSuggestion } from '../types/location';
@@ -40,9 +41,7 @@ export function LocationPicker({
   onBack,
 }: LocationPickerProps) {
   const insets = useSafeAreaInsets();
-  const [searchQuery, setSearchQuery] = useState(initialLocation?.address || '');
-  const [suggestions, setSuggestions] = useState<PlaceAutocompleteSuggestion[]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const mapRef = useRef<MapView>(null);
 
   const [selectedLocation, setSelectedLocation] = useState<GoTogetherLocation>(
     initialLocation || {
@@ -54,44 +53,33 @@ export function LocationPicker({
     }
   );
 
+  const [searchQuery, setSearchQuery] = useState(initialLocation?.address || selectedLocation.address);
+  const [suggestions, setSuggestions] = useState<PlaceAutocompleteSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [geocodingMap, setGeocodingMap] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Map drag offset animation simulation
-  const pan = useRef(new Animated.ValueXY()).current;
+  // Sync searchQuery when selectedLocation changes
+  useEffect(() => {
+    if (selectedLocation && selectedLocation.address) {
+      setSearchQuery(selectedLocation.address);
+    }
+  }, [selectedLocation]);
 
-  // PanResponder to simulate real interactive map drag with fixed center pin
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
-      onPanResponderRelease: async (_, gestureState) => {
-        // Compute delta shift in latitude & longitude
-        const deltaLat = -gestureState.dy * 0.00015;
-        const deltaLng = gestureState.dx * 0.00015;
-
-        const newLat = Math.round((selectedLocation.latitude + deltaLat) * 10000) / 10000;
-        const newLng = Math.round((selectedLocation.longitude + deltaLng) * 10000) / 10000;
-
-        Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
-
-        setGeocodingMap(true);
-        try {
-          const revGeocoded = await reverseGeocode(newLat, newLng);
-          setSelectedLocation(revGeocoded);
-          setSearchQuery(revGeocoded.address);
-        } catch {
-          setSelectedLocation(prev => ({
-            ...prev,
-            latitude: newLat,
-            longitude: newLng,
-          }));
-        } finally {
-          setGeocodingMap(false);
-        }
-      },
-    })
-  ).current;
+  // Animate MapView camera when selectedLocation changes
+  useEffect(() => {
+    if (mapRef.current && selectedLocation) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: selectedLocation.latitude,
+          longitude: selectedLocation.longitude,
+          latitudeDelta: 0.008,
+          longitudeDelta: 0.008,
+        },
+        500
+      );
+    }
+  }, [selectedLocation.latitude, selectedLocation.longitude]);
 
   // Debounced Places Autocomplete Search
   useEffect(() => {
@@ -124,13 +112,12 @@ export function LocationPicker({
       const details = await fetchPlaceDetails(s.placeId, s.name || s.address);
       setSelectedLocation(details);
     } catch {
-      setSelectedLocation({
+      setSelectedLocation(prev => ({
+        ...prev,
         placeId: s.placeId,
         name: s.name,
         address: s.address,
-        latitude: selectedLocation.latitude,
-        longitude: selectedLocation.longitude,
-      });
+      }));
     } finally {
       setLoadingSuggestions(false);
     }
@@ -150,13 +137,35 @@ export function LocationPicker({
     }
   };
 
+  const handleRegionChangeComplete = async (region: { latitude: number; longitude: number }) => {
+    // Only reverse geocode if moved away significantly
+    const dist = Math.abs(region.latitude - selectedLocation.latitude) + Math.abs(region.longitude - selectedLocation.longitude);
+    if (dist < 0.0003) return;
+
+    setGeocodingMap(true);
+    try {
+      const revGeocoded = await reverseGeocode(region.latitude, region.longitude);
+      setSelectedLocation(revGeocoded);
+    } catch {
+      setSelectedLocation(prev => ({
+        ...prev,
+        latitude: region.latitude,
+        longitude: region.longitude,
+      }));
+    } finally {
+      setGeocodingMap(false);
+    }
+  };
+
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
-  // Google Static Map Tiles URL centered on selectedLocation coordinates
-  const staticMapUri = GOOGLE_MAPS_API_KEY
-    ? `https://maps.googleapis.com/maps/api/staticmap?center=${selectedLocation.latitude},${selectedLocation.longitude}&zoom=15&size=800x800&scale=2&maptype=roadmap&key=${GOOGLE_MAPS_API_KEY}`
-    : null;
+  // Fallback map tile imagery using OpenStreetMap / Static Maps if native provider is loading
+  const osmStaticUri = `https://a.tile.openstreetmap.org/15/${Math.floor(
+    ((selectedLocation.longitude + 180) / 360) * Math.pow(2, 15)
+  )}/${Math.floor(
+    ((1 - Math.log(Math.tan((selectedLocation.latitude * Math.PI) / 180) + 1 / Math.cos((selectedLocation.latitude * Math.PI) / 180)) / Math.PI) / 2) * Math.pow(2, 15)
+  )}.png`;
 
   return (
     <View style={styles.container}>
@@ -248,32 +257,24 @@ export function LocationPicker({
         )}
       </View>
 
-      {/* Interactive Google Map Canvas with Fixed Center Pin */}
-      <View style={styles.mapCanvas} {...panResponder.panHandlers}>
-        {/* Real Google Maps Tile Layer / Grid Layer */}
-        <Animated.View
-          style={[
-            styles.mapGridLayer,
-            {
-              transform: [{ translateX: pan.x }, { translateY: pan.y }],
-            },
-          ]}
-        >
-          {staticMapUri ? (
-            <Image
-              source={{ uri: staticMapUri }}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-            />
-          ) : (
-            <>
-              <View style={styles.gridLineHorizontal1} />
-              <View style={styles.gridLineHorizontal2} />
-              <View style={styles.gridLineVertical1} />
-              <View style={styles.gridLineVertical2} />
-            </>
-          )}
-        </Animated.View>
+      {/* Native Google Map Canvas with Fixed Center Pin */}
+      <View style={styles.mapCanvas}>
+        {/* Real Native MapView Container */}
+        <MapView
+          ref={mapRef}
+          style={StyleSheet.absoluteFill}
+          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+          initialRegion={{
+            latitude: selectedLocation.latitude,
+            longitude: selectedLocation.longitude,
+            latitudeDelta: 0.008,
+            longitudeDelta: 0.008,
+          }}
+          onRegionChangeComplete={handleRegionChangeComplete}
+          showsUserLocation={true}
+          showsMyLocationButton={false}
+          showsCompass={false}
+        />
 
         {/* Fixed Center Pin & Location Card */}
         <View style={styles.centerPinContainer} pointerEvents="none">
@@ -293,6 +294,15 @@ export function LocationPicker({
           <Ionicons name="hand-right-outline" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
           <Text style={styles.dragHintText}>Move map to refine pin location</Text>
         </View>
+
+        {/* GPS Locate Button */}
+        <TouchableOpacity
+          style={styles.gpsLocateBtn}
+          onPress={handleUseCurrentLocation}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="locate" size={22} color={Colors.primary} />
+        </TouchableOpacity>
 
         {/* Floating Confirm Button (Blue Arrow Button) */}
         <View style={[styles.bottomBarContainer, { paddingBottom: bottomInset }]}>
@@ -441,46 +451,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  mapGridLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#E2E8F0',
-  },
-  gridLineHorizontal1: {
-    position: 'absolute',
-    top: '30%',
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-  },
-  gridLineHorizontal2: {
-    position: 'absolute',
-    top: '70%',
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-  },
-  gridLineVertical1: {
-    position: 'absolute',
-    left: '35%',
-    top: 0,
-    bottom: 0,
-    width: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-  },
-  gridLineVertical2: {
-    position: 'absolute',
-    left: '68%',
-    top: 0,
-    bottom: 0,
-    width: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-  },
   centerPinContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -559,6 +529,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  gpsLocateBtn: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
+    zIndex: 25,
   },
   bottomBarContainer: {
     position: 'absolute',

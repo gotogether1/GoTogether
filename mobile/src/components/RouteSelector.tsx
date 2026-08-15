@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoTogetherLocation, RouteOption } from '../types/location';
 import { calculateRoutes } from '../services/locationService';
 import { Colors, Spacing, Typography } from '../theme';
-
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 interface RouteSelectorProps {
   origin: GoTogetherLocation;
@@ -17,6 +16,8 @@ interface RouteSelectorProps {
 
 export function RouteSelector({ origin, destination, onSelectRoute, onBack }: RouteSelectorProps) {
   const insets = useSafeAreaInsets();
+  const mapRef = useRef<MapView>(null);
+
   const [routes, setRoutes] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -39,23 +40,67 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
     loadRoutes();
   }, [origin, destination]);
 
+  useEffect(() => {
+    if (mapRef.current && origin && destination) {
+      mapRef.current.fitToCoordinates(
+        [
+          { latitude: origin.latitude, longitude: origin.longitude },
+          { latitude: destination.latitude, longitude: destination.longitude },
+        ],
+        {
+          edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
+          animated: true,
+        }
+      );
+    }
+  }, [origin, destination]);
+
   const selectedRoute = routes.find(r => r.id === selectedRouteId) || routes[0];
 
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
-  // Google Static Map Path URI
-  const staticRouteMapUri = GOOGLE_MAPS_API_KEY
-    ? `https://maps.googleapis.com/maps/api/staticmap?path=color:0x2563EBff|weight:5|${origin.latitude},${origin.longitude}|${destination.latitude},${destination.longitude}&markers=color:blue|label:A|${origin.latitude},${origin.longitude}&markers=color:green|label:B|${destination.latitude},${destination.longitude}&size=800x600&scale=2&key=${GOOGLE_MAPS_API_KEY}`
-    : null;
-
   return (
     <View style={styles.container}>
       {/* Top Map Preview Canvas */}
       <View style={styles.topMapCanvas}>
-        {staticRouteMapUri ? (
-          <Image source={{ uri: staticRouteMapUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-        ) : null}
+        <MapView
+          ref={mapRef}
+          style={StyleSheet.absoluteFill}
+          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+          initialRegion={{
+            latitude: (origin.latitude + destination.latitude) / 2,
+            longitude: (origin.longitude + destination.longitude) / 2,
+            latitudeDelta: Math.abs(origin.latitude - destination.latitude) * 1.5 || 0.05,
+            longitudeDelta: Math.abs(origin.longitude - destination.longitude) * 1.5 || 0.05,
+          }}
+        >
+          {/* Pickup Marker */}
+          <Marker
+            coordinate={{ latitude: origin.latitude, longitude: origin.longitude }}
+            title={origin.name}
+            description={origin.address}
+            pinColor="#2563EB"
+          />
+
+          {/* Dropoff Marker */}
+          <Marker
+            coordinate={{ latitude: destination.latitude, longitude: destination.longitude }}
+            title={destination.name}
+            description={destination.address}
+            pinColor="#10B981"
+          />
+
+          {/* Connecting Route Line */}
+          <Polyline
+            coordinates={[
+              { latitude: origin.latitude, longitude: origin.longitude },
+              { latitude: destination.latitude, longitude: destination.longitude },
+            ]}
+            strokeColor="#2563EB"
+            strokeWidth={4}
+          />
+        </MapView>
 
         {onBack && (
           <TouchableOpacity
@@ -71,20 +116,6 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
         <View style={[styles.progressTrack, { top: headerPaddingTop + 8 }]}>
           <View style={styles.progressBarActive} />
         </View>
-
-        {/* Route Visualizer Path Representation */}
-        {!staticRouteMapUri && (
-          <View style={styles.routeTrackVisualizer}>
-            <View style={styles.originDot} />
-            <View style={styles.routeLineActive} />
-            <View style={styles.destDot} />
-            <View style={styles.routeBadgePill}>
-              <Text style={styles.routeBadgeText}>
-                {origin.name} → {destination.name}
-              </Text>
-            </View>
-          </View>
-        )}
       </View>
 
       {/* Bottom Sheet Card: What is your route? */}
@@ -181,45 +212,6 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: Colors.primary,
     borderRadius: 2,
-  },
-  routeTrackVisualizer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  originDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: Colors.primary,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  routeLineActive: {
-    width: 4,
-    height: 60,
-    backgroundColor: Colors.primary,
-    marginVertical: 4,
-  },
-  destDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#10B981',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  routeBadgePill: {
-    marginTop: 12,
-    backgroundColor: 'rgba(15, 23, 42, 0.75)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  routeBadgeText: {
-    ...Typography.labelSm,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 11.5,
   },
   bottomSheetCard: {
     backgroundColor: '#FFFFFF',
