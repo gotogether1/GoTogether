@@ -71,7 +71,7 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
           activeRouteId={selectedRouteId}
         />
 
-        {/* Header Back Button */}
+        {/* Clean Header Back Button (Progress Bar Line Removed as requested) */}
         {onBack && (
           <TouchableOpacity
             onPress={onBack}
@@ -81,17 +81,10 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
             <Ionicons name="arrow-back" size={20} color="#0F172A" />
           </TouchableOpacity>
         )}
-
-        {/* Progress Bar Header Indicator */}
-        <View style={[styles.progressBarContainer, { top: headerPaddingTop + 18 }]}>
-          <View style={styles.progressBarTrack}>
-            <View style={[styles.progressBarFill, { width: '60%' }]} />
-          </View>
-        </View>
       </View>
 
-      {/* Floating Bottom Card: "What is your route?" */}
-      <View style={[styles.bottomSheetCard, { paddingBottom: bottomInset + 75 }]}>
+      {/* Floating Bottom Sheet Card: "What is your route?" */}
+      <View style={[styles.bottomSheetCard, { paddingBottom: bottomInset + 12 }]}>
         <View style={styles.bottomSheetHeaderRow}>
           <Text style={styles.bottomSheetTitle}>What is your route?</Text>
         </View>
@@ -131,10 +124,10 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
           </ScrollView>
         )}
 
-        {/* Floating Confirm Arrow Button (Elevated 100% cleanly above bottom tab bar) */}
+        {/* Clean Non-Overlapping Floating Confirm Arrow Button (Bottom Right) */}
         {selectedRoute && (
           <TouchableOpacity
-            style={[styles.floatingConfirmArrowBtn, { bottom: bottomInset + 80 }]}
+            style={[styles.floatingConfirmArrowBtn, { bottom: bottomInset + 16 }]}
             onPress={() => onSelectRoute(selectedRoute)}
             activeOpacity={0.88}
           >
@@ -171,30 +164,13 @@ const styles = StyleSheet.create({
     elevation: 6,
     zIndex: 50,
   },
-  progressBarContainer: {
-    position: 'absolute',
-    left: 72,
-    right: 24,
-    zIndex: 50,
-  },
-  progressBarTrack: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(226, 232, 240, 0.9)',
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: Colors.primary,
-    borderRadius: 2,
-  },
   bottomSheetCard: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    maxHeight: '52%',
+    maxHeight: '46%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.12,
@@ -206,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.sm + 2,
+    marginBottom: Spacing.sm,
   },
   bottomSheetTitle: {
     ...Typography.headlineLg,
@@ -227,13 +203,15 @@ const styles = StyleSheet.create({
   },
   routesScroll: {
     maxHeight: 180,
+    paddingRight: 4,
   },
   routeCardOption: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
     borderRadius: 20,
-    paddingHorizontal: 16,
+    paddingLeft: 16,
+    paddingRight: 64, // Extra right padding so route card text never overlaps with blue arrow button!
     paddingVertical: 14,
     marginBottom: 12,
     borderWidth: 1.5,
