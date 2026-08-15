@@ -9,7 +9,7 @@ interface RealtimeContextType {
 
 const RealtimeContext = createContext<RealtimeContextType>({ connected: false });
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:10000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://gotogether-backend-zceg.onrender.com';
 
 export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [connected, setConnected] = useState(false);
