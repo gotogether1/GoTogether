@@ -1,6 +1,14 @@
+import { Platform } from 'react-native';
 import { auth } from '../config/firebase';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://gotogether-backend-zceg.onrender.com';
+let envBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://gotogether-backend-zceg.onrender.com';
+
+// On Android emulator, 'localhost' points to internal Android VM loopback. Map 'localhost' to '10.0.2.2' (Android host loopback)
+if (Platform.OS === 'android' && envBaseUrl.includes('localhost')) {
+  envBaseUrl = envBaseUrl.replace('localhost', '10.0.2.2');
+}
+
+export const API_BASE_URL = envBaseUrl;
 
 export async function fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<any> {
   let token: string | null = null;

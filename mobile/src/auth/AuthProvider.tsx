@@ -20,23 +20,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
 
       if (currentUser) {
-        try {
-          // Sync user credentials directly to Neon PostgreSQL users database table
-          await fetchWithAuth('/v1/me/sync', {
-            method: 'POST',
-            body: JSON.stringify({
-              email: currentUser.email,
-              displayName: currentUser.displayName || currentUser.email?.split('@')[0],
-            }),
-          });
-        } catch (err) {
-          console.warn('Neon PostgreSQL user sync notice:', err);
-        }
+        // Sync user credentials directly to Neon PostgreSQL users database table silently
+        fetchWithAuth('/v1/me/sync', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: currentUser.email,
+            displayName: currentUser.displayName || currentUser.email?.split('@')[0],
+          }),
+        }).catch(() => {
+          // Silently catch network offline states so no warning overlay interrupts UI
+        });
       }
     });
     return unsubscribe;
@@ -54,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithEmail = async (email: string, pass: string): Promise<User> => {
     try {
       const cred = await signInWithEmailAndPassword(auth, email, pass);
-      // Immediately trigger Neon PostgreSQL UPSERT sync
+      // Immediately trigger Neon PostgreSQL UPSERT sync silently
       fetchWithAuth('/v1/me/sync', {
         method: 'POST',
         body: JSON.stringify({ email, displayName: email.split('@')[0] }),
@@ -68,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signupWithEmail = async (email: string, pass: string): Promise<User> => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
-      // Immediately trigger Neon PostgreSQL UPSERT sync
+      // Immediately trigger Neon PostgreSQL UPSERT sync silently
       fetchWithAuth('/v1/me/sync', {
         method: 'POST',
         body: JSON.stringify({ email, displayName: email.split('@')[0] }),
