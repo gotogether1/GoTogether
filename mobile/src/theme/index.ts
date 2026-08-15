@@ -61,6 +61,11 @@ export const BorderRadius = {
 };
 
 export const Typography = {
+  fontFamily: {
+    regular: 'System',
+    medium: 'System',
+    bold: 'System',
+  },
   displayLg: { fontSize: 32, fontWeight: '800' as const, lineHeight: 40, letterSpacing: -0.5 },
   headlineLg: { fontSize: 24, fontWeight: '800' as const, lineHeight: 32, letterSpacing: -0.3 },
   headlineMd: { fontSize: 18, fontWeight: '700' as const, lineHeight: 26 },

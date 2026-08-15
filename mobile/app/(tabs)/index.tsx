@@ -1,25 +1,28 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../src/auth/AuthProvider';
-import { useRidesQuery } from '../../src/api/hooks';
-import { SkeletonCard } from '../../src/components/loading/SkeletonCard';
-import { EmptyState } from '../../src/components/loading/EmptyState';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { getRecentSearches, RecentSearchItem } from '../../src/utils/recentSearches';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [filter, setFilter] = useState<'all' | 'carpool' | 'bike_pool'>('all');
-
-  const queryParams = filter === 'all' ? undefined : { vehicleType: filter };
-  const { data: rides, isLoading, refetch, isRefetching } = useRidesQuery(queryParams);
+  const [recentSearches, setRecentSearches] = useState<RecentSearchItem[]>([]);
 
   const isLoggedIn = !!user;
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Guest';
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Commuter';
+
+  useEffect(() => {
+    async function loadHistory() {
+      const items = await getRecentSearches(user?.uid);
+      setRecentSearches(items);
+    }
+    loadHistory();
+  }, [user?.uid]);
 
   const handlePublishPress = () => {
     if (!user) {
@@ -36,13 +39,22 @@ export default function DashboardScreen() {
     router.push('/(tabs)/offer');
   };
 
+  const handleRecentSearchTap = (item: RecentSearchItem) => {
+    router.push({
+      pathname: '/(tabs)/find',
+      params: {
+        pickup: item.pickup,
+        destination: item.destination,
+      },
+    });
+  };
+
   const topInsetPadding = Math.max(insets.top, 16) + 4;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingTop: topInsetPadding }]}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
         {/* Top Header */}
@@ -83,140 +95,54 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Segmented Filter Control */}
+        {/* Recently Searched Routes Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Available Upcoming Rides</Text>
+          <Text style={styles.sectionTitle}>Recently Searched</Text>
         </View>
 
-        <View style={styles.segmentedFilterBar}>
-          <TouchableOpacity
-            style={[styles.segmentBtn, filter === 'all' && styles.segmentActive]}
-            onPress={() => setFilter('all')}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.segmentText, filter === 'all' && styles.segmentTextActive]}>All Rides</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.segmentBtn, filter === 'carpool' && styles.segmentActive]}
-            onPress={() => setFilter('carpool')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.filterBtnRow}>
-              <Ionicons name="car-outline" size={15} color={filter === 'carpool' ? Colors.primary : Colors.onSurfaceVariant} />
-              <Text style={[styles.segmentText, filter === 'carpool' && styles.segmentTextActive]}>Carpool</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.segmentBtn, filter === 'bike_pool' && styles.segmentActive]}
-            onPress={() => setFilter('bike_pool')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.filterBtnRow}>
-              <Ionicons name="bicycle-outline" size={15} color={filter === 'bike_pool' ? Colors.primary : Colors.onSurfaceVariant} />
-              <Text style={[styles.segmentText, filter === 'bike_pool' && styles.segmentTextActive]}>Bike Pool</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Ride Feed List Matching Reference Screenshot */}
-        {isLoading ? (
-          <SkeletonCard type="trip" count={3} />
-        ) : rides && rides.length > 0 ? (
-          rides.map((ride: any) => {
-            const isOwner = !!user && (user.uid === ride.driverId || `usr_${user.uid}` === ride.driverId);
-            const driverDisplayName = isOwner ? 'You' : (ride.driverName || 'Driver');
-            return (
+        {recentSearches.length === 0 ? (
+          <View style={styles.emptyRecentBox}>
+            <Ionicons name="time-outline" size={32} color="#94A3B8" />
+            <Text style={styles.emptyRecentTitle}>No Recent Searches</Text>
+            <Text style={styles.emptyRecentSub}>Routes you search for will appear here for quick access.</Text>
             <TouchableOpacity
-              key={ride.id}
-              style={styles.rideCard}
-              onPress={() => router.push(`/ride/${ride.id}`)}
-              activeOpacity={0.88}
+              style={styles.startSearchBtn}
+              onPress={() => router.push('/(tabs)/find')}
+              activeOpacity={0.85}
             >
-              {/* Card Top Row: Departure Time Badge, Seats Info, Vehicle Type Button */}
-              <View style={styles.cardTopBar}>
-                <View style={styles.timeBadgePill}>
-                  <Text style={styles.timeBadgeText}>
-                    Today, {new Date(ride.departureAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </View>
-
-                <View style={styles.seatsInfoRow}>
-                  <Ionicons name="people-outline" size={16} color="#475569" style={{ marginRight: 4 }} />
-                  <Text style={styles.seatsInfoText}>{ride.availableSeats || 2} seats left</Text>
-                </View>
-
-                <View style={styles.vehicleTypePillBtn}>
-                  <Ionicons
-                    name={ride.vehicleType === 'bike_pool' ? 'bicycle-outline' : 'car-outline'}
-                    size={14}
-                    color="#FFFFFF"
-                    style={{ marginRight: 4 }}
-                  />
-                  <Text style={styles.vehicleTypePillText}>
-                    {ride.vehicleType === 'bike_pool' ? 'BIKE' : 'CAR'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Route Timeline: Pickup & Dropoff */}
-              <View style={styles.routeSection}>
-                <View style={styles.timelineGraphic}>
-                  <View style={styles.hollowCircle} />
-                  <View style={styles.timelineLineTrack} />
-                  <View style={styles.solidCircle} />
-                </View>
-
-                <View style={styles.locationsColumn}>
-                  {/* Pickup */}
-                  <View style={styles.locationBlock}>
-                    <Text style={styles.cityNameText} numberOfLines={1}>{ride.pickup?.split(',')[0] || ride.pickup}</Text>
-                    <Text style={styles.landmarkSubText} numberOfLines={1}>{ride.pickup?.split(',')[1] || ride.meetingPoint || 'Main Pick-up Point'}</Text>
-                  </View>
-
-                  {/* Destination */}
-                  <View style={styles.locationBlock}>
-                    <Text style={styles.cityNameText} numberOfLines={1}>{ride.destination?.split(',')[0] || ride.destination}</Text>
-                    <Text style={styles.landmarkSubText} numberOfLines={1}>{ride.destination?.split(',')[1] || 'Drop-off Landmark'}</Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.dividerLine} />
-
-              {/* Card Footer: Driver Info & View Details Button */}
-              <View style={styles.cardFooterRow}>
-                <View style={styles.driverInfoMeta}>
-                  <View style={styles.driverAvatarCircle}>
-                    <Text style={styles.driverAvatarInitial}>{driverDisplayName.charAt(0)}</Text>
-                  </View>
-
-                  <View style={styles.driverNameRatingColumn}>
-                    <Text style={styles.driverNameText} numberOfLines={1}>{driverDisplayName}</Text>
-                    <View style={styles.starRatingRow}>
-                      <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 3 }} />
-                      <Text style={styles.ratingNumberText}>{ride.driverRating ? parseFloat(ride.driverRating).toFixed(1) : '5.0'}</Text>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.viewDetailsPillBtn}>
-                  <Text style={styles.viewDetailsPillText}>View Details</Text>
-                </View>
-              </View>
+              <Text style={styles.startSearchBtnText}>Search a Route</Text>
             </TouchableOpacity>
-          );
-        })
+          </View>
         ) : (
-          <EmptyState
-            icon="compass-outline"
-            title="No upcoming rides available"
-            message="Be the first to publish a ride or search nearby routes!"
-            actionLabel="Publish a Ride"
-            onAction={() => router.push('/(tabs)/offer')}
-          />
+          <View style={styles.recentList}>
+            {recentSearches.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.recentItemCard}
+                onPress={() => handleRecentSearchTap(item)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.recentIconBadge}>
+                  <Ionicons name="navigate-outline" size={18} color={Colors.primary} />
+                </View>
+                <View style={styles.recentMeta}>
+                  <Text style={styles.recentRouteTitle}>{item.pickup} → {item.destination}</Text>
+                  <Text style={styles.recentSubText}>Tap to pre-fill search in Find a Ride</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
+
+        {/* Community Trust Banner */}
+        <View style={styles.trustBannerCard}>
+          <Ionicons name="shield-checkmark-sharp" size={24} color={Colors.primary} />
+          <View style={styles.trustMeta}>
+            <Text style={styles.trustTitle}>Verified Commuter Network</Text>
+            <Text style={styles.trustSub}>Every pooler is authenticated with Firebase ID verification and community reviews.</Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -229,54 +155,61 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xl * 2,
+    paddingBottom: Spacing.xl,
   },
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
-    marginTop: 4,
+    marginBottom: Spacing.md,
   },
   userGreetingMeta: {
     flex: 1,
-    paddingRight: Spacing.md,
+    marginRight: Spacing.sm,
   },
   greetingSub: {
-    ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
-    fontWeight: '600',
+    fontSize: 13,
+    color: '#64748B',
+    fontFamily: Typography.fontFamily.medium,
   },
   userTitle: {
-    ...Typography.displayLg,
-    fontSize: 26,
-    fontWeight: '800',
-    color: Colors.onBackground,
-    letterSpacing: -0.5,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0F172A',
+    fontFamily: Typography.fontFamily.bold,
   },
   bellBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.surface,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
     elevation: 2,
   },
   notificationDot: {
     position: 'absolute',
-    top: 10,
+    top: 9,
     right: 10,
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
     backgroundColor: Colors.error,
+  },
+  loginPillHeader: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+  },
+  loginPillHeaderText: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontFamily: Typography.fontFamily.medium,
   },
   dualCardRow: {
     flexDirection: 'row',
@@ -286,279 +219,160 @@ const styles = StyleSheet.create({
   heroCardPrimary: {
     flex: 1,
     backgroundColor: '#EFF6FF',
-    padding: Spacing.md,
-    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#DBEAFE',
+    borderRadius: 16,
+    padding: Spacing.md,
+  },
+  heroCardAccent: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+    borderRadius: 16,
+    padding: Spacing.md,
   },
   heroIconBadge: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.surface,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.sm,
-  },
-  heroCardTitle: {
-    ...Typography.headlineMd,
-    fontSize: 17,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
-  heroCardSub: {
-    ...Typography.labelSm,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  heroCardAccent: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    padding: Spacing.md,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    marginBottom: 10,
   },
   heroIconBadgeDark: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    backgroundColor: '#1E293B',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: 10,
+  },
+  heroCardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1E40AF',
+    marginBottom: 2,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  heroCardSub: {
+    fontSize: 12,
+    color: '#3B82F6',
   },
   heroCardTitleDark: {
-    ...Typography.headlineMd,
-    fontSize: 17,
-    fontWeight: '800',
-    color: Colors.onBackground,
-  },
-  heroCardSubDark: {
-    ...Typography.labelSm,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  sectionHeader: {
-    marginBottom: Spacing.sm,
-  },
-  sectionTitle: {
-    ...Typography.headlineMd,
-    fontWeight: '800',
-    color: Colors.onBackground,
-  },
-  segmentedFilterBar: {
-    flexDirection: 'row',
-    backgroundColor: '#E2E8F0',
-    padding: 4,
-    borderRadius: 14,
-    marginBottom: Spacing.md,
-  },
-  segmentBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  filterBtnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  segmentActive: {
-    backgroundColor: Colors.surface,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  segmentText: {
-    ...Typography.labelSm,
-    fontWeight: '600',
-    color: Colors.onSurfaceVariant,
-  },
-  segmentTextActive: {
-    color: Colors.primary,
-    fontWeight: '700',
-  },
-  /* MATCHING RIDE CARD STYLING */
-  rideCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 24,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  cardTopBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  timeBadgePill: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  timeBadgeText: {
-    ...Typography.labelSm,
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.primary,
-  },
-  seatsInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  seatsInfoText: {
-    ...Typography.labelSm,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  vehicleTypePillBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-  vehicleTypePillText: {
-    ...Typography.labelSm,
-    fontSize: 12,
-    fontWeight: '800',
-    color: Colors.onPrimary,
-    letterSpacing: 0.5,
-  },
-  routeSection: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    marginVertical: Spacing.xs,
-  },
-  timelineGraphic: {
-    alignItems: 'center',
-    width: 24,
-    marginRight: Spacing.sm,
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  hollowCircle: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2.5,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.surface,
-  },
-  timelineLineTrack: {
-    flex: 1,
-    width: 2,
-    backgroundColor: '#CBD5E1',
-    marginVertical: 4,
-  },
-  solidCircle: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: Colors.primary,
-  },
-  locationsColumn: {
-    flex: 1,
-    gap: 16,
-  },
-  locationBlock: {},
-  cityNameText: {
-    ...Typography.headlineMd,
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.onSurface,
-  },
-  landmarkSubText: {
-    ...Typography.bodyMd,
-    fontSize: 13,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  dividerLine: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: Spacing.md,
-  },
-  cardFooterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  driverInfoMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  driverAvatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#DBEAFE',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.sm + 2,
-  },
-  driverAvatarInitial: {
-    ...Typography.headlineMd,
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.primary,
-  },
-  driverNameRatingColumn: {},
-  driverNameText: {
-    ...Typography.bodyLg,
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  starRatingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  ratingNumberText: {
-    ...Typography.labelSm,
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.onSurfaceVariant,
-  },
-  viewDetailsPillBtn: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  viewDetailsPillText: {
-    ...Typography.labelLg,
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  loginPillHeader: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  loginPillHeaderText: {
-    ...Typography.labelLg,
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
     color: '#FFFFFF',
+    marginBottom: 2,
+    fontFamily: Typography.fontFamily.bold,
+  },
+  heroCardSubDark: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.xs,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0F172A',
+    fontFamily: Typography.fontFamily.bold,
+  },
+  emptyRecentBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginVertical: Spacing.xs,
+  },
+  emptyRecentTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#334155',
+    marginTop: 8,
+  },
+  emptyRecentSub: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  startSearchBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+  },
+  startSearchBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+  recentList: {
+    gap: Spacing.xs,
+    marginVertical: Spacing.xs,
+  },
+  recentItemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  recentIconBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F0F9FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  recentMeta: {
+    flex: 1,
+  },
+  recentRouteTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  recentSubText: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  trustBannerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: 16,
+    padding: Spacing.md,
+    marginTop: Spacing.lg,
+    gap: 12,
+  },
+  trustMeta: {
+    flex: 1,
+  },
+  trustTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#166534',
+  },
+  trustSub: {
+    fontSize: 12,
+    color: '#15803D',
+    marginTop: 2,
   },
 });

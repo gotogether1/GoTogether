@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
@@ -11,13 +10,15 @@ import { EmptyState } from '../../src/components/loading/EmptyState';
 import { useRidesQuery } from '../../src/api/hooks';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { Colors, Spacing, Typography } from '../../src/theme';
+import { saveRecentSearch } from '../../src/utils/recentSearches';
 
 export default function FindRideScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const [pickup, setPickup] = useState('');
-  const [destination, setDestination] = useState('');
+  const [pickup, setPickup] = useState((params.pickup as string) || '');
+  const [destination, setDestination] = useState((params.destination as string) || '');
   const [travelDate, setTravelDate] = useState('');
   const [seats, setSeats] = useState('1');
   const [tripType, setTripType] = useState<'all' | 'carpool' | 'bike_pool'>('all');
@@ -28,6 +29,13 @@ export default function FindRideScreen() {
     destination: destination || undefined,
     date: travelDate || undefined,
   });
+
+  const handleSearchPress = () => {
+    if (pickup.trim() && destination.trim()) {
+      saveRecentSearch(user?.uid, pickup, destination);
+    }
+    refetch();
+  };
 
   const results = rides || [];
 
@@ -127,7 +135,7 @@ export default function FindRideScreen() {
             </View>
           </View>
 
-          <Button title="Search Rides" onPress={() => refetch()} style={{ marginTop: Spacing.xs }} />
+          <Button title="Search Rides" onPress={handleSearchPress} style={{ marginTop: Spacing.xs }} />
         </View>
 
         {/* Results Header */}
