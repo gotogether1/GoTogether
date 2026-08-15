@@ -44,28 +44,17 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
-  // Generate realistic curved polyline points for each route option
-  const routePolylines = routes.map((r, idx) => {
-    const oLat = origin.latitude;
-    const oLng = origin.longitude;
-    const dLat = destination.latitude;
-    const dLng = destination.longitude;
-
-    const midLat = (oLat + dLat) / 2;
-    const midLng = (oLng + dLng) / 2;
-
-    // Offset midpoints for alternative paths
-    const offset = idx === 0 ? 0.08 : idx === 1 ? -0.05 : 0.15;
-
-    return {
-      id: r.id,
-      points: [
-        { latitude: oLat, longitude: oLng },
-        { latitude: midLat + offset * 0.4, longitude: midLng + offset },
-        { latitude: dLat, longitude: dLng },
-      ],
-    };
-  });
+  // Map route objects directly to GoogleMapView polylines format
+  const routePolylines = routes.map(r => ({
+    id: r.id,
+    points: r.polylinePoints && r.polylinePoints.length > 0
+      ? r.polylinePoints
+      : [
+          { latitude: origin.latitude, longitude: origin.longitude },
+          { latitude: (origin.latitude + destination.latitude) / 2, longitude: (origin.longitude + destination.longitude) / 2 },
+          { latitude: destination.latitude, longitude: destination.longitude },
+        ],
+  }));
 
   return (
     <View style={styles.container}>
