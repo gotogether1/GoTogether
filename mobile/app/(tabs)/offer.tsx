@@ -95,13 +95,18 @@ export default function OfferRideScreen() {
       return;
     }
 
-    if (!pickupLocation || !dropoffLocation) {
-      Alert.alert('Incomplete Trip', 'Please select both pick-up and drop-off locations.');
+    if (!pickupLocation || typeof pickupLocation.latitude !== 'number' || typeof pickupLocation.longitude !== 'number' || isNaN(pickupLocation.latitude) || isNaN(pickupLocation.longitude)) {
+      Alert.alert('Incomplete Location', 'Please select a valid pick-up location from the search suggestions.');
+      return;
+    }
+
+    if (!dropoffLocation || typeof dropoffLocation.latitude !== 'number' || typeof dropoffLocation.longitude !== 'number' || isNaN(dropoffLocation.latitude) || isNaN(dropoffLocation.longitude)) {
+      Alert.alert('Incomplete Location', 'Please select a valid drop-off location from the search suggestions.');
       return;
     }
 
     const departureIso = computeDepartureAt(selectedDate, selectedTime);
-    if (new Date(departureIso).getTime() < Date.now() - 300000) {
+    if (new Date(departureIso).getTime() < Date.now() - 3600000) {
       Alert.alert('Invalid Departure Schedule', 'Departure time cannot be in the past. Please select a future departure date and time.');
       return;
     }
@@ -132,9 +137,11 @@ export default function OfferRideScreen() {
       });
       Alert.alert('Ride Published!', 'Your trip, route, and schedule are live for riders!');
       router.push('/(tabs)/dashboard');
-    } catch {
-      Alert.alert('Ride Published!', 'Your trip, route, and schedule are live for riders!');
-      router.push('/(tabs)/dashboard');
+    } catch (err: any) {
+      Alert.alert(
+        'Publish Failed',
+        err.message || 'Unable to publish ride. Please verify your trip details and connection.'
+      );
     }
   };
 

@@ -107,51 +107,19 @@ export function useCreateRideMutation() {
         driverId: currentUid || rideData.driverId,
       };
 
-      try {
-        const res = await fetchWithAuth('/v1/rides', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
-        if (res.data) {
-          SEED_RIDES.unshift(res.data);
-        }
-        return res.data;
-      } catch {
-        const newRide = {
-          id: `ride_${Date.now()}`,
-          driverId: currentUid || 'authenticated_driver',
-          driverName: auth.currentUser?.displayName || 'You',
-          driverRating: 5.0,
-          driverRideCount: 1,
-          vehicleType: rideData.vehicleType || 'carpool',
-          pickup: rideData.pickup,
-          destination: rideData.destination,
-          pickupAddress: rideData.pickupAddress || rideData.pickup,
-          pickupLatitude: rideData.pickupLatitude,
-          pickupLongitude: rideData.pickupLongitude,
-          dropoffAddress: rideData.dropoffAddress || rideData.destination,
-          dropoffLatitude: rideData.dropoffLatitude,
-          dropoffLongitude: rideData.dropoffLongitude,
-          meetingPoint: rideData.meetingPoint || 'Main Pick-up Point',
-          departureAt: rideData.departureAt || new Date().toISOString(),
-          totalSeats: rideData.totalSeats || 3,
-          availableSeats: rideData.totalSeats || 3,
-          suggestedContribution: rideData.suggestedContribution || 0,
-          stopovers: rideData.stopovers || [],
-          routePolyline: rideData.routePolyline || [],
-          routeSummary: rideData.routeSummary || 'fastest',
-          vehicleDetails: rideData.vehicleDetails || 'My Vehicle',
-          rules: rideData.rules || '',
-          notes: rideData.notes || '',
-          status: 'published' as const,
-        };
-        SEED_RIDES.unshift(newRide);
-        return newRide;
-      }
+      const res = await fetchWithAuth('/v1/rides', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return res.data;
     },
     onSuccess: () => {
+      const currentUid = auth.currentUser?.uid;
       queryClient.invalidateQueries({ queryKey: ['rides'] });
       queryClient.invalidateQueries({ queryKey: ['my-rides'] });
+      if (currentUid) {
+        queryClient.invalidateQueries({ queryKey: ['my-rides', currentUid] });
+      }
     },
   });
 }
