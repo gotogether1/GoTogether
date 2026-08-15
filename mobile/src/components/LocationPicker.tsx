@@ -137,7 +137,7 @@ export function LocationPicker({
 
   return (
     <View style={styles.container}>
-      {/* Floating Pill Search & Header Bar (BlaBlaCar Styling) */}
+      {/* Floating Pill Search & Header Bar */}
       <View style={[styles.headerContainer, { paddingTop: headerPaddingTop }]}>
         <View style={styles.inputCard}>
           {onBack ? (
@@ -232,7 +232,7 @@ export function LocationPicker({
           onCenterChange={handleCenterChange}
         />
 
-        {/* Fixed Center Pin & Location Card */}
+        {/* Fixed Center Pin 📍 Location Marker & Card */}
         <View style={styles.centerPinContainer} pointerEvents="none">
           <View style={styles.locationBadgeCard}>
             <Text style={styles.badgeTitle} numberOfLines={1}>{selectedLocation.name}</Text>
@@ -240,24 +240,24 @@ export function LocationPicker({
             {geocodingMap && <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 2 }} />}
           </View>
 
-          {/* BlaBlaCar Dark Teardrop Location Marker */}
-          <View style={styles.blaBlaPinBody}>
-            <View style={styles.blaBlaPinInnerDot} />
+          {/* Red 📍 Location Pin Marker */}
+          <View style={styles.redPinWrapper}>
+            <Ionicons name="location" size={44} color="#EF4444" />
+            <View style={styles.pinShadow} />
           </View>
-          <View style={styles.pinShadow} />
         </View>
 
-        {/* GPS Locate Button */}
+        {/* GPS Locate Button (Clean Stack Position) */}
         <TouchableOpacity
-          style={styles.gpsLocateBtn}
+          style={[styles.gpsLocateBtn, { bottom: bottomInset + 80 }]}
           onPress={handleUseCurrentLocation}
           activeOpacity={0.8}
         >
           <Ionicons name="locate" size={22} color={Colors.primary} />
         </TouchableOpacity>
 
-        {/* Floating Confirm Button (Blue Arrow Button) */}
-        <View style={[styles.bottomBarContainer, { paddingBottom: bottomInset }]}>
+        {/* Floating Confirm Button (Blue Arrow Button - Clean Bottom Position) */}
+        <View style={[styles.bottomBarContainer, { paddingBottom: bottomInset + 10 }]}>
           <TouchableOpacity
             style={styles.floatingArrowBtn}
             onPress={() => onConfirm(selectedLocation)}
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     alignItems: 'center',
     maxWidth: 280,
-    marginBottom: 8,
+    marginBottom: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
@@ -428,41 +428,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 2,
   },
-  blaBlaPinBody: {
-    width: 32,
-    height: 40,
-    backgroundColor: '#0F172A',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 2,
-    transform: [{ rotate: '-45deg' }],
+  redPinWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  blaBlaPinInnerDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#FFFFFF',
   },
   pinShadow: {
-    width: 14,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: 'rgba(15, 23, 42, 0.3)',
-    marginTop: 6,
+    width: 16,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(15, 23, 42, 0.35)',
+    marginTop: -8,
   },
   gpsLocateBtn: {
     position: 'absolute',
-    bottom: 90,
     right: 20,
     width: 48,
     height: 48,
@@ -479,8 +457,8 @@ const styles = StyleSheet.create({
   },
   bottomBarContainer: {
     position: 'absolute',
-    bottom: 20,
     right: 20,
+    zIndex: 30,
   },
   floatingArrowBtn: {
     width: 56,
