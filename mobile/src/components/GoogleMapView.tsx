@@ -29,7 +29,7 @@ export function GoogleMapView({
     if (webViewRef.current && (isProgrammatic || dist > 0.005)) {
       const script = `
         if (window.map) {
-          window.map.panTo([${latitude}, ${longitude}], { animate: true, duration: 0.5 });
+          window.map.panTo([${latitude}, ${longitude}], { animate: true, duration: 0.4 });
         }
       `;
       webViewRef.current.injectJavaScript(script);
@@ -58,10 +58,13 @@ export function GoogleMapView({
         <style>
           html, body, #map {
             height: 100%;
+            width: 100%;
             margin: 0;
             padding: 0;
             background-color: #74BBE3;
-            touch-action: manipulation;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
           }
           .leaflet-control-attribution {
             display: none !important;
@@ -90,28 +93,24 @@ export function GoogleMapView({
               attributionControl: false,
               minZoom: 3,
               maxZoom: 19,
-              worldCopyJump: true,
               touchZoom: 'center',
               bounceAtZoomLimits: false,
               scrollWheelZoom: true,
               doubleClickZoom: true,
               boxZoom: true,
               dragging: true,
-              tap: true,
               inertia: true,
-              inertiaDeceleration: 3500,
-              inertiaMaxSpeed: 600,
-              easeLinearity: 0.2,
-              fadeAnimation: true,
+              inertiaDeceleration: 2500,
+              inertiaMaxSpeed: 1500,
+              easeLinearity: 0.25,
+              fadeAnimation: false,
               zoomAnimation: true
             }).setView([${latitude}, ${longitude}], ${zoom});
 
-            // Official Google Maps Vector Roadmap Tiles with High-DPI support
+            // Official Google Maps Vector Roadmap Tiles
             L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
               minZoom: 3,
               maxZoom: 19,
-              tileSize: 256,
-              zoomOffset: 0,
               subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
             }).addTo(window.map);
 
@@ -142,7 +141,9 @@ export function GoogleMapView({
         style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}
-        scalesPageToFit={true}
+        scrollEnabled={false}
+        overScrollMode="never"
+        androidLayerType="hardware"
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
         onMessage={(event: any) => {
