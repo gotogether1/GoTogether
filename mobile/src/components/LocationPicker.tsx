@@ -249,21 +249,30 @@ export function LocationPicker({
 
         {/* GPS Locate Button */}
         <TouchableOpacity
-          style={[styles.gpsLocateBtn, { bottom: bottomInset + 80 }]}
+          style={[styles.gpsLocateBtn, { bottom: bottomInset + 140 }]}
           onPress={handleUseCurrentLocation}
           activeOpacity={0.8}
         >
           <Ionicons name="locate" size={22} color={Colors.primary} />
         </TouchableOpacity>
 
-        {/* Floating Confirm Button (Direction Arrow Button) */}
+        {/* Floating Next Button sitting right above direction button */}
         <View style={[styles.bottomBarContainer, { paddingBottom: bottomInset + 10 }]}>
+          <TouchableOpacity
+            style={styles.nextPillBtn}
+            onPress={() => onConfirm(selectedLocation)}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.nextPillText}>Next</Text>
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.floatingArrowBtn}
             onPress={() => onConfirm(selectedLocation)}
             activeOpacity={0.88}
           >
-            <Ionicons name="arrow-forward" size={26} color="#FFFFFF" />
+            <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -458,12 +467,33 @@ const styles = StyleSheet.create({
   bottomBarContainer: {
     position: 'absolute',
     right: 20,
+    alignItems: 'flex-end',
+    gap: 10,
     zIndex: 30,
   },
+  nextPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 22,
+    height: 44,
+    borderRadius: 22,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  nextPillText: {
+    ...Typography.labelLg,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
   floatingArrowBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
