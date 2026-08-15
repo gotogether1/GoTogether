@@ -91,8 +91,10 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
       </View>
 
       {/* Floating Bottom Card: "What is your route?" */}
-      <View style={[styles.bottomSheetCard, { paddingBottom: bottomInset + 10 }]}>
-        <Text style={styles.bottomSheetTitle}>What is your route?</Text>
+      <View style={[styles.bottomSheetCard, { paddingBottom: bottomInset + 75 }]}>
+        <View style={styles.bottomSheetHeaderRow}>
+          <Text style={styles.bottomSheetTitle}>What is your route?</Text>
+        </View>
 
         {loading ? (
           <View style={styles.loadingBox}>
@@ -129,10 +131,10 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
           </ScrollView>
         )}
 
-        {/* Floating Confirm Arrow Button (Bottom Right, cleanly elevated) */}
+        {/* Floating Confirm Arrow Button (Elevated 100% cleanly above bottom tab bar) */}
         {selectedRoute && (
           <TouchableOpacity
-            style={styles.floatingConfirmArrowBtn}
+            style={[styles.floatingConfirmArrowBtn, { bottom: bottomInset + 80 }]}
             onPress={() => onSelectRoute(selectedRoute)}
             activeOpacity={0.88}
           >
@@ -192,7 +194,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    maxHeight: '48%',
+    maxHeight: '52%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.12,
@@ -200,12 +202,17 @@ const styles = StyleSheet.create({
     elevation: 10,
     position: 'relative',
   },
+  bottomSheetHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm + 2,
+  },
   bottomSheetTitle: {
     ...Typography.headlineLg,
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '900',
     color: '#0F172A',
-    marginBottom: Spacing.md,
   },
   loadingBox: {
     flexDirection: 'row',
@@ -219,7 +226,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   routesScroll: {
-    maxHeight: 200,
+    maxHeight: 180,
   },
   routeCardOption: {
     flexDirection: 'row',
@@ -273,7 +280,6 @@ const styles = StyleSheet.create({
   floatingConfirmArrowBtn: {
     position: 'absolute',
     right: 20,
-    bottom: 24,
     width: 52,
     height: 52,
     borderRadius: 26,
