@@ -124,7 +124,10 @@ export default function DashboardScreen() {
         {isLoading ? (
           <SkeletonCard type="trip" count={3} />
         ) : rides && rides.length > 0 ? (
-          rides.map((ride: any) => (
+          rides.map((ride: any) => {
+            const isOwner = !!user && (user.uid === ride.driverId || `usr_${user.uid}` === ride.driverId);
+            const driverDisplayName = isOwner ? 'You' : (ride.driverName || 'Driver');
+            return (
             <TouchableOpacity
               key={ride.id}
               style={styles.rideCard}
@@ -186,11 +189,11 @@ export default function DashboardScreen() {
               <View style={styles.cardFooterRow}>
                 <View style={styles.driverInfoMeta}>
                   <View style={styles.driverAvatarCircle}>
-                    <Text style={styles.driverAvatarInitial}>{ride.driverName?.charAt(0) || 'D'}</Text>
+                    <Text style={styles.driverAvatarInitial}>{driverDisplayName.charAt(0)}</Text>
                   </View>
 
                   <View style={styles.driverNameRatingColumn}>
-                    <Text style={styles.driverNameText} numberOfLines={1}>{ride.driverName || 'Rajesh K.'}</Text>
+                    <Text style={styles.driverNameText} numberOfLines={1}>{driverDisplayName}</Text>
                     <View style={styles.starRatingRow}>
                       <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 3 }} />
                       <Text style={styles.ratingNumberText}>4.8</Text>
@@ -203,7 +206,8 @@ export default function DashboardScreen() {
                 </View>
               </View>
             </TouchableOpacity>
-          ))
+          );
+        })
         ) : (
           <EmptyState
             icon="compass-outline"

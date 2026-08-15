@@ -139,6 +139,8 @@ export default function RideDetailsScreen() {
   }
 
   const driverName = ride.driverName || 'Driver';
+  const isOwner = !!user && !!ride && (user.uid === ride.driverId || `usr_${user.uid}` === ride.driverId);
+  const driverDisplayName = isOwner ? 'You' : driverName;
   const driverRating = ride.driverRating || 5.0;
 
   return (
@@ -227,10 +229,10 @@ export default function RideDetailsScreen() {
         <Card style={styles.driverCard}>
           <TouchableOpacity onPress={() => router.push(`/profile/${ride.driverId}`)} style={styles.driverProfileHeader} activeOpacity={0.85}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>{driverName.charAt(0)}</Text>
+              <Text style={styles.avatarInitial}>{driverDisplayName.charAt(0)}</Text>
             </View>
             <View style={styles.driverMeta}>
-              <Text style={styles.driverName}>{driverName}</Text>
+              <Text style={styles.driverName}>{driverDisplayName}</Text>
               <Text style={styles.driverRating}>★ {driverRating} / 5 • Verified Driver</Text>
             </View>
             <Text style={styles.chevron}>›</Text>

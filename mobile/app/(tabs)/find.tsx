@@ -9,11 +9,13 @@ import { Button } from '../../src/components/Button';
 import { SkeletonCard } from '../../src/components/loading/SkeletonCard';
 import { EmptyState } from '../../src/components/loading/EmptyState';
 import { useRidesQuery } from '../../src/api/hooks';
+import { useAuth } from '../../src/auth/AuthProvider';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
 export default function FindRideScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
   const [travelDate, setTravelDate] = useState('');
@@ -149,23 +151,26 @@ export default function FindRideScreen() {
           />
         ) : (
           <View style={{ gap: Spacing.md }}>
-            {results.map((ride: any) => (
-              <TouchableOpacity
-                key={ride.id}
-                style={styles.rideCard}
-                onPress={() => router.push(`/ride/${ride.id}`)}
-                activeOpacity={0.88}
-              >
-                <View style={styles.cardHeader}>
-                  <View style={styles.driverInfo}>
-                    <View style={styles.avatarMini}>
-                      <Text style={styles.avatarMiniText}>{(ride.driverName || 'D').charAt(0)}</Text>
+            {results.map((ride: any) => {
+              const isOwner = !!user && (user.uid === ride.driverId || `usr_${user.uid}` === ride.driverId);
+              const driverDisplayName = isOwner ? 'You' : (ride.driverName || 'Driver');
+              return (
+                <TouchableOpacity
+                  key={ride.id}
+                  style={styles.rideCard}
+                  onPress={() => router.push(`/ride/${ride.id}`)}
+                  activeOpacity={0.88}
+                >
+                  <View style={styles.cardHeader}>
+                    <View style={styles.driverInfo}>
+                      <View style={styles.avatarMini}>
+                        <Text style={styles.avatarMiniText}>{driverDisplayName.charAt(0)}</Text>
+                      </View>
+                      <View>
+                        <Text style={styles.driverName}>{driverDisplayName}</Text>
+                        <Text style={styles.driverRating}>★ {ride.driverRating || '5.0'}</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={styles.driverName}>{ride.driverName || 'Driver'}</Text>
-                      <Text style={styles.driverRating}>★ {ride.driverRating || '5.0'}</Text>
-                    </View>
-                  </View>
 
                   <View style={styles.priceTag}>
                     <Text style={styles.priceText}>
@@ -195,7 +200,8 @@ export default function FindRideScreen() {
                   <Text style={styles.seatsText}>{ride.availableSeats} seat(s) left</Text>
                 </View>
               </TouchableOpacity>
-            ))}
+            );
+          })}
           </View>
         )}
       </ScrollView>
