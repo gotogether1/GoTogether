@@ -2,8 +2,6 @@ import React, { useRef, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-
 interface GoogleMapViewProps {
   latitude: number;
   longitude: number;
@@ -19,12 +17,12 @@ export function GoogleMapView({
 }: GoogleMapViewProps) {
   const webViewRef = useRef<any>(null);
 
-  // Send update message to WebView whenever latitude or longitude changes
+  // Smoothly pan map whenever latitude or longitude changes from search or GPS button
   useEffect(() => {
     if (webViewRef.current) {
       const script = `
         if (window.map) {
-          window.map.panTo({ lat: ${latitude}, lng: ${longitude} });
+          window.map.panTo([${latitude}, ${longitude}]);
         }
       `;
       webViewRef.current.injectJavaScript(script);
@@ -36,42 +34,46 @@ export function GoogleMapView({
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
           html, body, #map {
             height: 100%;
             margin: 0;
             padding: 0;
-            background-color: #e5e3df;
+            background-color: #f8fafc;
           }
-          .gmnoprint, .gm-style-cc, .gm-fullscreen-control {
+          .leaflet-control-container .leaflet-routing-container-hide {
+            display: none !important;
+          }
+          .leaflet-control-attribution {
             display: none !important;
           }
         </style>
-        <script src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&v=weekly"></script>
       </head>
       <body>
         <div id="map"></div>
         <script>
           function initMap() {
-            var centerPos = { lat: ${latitude}, lng: ${longitude} };
-            window.map = new google.maps.Map(document.getElementById('map'), {
-              zoom: ${zoom},
-              center: centerPos,
-              disableDefaultUI: true,
-              gestureHandling: 'greedy',
+            window.map = L.map('map', {
               zoomControl: false,
-              mapTypeControl: false,
-              streetViewControl: false,
-              fullscreenControl: false
-            });
+              attributionControl: false,
+              fadeAnimation: true,
+              zoomAnimation: true
+            }).setView([${latitude}, ${longitude}], ${zoom});
 
-            window.map.addListener('idle', function() {
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              maxZoom: 19,
+              subdomains: ['a', 'b', 'c']
+            }).addTo(window.map);
+
+            window.map.on('moveend', function() {
               var center = window.map.getCenter();
               if (window.ReactNativeWebView) {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                   type: 'centerChange',
-                  lat: center.lat(),
-                  lng: center.lng()
+                  lat: center.lat,
+                  lng: center.lng
                 }));
               }
             });
@@ -88,7 +90,7 @@ export function GoogleMapView({
       <WebView
         ref={webViewRef}
         originWhitelist={['*']}
-        source={{ html: htmlContent, baseUrl: 'https://localhost' }}
+        source={{ html: htmlContent }}
         style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}
@@ -111,6 +113,6 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
   },
 });
