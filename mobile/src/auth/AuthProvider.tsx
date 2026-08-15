@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import { fetchWithAuth } from '../api/client';
 
 interface AuthContextType {
   user: User | null;
@@ -19,9 +20,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setLoading(false);
+
+      if (currentUser) {
+        try {
+          // Sync user credentials directly to Neon PostgreSQL users database table
+          await fetchWithAuth('/v1/me/sync', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: currentUser.email,
+              displayName: currentUser.displayName || currentUser.email?.split('@')[0],
+            }),
+          });
+        } catch (err) {
+          console.warn('Neon PostgreSQL user sync notice:', err);
+        }
+      }
     });
     return unsubscribe;
   }, []);
@@ -38,6 +54,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithEmail = async (email: string, pass: string): Promise<User> => {
     try {
       const cred = await signInWithEmailAndPassword(auth, email, pass);
+      // Immediately trigger Neon PostgreSQL UPSERT sync
+      fetchWithAuth('/v1/me/sync', {
+        method: 'POST',
+        body: JSON.stringify({ email, displayName: email.split('@')[0] }),
+      }).catch(() => {});
       return cred.user;
     } catch (err: any) {
       throw new Error(mapAuthError(err.code));
@@ -47,6 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signupWithEmail = async (email: string, pass: string): Promise<User> => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      // Immediately trigger Neon PostgreSQL UPSERT sync
+      fetchWithAuth('/v1/me/sync', {
+        method: 'POST',
+        body: JSON.stringify({ email, displayName: email.split('@')[0] }),
+      }).catch(() => {});
       return cred.user;
     } catch (err: any) {
       throw new Error(mapAuthError(err.code));
@@ -98,13 +124,11 @@ function mapAuthError(code?: string): string {
       return 'Email or password is incorrect.';
     case 'auth/email-already-in-use':
       return 'An account already uses this email. Try logging in or resetting your password.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
     case 'auth/weak-password':
-      return 'Use at least 8 characters for your password.';
-    case 'auth/network-request-failed':
-      return 'Check your connection and try again.';
-    case 'auth/too-many-requests':
-      return 'Too many attempts. Please wait a few minutes and try again.';
+      return 'Password must be at least 6 characters.';
     default:
-      return 'Something went wrong. Please try again.';
+      return 'Authentication failed. Please check your credentials and try again.';
   }
 }

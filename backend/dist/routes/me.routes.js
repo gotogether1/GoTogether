@@ -8,7 +8,23 @@ router.use(authenticate_js_1.authenticate);
 router.get('/', async (req, res, next) => {
     try {
         const uid = req.auth.uid;
-        const profile = await user_service_js_1.UserService.getProfile(uid);
+        const email = req.auth.email || '';
+        const name = req.auth.name || email.split('@')[0] || '';
+        const profile = await user_service_js_1.UserService.getProfile(uid, email, name);
+        res.json({ data: profile });
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.post('/sync', async (req, res, next) => {
+    try {
+        const uid = req.auth.uid;
+        const email = req.body.email || req.auth.email || '';
+        const displayName = req.body.displayName || req.auth.name || email.split('@')[0] || '';
+        const city = req.body.city;
+        const bio = req.body.bio;
+        const profile = await user_service_js_1.UserService.syncUser(uid, email, displayName, city, bio);
         res.json({ data: profile });
     }
     catch (err) {

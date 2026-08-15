@@ -9,7 +9,24 @@ router.use(authenticate as any);
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const uid = req.auth!.uid;
-    const profile = await UserService.getProfile(uid);
+    const email = req.auth!.email || '';
+    const name = (req.auth as any).name || email.split('@')[0] || '';
+    const profile = await UserService.getProfile(uid, email, name);
+    res.json({ data: profile });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/sync', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const uid = req.auth!.uid;
+    const email = req.body.email || req.auth!.email || '';
+    const displayName = req.body.displayName || (req.auth as any).name || email.split('@')[0] || '';
+    const city = req.body.city;
+    const bio = req.body.bio;
+
+    const profile = await UserService.syncUser(uid, email, displayName, city, bio);
     res.json({ data: profile });
   } catch (err) {
     next(err);
