@@ -197,8 +197,8 @@ class RideService {
                     nearestDropoffIdx = i;
                 }
             }
-            // Proximity threshold: 25 km
-            const MAX_PROXIMITY_KM = 25.0;
+            // Proximity threshold: Configurable (Default: 10.0 km corridor radius)
+            const MAX_PROXIMITY_KM = parseFloat(process.env.ROUTE_MATCHING_RADIUS_KM || '10.0');
             const isPickupNear = nearestPickupDist <= MAX_PROXIMITY_KM;
             const isDropoffNear = nearestDropoffDist <= MAX_PROXIMITY_KM;
             const isCorrectOrder = nearestPickupIdx < nearestDropoffIdx;
