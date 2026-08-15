@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Animated,
   PanResponder,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +21,8 @@ import {
   getCurrentDeviceLocation,
 } from '../services/locationService';
 import { Colors, Spacing, Typography } from '../theme';
+
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 interface LocationPickerProps {
   title: string;
@@ -150,6 +153,11 @@ export function LocationPicker({
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
+  // Google Static Map Tiles URL
+  const staticMapUri = GOOGLE_MAPS_API_KEY
+    ? `https://maps.googleapis.com/maps/api/staticmap?center=${selectedLocation.latitude},${selectedLocation.longitude}&zoom=15&size=800x800&scale=2&maptype=roadmap&key=${GOOGLE_MAPS_API_KEY}`
+    : null;
+
   return (
     <View style={styles.container}>
       {/* Search & Header Bar */}
@@ -230,7 +238,7 @@ export function LocationPicker({
 
       {/* Interactive Google Map Canvas with Fixed Center Pin */}
       <View style={styles.mapCanvas} {...panResponder.panHandlers}>
-        {/* Simulated Tile Grid Layer */}
+        {/* Real Google Maps Tile Layer / Grid Layer */}
         <Animated.View
           style={[
             styles.mapGridLayer,
@@ -239,10 +247,20 @@ export function LocationPicker({
             },
           ]}
         >
-          <View style={styles.gridLineHorizontal1} />
-          <View style={styles.gridLineHorizontal2} />
-          <View style={styles.gridLineVertical1} />
-          <View style={styles.gridLineVertical2} />
+          {staticMapUri ? (
+            <Image
+              source={{ uri: staticMapUri }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+            />
+          ) : (
+            <>
+              <View style={styles.gridLineHorizontal1} />
+              <View style={styles.gridLineHorizontal2} />
+              <View style={styles.gridLineVertical1} />
+              <View style={styles.gridLineVertical2} />
+            </>
+          )}
         </Animated.View>
 
         {/* Fixed Center Pin & Location Card */}

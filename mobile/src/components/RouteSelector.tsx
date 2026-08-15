@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GoTogetherLocation, RouteOption } from '../types/location';
 import { calculateRoutes } from '../services/locationService';
 import { Colors, Spacing, Typography } from '../theme';
+
+const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
 interface RouteSelectorProps {
   origin: GoTogetherLocation;
@@ -42,10 +44,19 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
+  // Google Static Map Path URI
+  const staticRouteMapUri = GOOGLE_MAPS_API_KEY
+    ? `https://maps.googleapis.com/maps/api/staticmap?path=color:0x2563EBff|weight:5|${origin.latitude},${origin.longitude}|${destination.latitude},${destination.longitude}&markers=color:blue|label:A|${origin.latitude},${origin.longitude}&markers=color:green|label:B|${destination.latitude},${destination.longitude}&size=800x600&scale=2&key=${GOOGLE_MAPS_API_KEY}`
+    : null;
+
   return (
     <View style={styles.container}>
       {/* Top Map Preview Canvas */}
       <View style={styles.topMapCanvas}>
+        {staticRouteMapUri ? (
+          <Image source={{ uri: staticRouteMapUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        ) : null}
+
         {onBack && (
           <TouchableOpacity
             onPress={onBack}
@@ -62,16 +73,18 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
         </View>
 
         {/* Route Visualizer Path Representation */}
-        <View style={styles.routeTrackVisualizer}>
-          <View style={styles.originDot} />
-          <View style={styles.routeLineActive} />
-          <View style={styles.destDot} />
-          <View style={styles.routeBadgePill}>
-            <Text style={styles.routeBadgeText}>
-              {origin.name} → {destination.name}
-            </Text>
+        {!staticRouteMapUri && (
+          <View style={styles.routeTrackVisualizer}>
+            <View style={styles.originDot} />
+            <View style={styles.routeLineActive} />
+            <View style={styles.destDot} />
+            <View style={styles.routeBadgePill}>
+              <Text style={styles.routeBadgeText}>
+                {origin.name} → {destination.name}
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
       </View>
 
       {/* Bottom Sheet Card: What is your route? */}
