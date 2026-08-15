@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,10 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
-import MapView, { UrlTile } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GoogleMapView } from './GoogleMapView';
 import { GoTogetherLocation, PlaceAutocompleteSuggestion } from '../types/location';
 import {
   fetchPlacesAutocomplete,
@@ -37,7 +36,6 @@ export function LocationPicker({
   onBack,
 }: LocationPickerProps) {
   const insets = useSafeAreaInsets();
-  const mapRef = useRef<MapView>(null);
 
   const [selectedLocation, setSelectedLocation] = useState<GoTogetherLocation>(
     initialLocation || {
@@ -61,21 +59,6 @@ export function LocationPicker({
       setSearchQuery(selectedLocation.address);
     }
   }, [selectedLocation]);
-
-  // Animate MapView camera when selectedLocation changes
-  useEffect(() => {
-    if (mapRef.current && selectedLocation) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: selectedLocation.latitude,
-          longitude: selectedLocation.longitude,
-          latitudeDelta: 0.008,
-          longitudeDelta: 0.008,
-        },
-        500
-      );
-    }
-  }, [selectedLocation.latitude, selectedLocation.longitude]);
 
   // Debounced Places Autocomplete Search
   useEffect(() => {
@@ -133,20 +116,19 @@ export function LocationPicker({
     }
   };
 
-  const handleRegionChangeComplete = async (region: { latitude: number; longitude: number }) => {
-    // Only reverse geocode if moved away significantly
-    const dist = Math.abs(region.latitude - selectedLocation.latitude) + Math.abs(region.longitude - selectedLocation.longitude);
+  const handleCenterChange = async (lat: number, lng: number) => {
+    const dist = Math.abs(lat - selectedLocation.latitude) + Math.abs(lng - selectedLocation.longitude);
     if (dist < 0.0003) return;
 
     setGeocodingMap(true);
     try {
-      const revGeocoded = await reverseGeocode(region.latitude, region.longitude);
+      const revGeocoded = await reverseGeocode(lat, lng);
       setSelectedLocation(revGeocoded);
     } catch {
       setSelectedLocation(prev => ({
         ...prev,
-        latitude: region.latitude,
-        longitude: region.longitude,
+        latitude: lat,
+        longitude: lng,
       }));
     } finally {
       setGeocodingMap(false);
@@ -246,29 +228,13 @@ export function LocationPicker({
         )}
       </View>
 
-      {/* Native Interactive Map Canvas with Fixed Center Pin */}
+      {/* Real Interactive Google Map Canvas */}
       <View style={styles.mapCanvas}>
-        <MapView
-          ref={mapRef}
-          style={StyleSheet.absoluteFill}
-          initialRegion={{
-            latitude: selectedLocation.latitude,
-            longitude: selectedLocation.longitude,
-            latitudeDelta: 0.008,
-            longitudeDelta: 0.008,
-          }}
-          onRegionChangeComplete={handleRegionChangeComplete}
-          showsUserLocation={true}
-          showsMyLocationButton={false}
-          showsCompass={false}
-        >
-          {/* Tile Layer Overlay guaranteeing full street maps load in Expo Go & Standalone */}
-          <UrlTile
-            urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-            maximumZ={19}
-            flipY={false}
-          />
-        </MapView>
+        <GoogleMapView
+          latitude={selectedLocation.latitude}
+          longitude={selectedLocation.longitude}
+          onCenterChange={handleCenterChange}
+        />
 
         {/* Fixed Center Pin & Location Card */}
         <View style={styles.centerPinContainer} pointerEvents="none">
