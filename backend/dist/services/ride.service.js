@@ -1,9 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RideService = void 0;
+exports.haversineKm = haversineKm;
 const index_js_1 = require("../db/index.js");
 const api_error_js_1 = require("../utils/api-error.js");
 const block_service_js_1 = require("./block.service.js");
+function haversineKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in kilometers
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
 class RideService {
     /**
      * Create a new ride in Neon PostgreSQL rides table
@@ -68,39 +79,139 @@ class RideService {
         throw new Error('Failed to create ride record in database');
     }
     /**
-     * Search Public Rides in Neon PostgreSQL (Find a Ride with Date Filtering)
+     * Search Public Rides in Neon PostgreSQL (Find a Ride with Dynamic BlaBla-Style Route Matching)
      */
     static async listRides(callerUid, filters) {
         const blockedUserIds = await block_service_js_1.BlockService.getBlockedUsers(callerUid);
-        const pickupQuery = filters.pickup ? filters.pickup.trim() : null;
-        const destQuery = filters.destination ? filters.destination.trim() : null;
+        const pickupQuery = filters.pickup ? filters.pickup.trim().toLowerCase() : null;
+        const destQuery = filters.destination ? filters.destination.trim().toLowerCase() : null;
         const vehicleFilter = filters.vehicleType && filters.vehicleType !== 'all' ? filters.vehicleType : null;
         const dateFilter = filters.date ? filters.date.trim() : null;
+        // Stage 1: Fast Candidate Query (Active rides, available seats > 0, excludes caller's own rides)
         const sql = `
-      SELECT r.*, u.display_name AS driver_name, u.average_rating AS driver_rating
+      SELECT r.*, u.display_name AS driver_name, u.average_rating AS driver_rating, u.firebase_uid AS driver_fb_uid
       FROM rides r
       LEFT JOIN users u ON r.driver_id = u.id OR r.driver_id = u.firebase_uid
       WHERE r.status = 'active'
         AND r.available_seats > 0
-        AND ($1::VARCHAR IS NULL OR r.vehicle_type = $1)
-        AND (
-          $2::VARCHAR IS NULL OR r.pickup ILIKE '%' || $2 || '%' OR EXISTS (
-            SELECT 1 FROM jsonb_array_elements(r.stopovers) elem 
-            WHERE elem->>'name' ILIKE '%' || $2 || '%' OR elem->>'address' ILIKE '%' || $2 || '%'
-          )
-        )
-        AND (
-          $3::VARCHAR IS NULL OR r.destination ILIKE '%' || $3 || '%' OR EXISTS (
-            SELECT 1 FROM jsonb_array_elements(r.stopovers) elem 
-            WHERE elem->>'name' ILIKE '%' || $3 || '%' OR elem->>'address' ILIKE '%' || $3 || '%'
-          )
-        )
-        AND ($4::VARCHAR IS NULL OR DATE(r.departure_at) = $4::DATE)
+        AND r.driver_id != $1
+        AND (u.firebase_uid IS NULL OR u.firebase_uid != $1)
+        AND ($2::VARCHAR IS NULL OR r.vehicle_type = $2)
+        AND ($3::VARCHAR IS NULL OR DATE(r.departure_at) = $3::DATE)
       ORDER BY r.departure_at ASC;
     `;
-        const res = await (0, index_js_1.query)(sql, [vehicleFilter, pickupQuery, destQuery, dateFilter]);
-        const rides = (res.rows || []).map(r => this.mapRideRow(r));
-        return rides.filter(r => !blockedUserIds.includes(r.driverId));
+        const res = await (0, index_js_1.query)(sql, [callerUid, vehicleFilter, dateFilter]);
+        const candidateRides = (res.rows || []).map(r => this.mapRideRow(r));
+        // Filter out blocked drivers
+        const unblockedRides = candidateRides.filter(r => !blockedUserIds.includes(r.driverId));
+        // If no pickup/destination search criteria, return candidates
+        if (!pickupQuery && !destQuery && typeof filters.pickupLatitude !== 'number') {
+            return unblockedRides;
+        }
+        // Stage 2: Dynamic BlaBla-Style Route & Order Matching
+        return unblockedRides.filter(ride => {
+            return this.matchesRouteSegment(ride, {
+                pickupName: pickupQuery,
+                destName: destQuery,
+                pickupLat: filters.pickupLatitude,
+                pickupLng: filters.pickupLongitude,
+                dropoffLat: filters.dropoffLatitude,
+                dropoffLng: filters.dropoffLongitude,
+            });
+        });
+    }
+    /**
+     * Helper: Check if a passenger's requested journey segment matches driver's route polyline & ordered waypoints
+     */
+    static matchesRouteSegment(ride, search) {
+        const { pickupName, destName, pickupLat, pickupLng, dropoffLat, dropoffLng } = search;
+        // 1. Waypoints Text Array: [Pickup, ...Stopovers, Destination]
+        const stopoverNames = (ride.stopovers || []).map(s => s.name.toLowerCase());
+        const waypoints = [ride.pickup.toLowerCase(), ...stopoverNames, ride.destination.toLowerCase()];
+        let pickupIndex = -1;
+        let dropoffIndex = -1;
+        if (pickupName) {
+            pickupIndex = waypoints.findIndex(w => w.includes(pickupName) || pickupName.includes(w));
+        }
+        if (destName) {
+            // Find latest dropoff match
+            for (let i = waypoints.length - 1; i >= 0; i--) {
+                if (waypoints[i].includes(destName) || destName.includes(waypoints[i])) {
+                    dropoffIndex = i;
+                    break;
+                }
+            }
+        }
+        // If both pickup and destination text names match, check ROUTE ORDER
+        if (pickupName && destName && pickupIndex !== -1 && dropoffIndex !== -1) {
+            // Must satisfy pickupIndex < dropoffIndex (Strict direction order!)
+            if (pickupIndex >= dropoffIndex) {
+                return false; // Opposite direction / wrong order -> REJECT
+            }
+            return true; // Valid order match!
+        }
+        // Single name text match (Pickup only OR Destination only)
+        if (pickupName && !destName && pickupIndex !== -1)
+            return true;
+        if (!pickupName && destName && dropoffIndex !== -1)
+            return true;
+        // 2. Polyline Proximity & Polyline Order Matching (using saved routePolyline points)
+        const polyline = ride.routePolyline || [];
+        // Also include pickup, stopover, and dropoff coordinates in geometry evaluation
+        const coordsList = [];
+        if (typeof ride.pickupLatitude === 'number' && typeof ride.pickupLongitude === 'number') {
+            coordsList.push({ latitude: ride.pickupLatitude, longitude: ride.pickupLongitude });
+        }
+        (ride.stopovers || []).forEach(s => {
+            if (typeof s.latitude === 'number' && typeof s.longitude === 'number') {
+                coordsList.push({ latitude: s.latitude, longitude: s.longitude });
+            }
+        });
+        if (typeof ride.dropoffLatitude === 'number' && typeof ride.dropoffLongitude === 'number') {
+            coordsList.push({ latitude: ride.dropoffLatitude, longitude: ride.dropoffLongitude });
+        }
+        const fullPolyline = polyline.length > 0 ? polyline : coordsList;
+        if (fullPolyline.length < 2) {
+            // Fallback: If no coordinates or polyline, check text substring matching
+            if (pickupName && destName) {
+                return waypoints.some(w => w.includes(pickupName)) && waypoints.some(w => w.includes(destName));
+            }
+            return true;
+        }
+        // Evaluate coordinate proximity if passenger coordinates passed
+        if (typeof pickupLat === 'number' && typeof pickupLng === 'number' && typeof dropoffLat === 'number' && typeof dropoffLng === 'number') {
+            let nearestPickupDist = Infinity;
+            let nearestPickupIdx = -1;
+            let nearestDropoffDist = Infinity;
+            let nearestDropoffIdx = -1;
+            for (let i = 0; i < fullPolyline.length; i++) {
+                const pt = fullPolyline[i];
+                const distP = haversineKm(pickupLat, pickupLng, pt.latitude, pt.longitude);
+                if (distP < nearestPickupDist) {
+                    nearestPickupDist = distP;
+                    nearestPickupIdx = i;
+                }
+                const distD = haversineKm(dropoffLat, dropoffLng, pt.latitude, pt.longitude);
+                if (distD < nearestDropoffDist) {
+                    nearestDropoffDist = distD;
+                    nearestDropoffIdx = i;
+                }
+            }
+            // Proximity threshold: 25 km
+            const MAX_PROXIMITY_KM = 25.0;
+            const isPickupNear = nearestPickupDist <= MAX_PROXIMITY_KM;
+            const isDropoffNear = nearestDropoffDist <= MAX_PROXIMITY_KM;
+            const isCorrectOrder = nearestPickupIdx < nearestDropoffIdx;
+            if (isPickupNear && isDropoffNear && isCorrectOrder) {
+                return true;
+            }
+            return false;
+        }
+        // Default text fallback if text queries provided
+        if (pickupName && destName) {
+            return (pickupIndex !== -1 && dropoffIndex !== -1 && pickupIndex < dropoffIndex);
+        }
+        return true;
     }
     /**
      * Get My Published Rides (WHERE driver_id = authenticatedUserId)
