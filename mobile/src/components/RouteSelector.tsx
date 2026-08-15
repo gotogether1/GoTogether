@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
-import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GoogleMapView } from './GoogleMapView';
 import { GoTogetherLocation, RouteOption } from '../types/location';
 import { calculateRoutes } from '../services/locationService';
 import { Colors, Spacing, Typography } from '../theme';
@@ -16,7 +16,6 @@ interface RouteSelectorProps {
 
 export function RouteSelector({ origin, destination, onSelectRoute, onBack }: RouteSelectorProps) {
   const insets = useSafeAreaInsets();
-  const mapRef = useRef<MapView>(null);
 
   const [routes, setRoutes] = useState<RouteOption[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState<string>('');
@@ -40,117 +39,100 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
     loadRoutes();
   }, [origin, destination]);
 
-  useEffect(() => {
-    if (mapRef.current && origin && destination) {
-      mapRef.current.fitToCoordinates(
-        [
-          { latitude: origin.latitude, longitude: origin.longitude },
-          { latitude: destination.latitude, longitude: destination.longitude },
-        ],
-        {
-          edgePadding: { top: 60, right: 60, bottom: 60, left: 60 },
-          animated: true,
-        }
-      );
-    }
-  }, [origin, destination]);
-
   const selectedRoute = routes.find(r => r.id === selectedRouteId) || routes[0];
 
   const headerPaddingTop = Math.max(insets.top, 16) + 4;
   const bottomInset = Math.max(insets.bottom, 16);
 
+  // Generate realistic curved polyline points for each route option
+  const routePolylines = routes.map((r, idx) => {
+    const oLat = origin.latitude;
+    const oLng = origin.longitude;
+    const dLat = destination.latitude;
+    const dLng = destination.longitude;
+
+    const midLat = (oLat + dLat) / 2;
+    const midLng = (oLng + dLng) / 2;
+
+    // Offset midpoints for alternative paths
+    const offset = idx === 0 ? 0.08 : idx === 1 ? -0.05 : 0.15;
+
+    return {
+      id: r.id,
+      points: [
+        { latitude: oLat, longitude: oLng },
+        { latitude: midLat + offset * 0.4, longitude: midLng + offset },
+        { latitude: dLat, longitude: dLng },
+      ],
+    };
+  });
+
   return (
     <View style={styles.container}>
-      {/* Top Map Preview Canvas */}
+      {/* Interactive Top Google Map Canvas */}
       <View style={styles.topMapCanvas}>
-        <MapView
-          ref={mapRef}
-          style={StyleSheet.absoluteFill}
-          initialRegion={{
-            latitude: (origin.latitude + destination.latitude) / 2,
-            longitude: (origin.longitude + destination.longitude) / 2,
-            latitudeDelta: Math.abs(origin.latitude - destination.latitude) * 1.5 || 0.05,
-            longitudeDelta: Math.abs(origin.longitude - destination.longitude) * 1.5 || 0.05,
-          }}
-        >
-          <UrlTile
-            urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-            maximumZ={19}
-            flipY={false}
-          />
+        <GoogleMapView
+          latitude={(origin.latitude + destination.latitude) / 2}
+          longitude={(origin.longitude + destination.longitude) / 2}
+          zoom={9}
+          isProgrammatic={true}
+          pickupCoords={{ latitude: origin.latitude, longitude: origin.longitude, name: origin.name }}
+          dropoffCoords={{ latitude: destination.latitude, longitude: destination.longitude, name: destination.name }}
+          routes={routePolylines}
+          activeRouteId={selectedRouteId}
+        />
 
-          {/* Pickup Marker */}
-          <Marker
-            coordinate={{ latitude: origin.latitude, longitude: origin.longitude }}
-            title={origin.name}
-            description={origin.address}
-            pinColor="#2563EB"
-          />
-
-          {/* Dropoff Marker */}
-          <Marker
-            coordinate={{ latitude: destination.latitude, longitude: destination.longitude }}
-            title={destination.name}
-            description={destination.address}
-            pinColor="#10B981"
-          />
-
-          {/* Connecting Route Line */}
-          <Polyline
-            coordinates={[
-              { latitude: origin.latitude, longitude: origin.longitude },
-              { latitude: destination.latitude, longitude: destination.longitude },
-            ]}
-            strokeColor="#2563EB"
-            strokeWidth={4}
-          />
-        </MapView>
-
+        {/* Header Back Button */}
         {onBack && (
           <TouchableOpacity
             onPress={onBack}
             style={[styles.backCircleBtn, { top: headerPaddingTop }]}
             activeOpacity={0.8}
           >
-            <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
+            <Ionicons name="arrow-back" size={20} color="#0F172A" />
           </TouchableOpacity>
         )}
 
-        {/* Top Progress Line Indicator */}
-        <View style={[styles.progressTrack, { top: headerPaddingTop + 8 }]}>
-          <View style={styles.progressBarActive} />
+        {/* Progress Bar Header Indicator */}
+        <View style={[styles.progressBarContainer, { top: headerPaddingTop + 18 }]}>
+          <View style={styles.progressBarTrack}>
+            <View style={[styles.progressBarFill, { width: '60%' }]} />
+          </View>
         </View>
       </View>
 
-      {/* Bottom Sheet Card: What is your route? */}
-      <View style={[styles.bottomSheetCard, { paddingBottom: bottomInset + 70 }]}>
-        <Text style={styles.sheetTitle}>What is your route?</Text>
+      {/* Floating Bottom Card: "What is your route?" */}
+      <View style={[styles.bottomSheetCard, { paddingBottom: bottomInset + 10 }]}>
+        <Text style={styles.bottomSheetTitle}>What is your route?</Text>
 
         {loading ? (
-          <View style={styles.loaderRow}>
+          <View style={styles.loadingBox}>
             <ActivityIndicator size="small" color={Colors.primary} />
-            <Text style={styles.loaderText}>Calculating Google Routes...</Text>
+            <Text style={styles.loadingText}>Calculating best routes...</Text>
           </View>
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.routesScroll} showsVerticalScrollIndicator={false}>
             {routes.map(r => {
               const isSelected = r.id === selectedRouteId;
               return (
                 <TouchableOpacity
                   key={r.id}
-                  style={[styles.routeOptionRow, isSelected && styles.selectedRouteOption]}
+                  style={[styles.routeCardOption, isSelected && styles.routeCardOptionSelected]}
                   onPress={() => setSelectedRouteId(r.id)}
-                  activeOpacity={0.88}
+                  activeOpacity={0.85}
                 >
-                  <View style={[styles.radioCircle, isSelected && styles.selectedRadio]}>
-                    {isSelected && <View style={styles.radioInner} />}
+                  <View style={[styles.radioButtonOuter, isSelected && styles.radioButtonOuterSelected]}>
+                    {isSelected && <View style={styles.radioButtonInner} />}
                   </View>
-                  <View style={styles.routeMeta}>
-                    <Text style={styles.routeTimeText}>
-                      {r.durationMins} min - {r.hasTolls ? 'Has tolls' : 'No tolls'}
+
+                  <View style={styles.routeCardTextGroup}>
+                    <Text style={styles.routeMainTitle}>
+                      {r.durationMins >= 60
+                        ? `${Math.floor(r.durationMins / 60)} hr ${r.durationMins % 60 > 0 ? `${r.durationMins % 60} min` : ''}`
+                        : `${r.durationMins} min`}{' '}
+                      - {r.hasTolls ? 'Tolls' : 'No tolls'}
                     </Text>
-                    <Text style={styles.routeDetailText}>{r.viaRoads}</Text>
+                    <Text style={styles.routeSubDetails}>{r.viaRoads}</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -158,17 +140,16 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
           </ScrollView>
         )}
 
-        {/* Floating Confirm Button (Blue Arrow Button) */}
-        <View style={[styles.bottomBarContainer, { bottom: bottomInset }]}>
+        {/* Floating Confirm Arrow Button (Bottom Right, cleanly elevated) */}
+        {selectedRoute && (
           <TouchableOpacity
-            style={styles.floatingArrowBtn}
-            onPress={() => selectedRoute && onSelectRoute(selectedRoute)}
+            style={styles.floatingConfirmArrowBtn}
+            onPress={() => onSelectRoute(selectedRoute)}
             activeOpacity={0.88}
-            disabled={!selectedRoute}
           >
             <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-        </View>
+        )}
       </View>
     </View>
   );
@@ -177,43 +158,41 @@ export function RouteSelector({ origin, destination, onSelectRoute, onBack }: Ro
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   topMapCanvas: {
     flex: 1,
-    backgroundColor: '#E2E8F0',
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#F5EFE6',
   },
   backCircleBtn: {
     position: 'absolute',
     left: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-    zIndex: 20,
+    shadowRadius: 8,
+    elevation: 6,
+    zIndex: 50,
   },
-  progressTrack: {
+  progressBarContainer: {
     position: 'absolute',
-    left: 70,
-    right: 30,
+    left: 72,
+    right: 24,
+    zIndex: 50,
+  },
+  progressBarTrack: {
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    zIndex: 20,
+    backgroundColor: 'rgba(226, 232, 240, 0.9)',
     overflow: 'hidden',
   },
-  progressBarActive: {
-    width: '65%',
+  progressBarFill: {
     height: '100%',
     backgroundColor: Colors.primary,
     borderRadius: 2,
@@ -224,86 +203,91 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
+    maxHeight: '48%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.12,
-    shadowRadius: 16,
+    shadowRadius: 12,
     elevation: 10,
-    maxHeight: '48%',
+    position: 'relative',
   },
-  sheetTitle: {
+  bottomSheetTitle: {
     ...Typography.headlineLg,
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.onSurface,
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#0F172A',
     marginBottom: Spacing.md,
   },
-  loaderRow: {
+  loadingBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     gap: 10,
   },
-  loaderText: {
+  loadingText: {
     ...Typography.bodyMd,
+    fontSize: 14,
     color: Colors.onSurfaceVariant,
   },
-  routeOptionRow: {
+  routesScroll: {
+    maxHeight: 200,
+  },
+  routeCardOption: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8FAFC',
-    borderRadius: 18,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm + 2,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
   },
-  selectedRouteOption: {
+  routeCardOptionSelected: {
     backgroundColor: '#EFF6FF',
     borderColor: Colors.primary,
   },
-  radioCircle: {
+  radioButtonOuter: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: Colors.outline,
+    borderColor: '#94A3B8',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
+    marginRight: 14,
   },
-  selectedRadio: {
+  radioButtonOuterSelected: {
     borderColor: Colors.primary,
   },
-  radioInner: {
+  radioButtonInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: Colors.primary,
   },
-  routeMeta: {
+  routeCardTextGroup: {
     flex: 1,
   },
-  routeTimeText: {
+  routeMainTitle: {
     ...Typography.labelLg,
     fontSize: 15,
     fontWeight: '800',
-    color: Colors.onSurface,
+    color: '#0F172A',
   },
-  routeDetailText: {
+  routeSubDetails: {
     ...Typography.bodyMd,
-    fontSize: 12,
+    fontSize: 12.5,
     color: Colors.onSurfaceVariant,
     marginTop: 2,
   },
-  bottomBarContainer: {
+  floatingConfirmArrowBtn: {
     position: 'absolute',
     right: 20,
-  },
-  floatingArrowBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    bottom: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -312,5 +296,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 8,
+    zIndex: 60,
   },
 });

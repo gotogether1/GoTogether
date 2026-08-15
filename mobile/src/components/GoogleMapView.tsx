@@ -3,6 +3,11 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 
+interface RoutePolylineOption {
+  id: string;
+  points: { latitude: number; longitude: number }[];
+}
+
 interface GoogleMapViewProps {
   latitude: number;
   longitude: number;
@@ -11,7 +16,8 @@ interface GoogleMapViewProps {
   onCenterChange?: (lat: number, lng: number) => void;
   pickupCoords?: { latitude: number; longitude: number; name?: string };
   dropoffCoords?: { latitude: number; longitude: number; name?: string };
-  polyline?: { latitude: number; longitude: number }[];
+  routes?: RoutePolylineOption[];
+  activeRouteId?: string;
 }
 
 export function GoogleMapView({
@@ -22,7 +28,8 @@ export function GoogleMapView({
   onCenterChange,
   pickupCoords,
   dropoffCoords,
-  polyline,
+  routes,
+  activeRouteId,
 }: GoogleMapViewProps) {
   const webViewRef = useRef<any>(null);
   const prevCoords = useRef<{ lat: number; lng: number }>({ lat: latitude, lng: longitude });
@@ -40,6 +47,18 @@ export function GoogleMapView({
       webViewRef.current.injectJavaScript(script);
     }
   }, [latitude, longitude, isProgrammatic]);
+
+  // Inject script to update active route line when driver changes selection card
+  useEffect(() => {
+    if (webViewRef.current && routes && activeRouteId) {
+      const script = `
+        if (window.updateActiveRoute) {
+          window.updateActiveRoute(${JSON.stringify(activeRouteId)});
+        }
+      `;
+      webViewRef.current.injectJavaScript(script);
+    }
+  }, [activeRouteId, routes]);
 
   const handleZoomIn = () => {
     if (webViewRef.current) {
@@ -66,7 +85,7 @@ export function GoogleMapView({
             width: 100%;
             margin: 0;
             padding: 0;
-            background-color: #74BBE3;
+            background-color: #F5EFE6;
             overflow: hidden;
             -webkit-user-select: none;
             user-select: none;
@@ -84,29 +103,39 @@ export function GoogleMapView({
           .google-logo img {
             height: 20px;
           }
-          .custom-marker-a {
-            background-color: #2563EB;
-            color: #FFFFFF;
-            border: 2px solid #FFFFFF;
+          .marker-pickup-circle {
+            background-color: #0066FF;
+            border: 3px solid #FFFFFF;
             border-radius: 50%;
-            text-align: center;
-            font-weight: bold;
-            font-family: sans-serif;
-            font-size: 13px;
-            line-height: 24px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }
-          .custom-marker-b {
-            background-color: #EF4444;
-            color: #FFFFFF;
-            border: 2px solid #FFFFFF;
+          .marker-pickup-inner {
+            width: 8px;
+            height: 8px;
+            background-color: #FFFFFF;
             border-radius: 50%;
-            text-align: center;
-            font-weight: bold;
-            font-family: sans-serif;
-            font-size: 13px;
-            line-height: 24px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+          }
+          .marker-dropoff-circle {
+            background-color: #0F172A;
+            border: 3px solid #FFFFFF;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .marker-dropoff-inner {
+            width: 8px;
+            height: 8px;
+            background-color: #FFFFFF;
+            border-radius: 50%;
           }
         </style>
       </head>
@@ -116,6 +145,8 @@ export function GoogleMapView({
           <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" />
         </div>
         <script>
+          window.routeLines = {};
+
           function initMap() {
             var wideBounds = L.latLngBounds(L.latLng(-85, -540), L.latLng(85, 540));
 
@@ -156,41 +187,67 @@ export function GoogleMapView({
               var dLat = ${dropoffCoords.latitude};
               var dLng = ${dropoffCoords.longitude};
 
-              var iconA = L.divIcon({
-                className: 'custom-marker-a',
-                html: 'A',
-                iconSize: [28, 28],
-                iconAnchor: [14, 14]
+              var iconPickup = L.divIcon({
+                className: 'marker-pickup-circle',
+                html: '<div class="marker-pickup-inner"></div>',
+                iconSize: [22, 22],
+                iconAnchor: [11, 11]
               });
 
-              var iconB = L.divIcon({
-                className: 'custom-marker-b',
-                html: 'B',
-                iconSize: [28, 28],
-                iconAnchor: [14, 14]
+              var iconDropoff = L.divIcon({
+                className: 'marker-dropoff-circle',
+                html: '<div class="marker-dropoff-inner"></div>',
+                iconSize: [22, 22],
+                iconAnchor: [11, 11]
               });
 
-              L.marker([pLat, pLng], { icon: iconA }).addTo(window.map).bindPopup(${JSON.stringify(pickupCoords.name || 'Pickup')});
-              L.marker([dLat, dLng], { icon: iconB }).addTo(window.map).bindPopup(${JSON.stringify(dropoffCoords.name || 'Drop-off')});
+              L.marker([pLat, pLng], { icon: iconPickup }).addTo(window.map);
+              L.marker([dLat, dLng], { icon: iconDropoff }).addTo(window.map);
 
-              var polylinePoints = ${
-                polyline && polyline.length > 0
-                  ? JSON.stringify(polyline.map(p => [p.latitude, p.longitude]))
-                  : `[[pLat, pLng], [dLat, dLng]]`
-              };
+              var routesData = ${JSON.stringify(routes || [])};
+              var currentActiveId = ${JSON.stringify(activeRouteId || (routes && routes[0] ? routes[0].id : ''))};
 
-              var routeLine = L.polyline(polylinePoints, {
-                color: '#2563EB',
-                weight: 5,
-                opacity: 0.85,
-                lineJoin: 'round'
-              }).addTo(window.map);
+              if (routesData.length > 0) {
+                routesData.forEach(function(r) {
+                  var coords = r.points.map(function(p) { return [p.latitude, p.longitude]; });
+                  var isActive = (r.id === currentActiveId);
+                  
+                  var line = L.polyline(coords, {
+                    color: '#0066FF',
+                    weight: isActive ? 6 : 4,
+                    opacity: isActive ? 0.95 : 0.35,
+                    lineJoin: 'round'
+                  }).addTo(window.map);
+
+                  window.routeLines[r.id] = line;
+                });
+              } else {
+                var defaultLine = L.polyline([[pLat, pLng], [dLat, dLng]], {
+                  color: '#0066FF',
+                  weight: 6,
+                  opacity: 0.95,
+                  lineJoin: 'round'
+                }).addTo(window.map);
+                window.routeLines['default'] = defaultLine;
+              }
 
               var routeBounds = L.latLngBounds([[pLat, pLng], [dLat, dLng]]);
-              window.map.fitBounds(routeBounds, { padding: [60, 60] });
+              window.map.fitBounds(routeBounds, { padding: [50, 50] });
             `
                 : ''
             }
+
+            window.updateActiveRoute = function(activeId) {
+              Object.keys(window.routeLines).forEach(function(rId) {
+                var line = window.routeLines[rId];
+                if (rId === activeId) {
+                  line.setStyle({ weight: 6, opacity: 0.95, color: '#0066FF' });
+                  line.bringToFront();
+                } else {
+                  line.setStyle({ weight: 4, opacity: 0.35, color: '#0066FF' });
+                }
+              });
+            };
 
             window.map.on('moveend', function() {
               var center = window.map.getCenter();
@@ -255,7 +312,7 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    backgroundColor: '#74BBE3',
+    backgroundColor: '#F5EFE6',
   },
   zoomControlsContainer: {
     position: 'absolute',
