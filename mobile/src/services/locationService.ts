@@ -168,25 +168,28 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
     }
   }
 
-  // Fallback using Expo Location native geocoder
+  // Fallback using Expo Location native geocoder (only if permission granted)
   try {
-    const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
-    if (addresses && addresses.length > 0) {
-      const addr = addresses[0];
-      const name = addr.name || addr.street || addr.district || addr.city || 'Selected Location';
-      const formatted = [addr.name, addr.street, addr.subregion, addr.city, addr.region, addr.country]
-        .filter(Boolean)
-        .join(', ');
+    const { status } = await Location.getForegroundPermissionsAsync();
+    if (status === 'granted') {
+      const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (addresses && addresses.length > 0) {
+        const addr = addresses[0];
+        const name = addr.name || addr.street || addr.district || addr.city || 'Selected Location';
+        const formatted = [addr.name, addr.street, addr.subregion, addr.city, addr.region, addr.country]
+          .filter(Boolean)
+          .join(', ');
 
-      return {
-        name,
-        address: formatted || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-        latitude,
-        longitude,
-      };
+        return {
+          name,
+          address: formatted || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+          latitude,
+          longitude,
+        };
+      }
     }
-  } catch (err) {
-    console.warn('Expo Location reverse geocode error:', err);
+  } catch {
+    // Silence location permission rejection on emulator
   }
 
   // General coordinate fallback
