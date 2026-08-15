@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchWithAuth } from './client';
 import { SEED_RIDES, SEED_BOOKINGS } from '../demo/seedData';
 import { auth } from '../config/firebase';
+import { useAuth } from '../auth/AuthProvider';
 
 // 1. Rides Hooks
 
@@ -59,19 +60,18 @@ export function useRidesQuery(filters?: {
  * Authenticated user's My Rides query (WHERE driver_id = authenticatedUserId)
  */
 export function useMyRidesQuery() {
-  const currentUid = auth.currentUser?.uid;
+  const { user } = useAuth();
+  const currentUid = user?.uid || auth.currentUser?.uid;
+
   return useQuery({
     queryKey: ['my-rides', currentUid],
     queryFn: async () => {
       if (!currentUid) return [];
-      try {
-        const res = await fetchWithAuth('/v1/rides/me');
-        return res.data;
-      } catch {
-        return SEED_RIDES.filter(r => r.driverId === currentUid);
-      }
+      const res = await fetchWithAuth('/v1/rides/me');
+      return res.data || [];
     },
     enabled: !!currentUid,
+    staleTime: 0,
   });
 }
 
