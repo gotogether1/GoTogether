@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -232,17 +232,6 @@ export function LocationPicker({
           onCenterChange={handleCenterChange}
         />
 
-        {/* Floating "See suggestions" Pill (Matching BlaBlaCar Reference UI) */}
-        {!isSearching && suggestions.length > 0 && (
-          <TouchableOpacity
-            style={styles.seeSuggestionsBtn}
-            onPress={() => setIsSearching(true)}
-            activeOpacity={0.88}
-          >
-            <Text style={styles.seeSuggestionsText}>See suggestions</Text>
-          </TouchableOpacity>
-        )}
-
         {/* Fixed Center Pin & Location Card */}
         <View style={styles.centerPinContainer} pointerEvents="none">
           <View style={styles.locationBadgeCard}>
@@ -294,7 +283,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 40,
+    zIndex: 50,
   },
   inputCard: {
     flexDirection: 'row',
@@ -403,27 +392,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-  seeSuggestionsBtn: {
-    position: 'absolute',
-    top: 76,
-    alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 6,
-    zIndex: 25,
-  },
-  seeSuggestionsText: {
-    ...Typography.labelLg,
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#2563EB',
   },
   centerPinContainer: {
     alignItems: 'center',

@@ -23,7 +23,7 @@ export function GoogleMapView({
     if (webViewRef.current) {
       const script = `
         if (window.map) {
-          window.map.setView([${latitude}, ${longitude}], Math.max(window.map.getZoom(), 14));
+          window.map.panTo([${latitude}, ${longitude}]);
         }
       `;
       webViewRef.current.injectJavaScript(script);
@@ -79,15 +79,12 @@ export function GoogleMapView({
         </div>
         <script>
           function initMap() {
-            var worldBounds = L.latLngBounds(L.latLng(-85, -180), L.latLng(85, 180));
-
             window.map = L.map('map', {
               zoomControl: false,
               attributionControl: false,
               minZoom: 3,
               maxZoom: 19,
-              maxBounds: worldBounds,
-              maxBoundsViscosity: 1.0,
+              worldCopyJump: true,
               touchZoom: 'center',
               bounceAtZoomLimits: false,
               scrollWheelZoom: true,
@@ -99,12 +96,10 @@ export function GoogleMapView({
               zoomAnimation: true
             }).setView([${latitude}, ${longitude}], ${zoom});
 
-            // Official Google Maps Vector Roadmap Tiles with noWrap tile clamping
+            // Official Google Maps Vector Roadmap Tiles
             L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
               minZoom: 3,
               maxZoom: 19,
-              noWrap: true,
-              bounds: worldBounds,
               subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
             }).addTo(window.map);
 
@@ -148,7 +143,7 @@ export function GoogleMapView({
         }}
       />
 
-      {/* Floating Zoom Controls (+ and - buttons) */}
+      {/* Floating Zoom Controls (+ and - buttons) repositioned to avoid overlap with search bar */}
       <View style={styles.zoomControlsContainer}>
         <TouchableOpacity style={styles.zoomBtn} onPress={handleZoomIn} activeOpacity={0.8}>
           <Ionicons name="add" size={20} color="#0F172A" />
@@ -172,7 +167,7 @@ const styles = StyleSheet.create({
   },
   zoomControlsContainer: {
     position: 'absolute',
-    top: 70,
+    top: 116,
     right: 16,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
@@ -182,8 +177,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
-    elevation: 5,
-    zIndex: 30,
+    elevation: 6,
+    zIndex: 35,
   },
   zoomBtn: {
     width: 40,
