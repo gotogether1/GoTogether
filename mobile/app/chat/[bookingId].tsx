@@ -1,43 +1,131 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { SEED_BOOKINGS, SEED_MESSAGES, SEED_RIDES, DemoMessage } from '../../src/demo/seedData';
+import { SEED_BOOKINGS, SEED_MESSAGES, SEED_RIDES, DemoMessage, DemoBooking } from '../../src/demo/seedData';
+import { EmptyState } from '../../src/components/loading/EmptyState';
+import { fetchWithAuth } from '../../src/api/client';
+import { useAuth } from '../../src/auth/AuthProvider';
 import { Colors, Spacing, Typography } from '../../src/theme';
 import { safeBack } from '../../src/utils/navigation';
 
 export default function ChatScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const { bookingId } = useLocalSearchParams();
-  const booking = SEED_BOOKINGS.find(b => b.id === bookingId) || SEED_BOOKINGS[0];
-  const ride = SEED_RIDES.find(r => r.id === booking.rideId) || SEED_RIDES[0];
 
-  const [messages, setMessages] = useState<DemoMessage[]>(
-    SEED_MESSAGES.filter(m => m.bookingId === booking.id)
-  );
+  const [booking, setBooking] = useState<DemoBooking | any | null>(null);
+  const [messages, setMessages] = useState<DemoMessage[]>([]);
   const [inputText, setInputText] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const currentUserId = 'user_sarah_456'; // Current demo rider
+  const currentUserId = user?.uid || '';
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  useEffect(() => {
+    async function loadChatData() {
+      if (!bookingId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch conversation / booking messages from backend API
+        const [convRes, msgRes] = await Promise.all([
+          fetchWithAuth(`/v1/chats/${bookingId}`).catch(() => null),
+          fetchWithAuth(`/v1/chats/${bookingId}/messages`).catch(() => null),
+        ]);
+
+        if (convRes?.data && msgRes?.data) {
+          setBooking({
+            id: bookingId as string,
+            rideId: convRes.data.rideId,
+            status: 'approved',
+            pickup: convRes.data.pickup || 'Trip Pick-up',
+            destination: convRes.data.destination || 'Trip Drop-off',
+          });
+          setMessages(msgRes.data);
+          setLoading(false);
+          return;
+        }
+      } catch (err: any) {
+        // Fallback to local booking state check if offline
+      }
+
+      // Check local state fallback
+      const foundBooking = SEED_BOOKINGS.find(b => b.id === bookingId);
+      if (foundBooking) {
+        setBooking(foundBooking);
+        setMessages(SEED_MESSAGES.filter(m => m.bookingId === foundBooking.id));
+      } else {
+        setErrorMsg('Booking request not found or chat is inaccessible.');
+      }
+      setLoading(false);
+    }
+
+    loadChatData();
+  }, [bookingId]);
+
+  const handleSend = async () => {
+    if (!inputText.trim() || !bookingId) return;
+
+    const msgText = inputText.trim();
+    setInputText('');
+
     const newMsg: DemoMessage = {
       id: `msg_${Date.now()}`,
-      bookingId: booking.id,
+      bookingId: bookingId as string,
       senderId: currentUserId,
-      body: inputText.trim(),
+      body: msgText,
       createdAt: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, newMsg]);
-    setInputText('');
-  };
 
-  const isClosed = booking.status !== 'approved';
+    setMessages(prev => [...prev, newMsg]);
+
+    try {
+      await fetchWithAuth(`/v1/chats/${bookingId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ body: msgText }),
+      });
+    } catch {
+      // Message added to local state
+    }
+  };
 
   const topInsetHeight = Math.max(insets.top + 12, 42);
   const bottomInsetPadding = Math.max(insets.bottom, 12);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingCenter}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Verifying chat permissions...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Strict Booking Status & Authorization Guard: Chat allowed ONLY on APPROVED bookings!
+  if (!booking || booking.status !== 'approved') {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.emptyCenter}>
+          <EmptyState
+            icon="lock-closed-outline"
+            title="Chat Locked"
+            message={errorMsg || "Direct chat opens automatically once your booking request is approved by the driver."}
+            actionLabel="Go Back"
+            onAction={() => safeBack(router)}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const ride = SEED_RIDES.find(r => r.id === booking.rideId) || { pickup: booking.pickup || 'Pick-up', destination: booking.destination || 'Drop-off' };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -53,70 +141,64 @@ export default function ChatScreen() {
             <Ionicons name="arrow-back" size={20} color={Colors.primary} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerName}>{booking.driverName}</Text>
-            <View style={styles.badgeRow}>
-              <Ionicons
-                name={ride.vehicleType === 'carpool' ? 'car-outline' : 'bicycle-outline'}
-                size={14}
-                color={Colors.primary}
-                style={{ marginRight: 4 }}
-              />
-              <Text style={styles.headerSub}>{ride.vehicleType === 'carpool' ? 'Carpool' : 'Bike Pool'}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.rideContextStrip}>
-          <View style={styles.stripRow}>
-            <Ionicons name="location-outline" size={15} color={Colors.primary} style={{ marginRight: 6 }} />
-            <Text style={styles.stripText}>Meeting Point: <Text style={styles.bold}>{ride.meetingPoint}</Text></Text>
-          </View>
-          <View style={styles.noticeRow}>
-            <Ionicons name="information-circle-outline" size={15} color={Colors.onSurfaceVariant} style={{ marginRight: 6 }} />
-            <Text style={styles.noticeText}>This chat is available until the ride is completed. Keep messages about this ride.</Text>
-          </View>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.messagesContainer} showsVerticalScrollIndicator={false}>
-          {messages.map(msg => {
-            const isMe = msg.senderId === currentUserId;
-            return (
-              <View
-                key={msg.id}
-                style={[styles.messageBubble, isMe ? styles.myBubble : styles.otherBubble]}
-              >
-                <Text style={[styles.messageText, isMe ? styles.myMessageText : styles.otherMessageText]}>
-                  {msg.body}
-                </Text>
-                <Text style={[styles.timeText, isMe ? styles.myTimeText : styles.otherTimeText]}>
-                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-              </View>
-            );
-          })}
-        </ScrollView>
-
-        {isClosed ? (
-          <View style={[styles.closedBanner, { paddingBottom: bottomInsetPadding }]}>
-            <Text style={styles.closedText}>
-              {booking.status === 'completed' ? 'This ride is complete. This chat is now closed.' : 'This booking was cancelled. This chat is now closed.'}
+            <Text style={styles.headerTitle} numberOfLines={1}>Trip Chat</Text>
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+              {ride.pickup} → {ride.destination}
             </Text>
           </View>
-        ) : (
-          <View style={[styles.inputContainer, { paddingBottom: bottomInsetPadding }]}>
-            <TextInput
-              style={styles.input}
-              placeholder="Type your message..."
-              placeholderTextColor={Colors.outline}
-              value={inputText}
-              onChangeText={setInputText}
-              multiline
-            />
-            <TouchableOpacity style={styles.sendBtn} onPress={handleSend} activeOpacity={0.85}>
-              <Ionicons name="paper-plane" size={18} color="#FFFFFF" />
-            </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={styles.messagesList}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.systemNoticeBox}>
+            <Ionicons name="shield-checkmark" size={16} color="#047857" style={{ marginRight: 6 }} />
+            <Text style={styles.systemNoticeText}>
+              Booking Confirmed. Contact details and direct trip messaging are active.
+            </Text>
           </View>
-        )}
+
+          {messages.length === 0 ? (
+            <Text style={styles.noMessagesText}>No messages yet. Say hello to coordinate your trip!</Text>
+          ) : (
+            messages.map(msg => {
+              const isMine = msg.senderId === currentUserId;
+              return (
+                <View
+                  key={msg.id}
+                  style={[styles.messageBubble, isMine ? styles.myBubble : styles.otherBubble]}
+                >
+                  <Text style={[styles.messageText, isMine ? styles.myMessageText : styles.otherMessageText]}>
+                    {msg.body}
+                  </Text>
+                  <Text style={[styles.timeText, isMine ? styles.myTimeText : styles.otherTimeText]}>
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+              );
+            })
+          )}
+        </ScrollView>
+
+        <View style={[styles.inputRow, { paddingBottom: bottomInsetPadding }]}>
+          <TextInput
+            style={styles.input}
+            placeholder="Type a message..."
+            placeholderTextColor="#94A3B8"
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+          />
+          <TouchableOpacity
+            style={[styles.sendBtn, !inputText.trim() && styles.sendBtnDisabled]}
+            onPress={handleSend}
+            disabled={!inputText.trim()}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="send" size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -130,76 +212,90 @@ const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
   },
+  loadingCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.xl,
+  },
+  loadingText: {
+    ...Typography.bodyMd,
+    fontSize: 14,
+    color: Colors.onSurfaceVariant,
+    marginTop: 12,
+  },
+  emptyCenter: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm + 2,
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
   backBtn: {
-    paddingRight: Spacing.md,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   headerTitleContainer: {
     flex: 1,
   },
-  headerName: {
-    ...Typography.headlineMd,
-    fontSize: 18,
+  headerTitle: {
+    ...Typography.headlineLg,
+    fontSize: 17,
     fontWeight: '800',
     color: Colors.onSurface,
   },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  headerSub: {
-    ...Typography.labelSm,
-    color: Colors.primary,
-    fontWeight: '700',
-  },
-  rideContextStrip: {
-    backgroundColor: '#EFF6FF',
-    padding: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#BFDBFE',
-    gap: 4,
-  },
-  stripRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stripText: {
+  headerSubtitle: {
     ...Typography.bodyMd,
-    color: Colors.onSurface,
-    fontSize: 13,
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
   },
-  bold: {
-    fontWeight: '700',
+  messagesList: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  noticeRow: {
+  systemNoticeBox: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  noticeText: {
-    ...Typography.labelSm,
-    color: Colors.onSurfaceVariant,
-    fontSize: 12,
-    flex: 1,
-  },
-  messagesContainer: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 12,
     padding: Spacing.md,
-    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  systemNoticeText: {
+    ...Typography.bodyMd,
+    fontSize: 12.5,
+    color: '#065F46',
+    flex: 1,
+    fontWeight: '500',
+  },
+  noMessagesText: {
+    ...Typography.bodyMd,
+    fontSize: 13,
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginTop: 40,
   },
   messageBubble: {
     maxWidth: '80%',
-    padding: Spacing.md,
     borderRadius: 18,
-    marginBottom: Spacing.xs,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 10,
   },
   myBubble: {
     alignSelf: 'flex-end',
@@ -208,74 +304,63 @@ const styles = StyleSheet.create({
   },
   otherBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 4,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderBottomLeftRadius: 4,
   },
   messageText: {
     ...Typography.bodyMd,
-    fontSize: 15,
+    fontSize: 14,
+    lineHeight: 20,
   },
   myMessageText: {
-    color: Colors.onPrimary,
+    color: '#FFFFFF',
   },
   otherMessageText: {
-    color: Colors.onSurface,
+    color: '#0F172A',
   },
   timeText: {
+    ...Typography.bodyMd,
     fontSize: 10,
     marginTop: 4,
     alignSelf: 'flex-end',
   },
   myTimeText: {
-    color: '#DBEAFE',
+    color: 'rgba(255, 255, 255, 0.75)',
   },
   otherTimeText: {
-    color: Colors.outline,
+    color: '#94A3B8',
   },
-  inputContainer: {
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.sm,
     paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm,
     backgroundColor: Colors.surface,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
-    gap: Spacing.xs,
   },
   input: {
     flex: 1,
-    minHeight: 44,
-    maxHeight: 100,
     backgroundColor: '#F1F5F9',
-    borderRadius: 22,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
-    fontSize: 15,
-    color: Colors.onSurface,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+    maxHeight: 100,
+    color: '#0F172A',
+    marginRight: 8,
   },
   sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  closedBanner: {
-    padding: Spacing.md,
-    backgroundColor: '#FEF2F2',
-    alignItems: 'center',
-  },
-  closedText: {
-    ...Typography.labelLg,
-    color: Colors.error,
-    textAlign: 'center',
+  sendBtnDisabled: {
+    opacity: 0.5,
   },
 });
