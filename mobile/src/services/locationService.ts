@@ -92,13 +92,12 @@ const FALLBACK_PLACES: GoTogetherLocation[] = [
 ];
 
 /**
- * Normalize and expand search queries (handles "busstand" -> "bus stand", district + town combinations)
+ * Expand search query terms (transit synonyms, district+town, schools, colleges, shops)
  */
 function expandSearchTerms(query: string): string[] {
   const clean = query.trim().toLowerCase();
   const queries = [clean];
 
-  // Expand "busstand" or "bus stand"
   if (clean.includes('busstand') || clean.includes('bus stand') || clean.includes('busstop')) {
     const base = clean.replace('busstand', '').replace('bus stand', '').replace('busstop', '').trim();
     if (base) {
@@ -108,7 +107,6 @@ function expandSearchTerms(query: string): string[] {
     }
   }
 
-  // Handle multi-word queries like "nizamabad bodhan" -> "bodhan, nizamabad"
   const words = clean.split(/\s+/).filter(w => w.length > 1);
   if (words.length >= 2) {
     queries.push(words.join(', '));
@@ -119,52 +117,72 @@ function expandSearchTerms(query: string): string[] {
 }
 
 /**
- * Fetch Worldwide Places Autocomplete Suggestions (Google Places + OpenStreetMap Nominatim + Multi-Token Parsing)
+ * Worldwide Places & POI Search (Colleges, Schools, Shops, Bus Stands, Hospitals, Landmarks, Cities)
+ * Uses Google Places Text Search + Google Places Autocomplete + OpenStreetMap Nominatim POI Engine
  */
 export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutocompleteSuggestion[]> {
   if (!query || query.trim().length < 2) return [];
 
-  const searchVariants = expandSearchTerms(query);
+  const cleanQuery = query.trim();
+  const searchVariants = expandSearchTerms(cleanQuery);
   const results: PlaceAutocompleteSuggestion[] = [];
-  const seenPlaceIds = new Set<string>();
+  const seenKeys = new Set<string>();
 
-  // Helper to add suggestion uniquely
   const addSuggestion = (item: PlaceAutocompleteSuggestion) => {
-    if (!seenPlaceIds.has(item.placeId)) {
-      seenPlaceIds.add(item.placeId);
+    const key = `${item.name.toLowerCase()}-${item.address.toLowerCase()}`;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
       results.push(item);
     }
   };
 
-  // 1. Try Google Places API for query variants
+  // 1. Google Places Text Search API (Finds POIs: Colleges, Schools, Shops, Bus Stands, Hospitals)
   if (GOOGLE_MAPS_API_KEY) {
-    for (const q of searchVariants.slice(0, 2)) {
-      try {
-        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&types=geocode|establishment&key=${GOOGLE_MAPS_API_KEY}`;
-        const res = await fetch(url);
-        const data = await res.json();
+    try {
+      const textUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(cleanQuery)}&key=${GOOGLE_MAPS_API_KEY}`;
+      const res = await fetch(textUrl);
+      const data = await res.json();
 
-        if (data.status === 'OK' && Array.isArray(data.predictions)) {
-          data.predictions.forEach((p: any) => {
-            addSuggestion({
-              placeId: p.place_id,
-              name: p.structured_formatting?.main_text || p.description.split(',')[0],
-              address: p.description,
-              secondaryText: p.structured_formatting?.secondary_text || '',
-            });
+      if (data.status === 'OK' && Array.isArray(data.results)) {
+        data.results.forEach((r: any) => {
+          addSuggestion({
+            placeId: r.place_id,
+            name: r.name,
+            address: r.formatted_address,
+            secondaryText: r.formatted_address.replace(`${r.name}, `, ''),
           });
-        }
-      } catch (err) {
-        console.warn('Google Places Autocomplete API error:', err);
+        });
       }
+    } catch (err) {
+      console.warn('Google Places Text Search API error:', err);
+    }
+
+    // 2. Google Places Autocomplete API
+    try {
+      const autoUrl = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(cleanQuery)}&key=${GOOGLE_MAPS_API_KEY}`;
+      const res = await fetch(autoUrl);
+      const data = await res.json();
+
+      if (data.status === 'OK' && Array.isArray(data.predictions)) {
+        data.predictions.forEach((p: any) => {
+          addSuggestion({
+            placeId: p.place_id,
+            name: p.structured_formatting?.main_text || p.description.split(',')[0],
+            address: p.description,
+            secondaryText: p.structured_formatting?.secondary_text || '',
+          });
+        });
+      }
+    } catch (err) {
+      console.warn('Google Places Autocomplete API error:', err);
     }
   }
 
-  // 2. Query Nominatim OpenStreetMap for search variants
-  for (const q of searchVariants) {
-    if (results.length >= 10) break;
+  // 3. OpenStreetMap Nominatim POI Engine (Schools, Colleges, Shops, Bus Stands, Hospitals)
+  for (const q of searchVariants.slice(0, 2)) {
+    if (results.length >= 12) break;
     try {
-      const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=8`;
+      const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=10`;
       const res = await fetch(nomUrl, {
         headers: {
           'User-Agent': 'GoTogetherMobileApp/1.0',
@@ -175,7 +193,7 @@ export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutoc
 
       if (Array.isArray(data)) {
         data.forEach((item: any) => {
-          const mainName = item.name || item.address?.bus_stop || item.address?.amenity || item.address?.city || item.address?.town || item.address?.village || item.display_name.split(',')[0];
+          const mainName = item.name || item.address?.amenity || item.address?.shop || item.address?.building || item.address?.school || item.address?.college || item.address?.bus_stop || item.display_name.split(',')[0];
           const fullAddr = item.display_name;
           addSuggestion({
             placeId: `nom-${item.place_id}-${item.lat}-${item.lon}`,
@@ -186,12 +204,12 @@ export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutoc
         });
       }
     } catch (err) {
-      console.warn('Nominatim search call failed:', err);
+      console.warn('Nominatim POI search call failed:', err);
     }
   }
 
-  // 3. Fallback matching over regional places list with token matching
-  const cleanTokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+  // 4. Fallback regional matching
+  const cleanTokens = cleanQuery.toLowerCase().split(/\s+/).filter(t => t.length > 0);
   FALLBACK_PLACES.forEach(p => {
     const haystack = `${p.name} ${p.address}`.toLowerCase();
     const allTokensMatch = cleanTokens.every(t => haystack.includes(t));
@@ -205,7 +223,7 @@ export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutoc
     }
   });
 
-  return results.slice(0, 10);
+  return results.slice(0, 12);
 }
 
 /**
