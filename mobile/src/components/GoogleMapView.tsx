@@ -7,6 +7,7 @@ interface GoogleMapViewProps {
   latitude: number;
   longitude: number;
   zoom?: number;
+  isProgrammatic?: boolean;
   onCenterChange?: (lat: number, lng: number) => void;
 }
 
@@ -14,21 +15,26 @@ export function GoogleMapView({
   latitude,
   longitude,
   zoom = 15,
+  isProgrammatic = false,
   onCenterChange,
 }: GoogleMapViewProps) {
   const webViewRef = useRef<any>(null);
+  const prevCoords = useRef<{ lat: number; lng: number }>({ lat: latitude, lng: longitude });
 
-  // Smoothly pan map whenever latitude or longitude changes from search or GPS button
+  // Only inject panTo when coordinates change programmatically (e.g., search click or GPS button click)
   useEffect(() => {
-    if (webViewRef.current) {
+    const dist = Math.abs(latitude - prevCoords.current.lat) + Math.abs(longitude - prevCoords.current.lng);
+    prevCoords.current = { lat: latitude, lng: longitude };
+
+    if (webViewRef.current && (isProgrammatic || dist > 0.005)) {
       const script = `
         if (window.map) {
-          window.map.panTo([${latitude}, ${longitude}]);
+          window.map.panTo([${latitude}, ${longitude}], { animate: true, duration: 0.5 });
         }
       `;
       webViewRef.current.injectJavaScript(script);
     }
-  }, [latitude, longitude]);
+  }, [latitude, longitude, isProgrammatic]);
 
   const handleZoomIn = () => {
     if (webViewRef.current) {
@@ -92,14 +98,20 @@ export function GoogleMapView({
               boxZoom: true,
               dragging: true,
               tap: true,
+              inertia: true,
+              inertiaDeceleration: 3500,
+              inertiaMaxSpeed: 600,
+              easeLinearity: 0.2,
               fadeAnimation: true,
               zoomAnimation: true
             }).setView([${latitude}, ${longitude}], ${zoom});
 
-            // Official Google Maps Vector Roadmap Tiles
+            // Official Google Maps Vector Roadmap Tiles with High-DPI support
             L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
               minZoom: 3,
               maxZoom: 19,
+              tileSize: 256,
+              zoomOffset: 0,
               subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
             }).addTo(window.map);
 
@@ -143,7 +155,7 @@ export function GoogleMapView({
         }}
       />
 
-      {/* Floating Zoom Controls (+ and - buttons) repositioned to avoid overlap with search bar */}
+      {/* Floating Zoom Controls (+ and - buttons) */}
       <View style={styles.zoomControlsContainer}>
         <TouchableOpacity style={styles.zoomBtn} onPress={handleZoomIn} activeOpacity={0.8}>
           <Ionicons name="add" size={20} color="#0F172A" />

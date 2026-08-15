@@ -52,6 +52,7 @@ export function LocationPicker({
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [geocodingMap, setGeocodingMap] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isProgrammatic, setIsProgrammatic] = useState(false);
 
   // Debounced Places Autocomplete Search
   useEffect(() => {
@@ -79,6 +80,7 @@ export function LocationPicker({
     setIsSearching(false);
     setSearchQuery(s.address);
     setLoadingSuggestions(true);
+    setIsProgrammatic(true);
 
     try {
       const details = await fetchPlaceDetails(s.placeId, s.name || s.address);
@@ -99,6 +101,7 @@ export function LocationPicker({
   const handleUseCurrentLocation = async () => {
     setIsSearching(false);
     setLoadingSuggestions(true);
+    setIsProgrammatic(true);
     try {
       const gpsLocation = await getCurrentDeviceLocation();
       setSelectedLocation(gpsLocation);
@@ -111,6 +114,7 @@ export function LocationPicker({
   };
 
   const handleCenterChange = async (lat: number, lng: number) => {
+    setIsProgrammatic(false);
     const dist = Math.abs(lat - selectedLocation.latitude) + Math.abs(lng - selectedLocation.longitude);
     if (dist < 0.0002) return;
 
@@ -162,6 +166,7 @@ export function LocationPicker({
               if (searchQuery.trim().length > 2) {
                 setIsSearching(false);
                 setLoadingSuggestions(true);
+                setIsProgrammatic(true);
                 try {
                   const details = await fetchPlaceDetails(searchQuery.trim(), searchQuery.trim());
                   setSelectedLocation(details);
@@ -229,6 +234,7 @@ export function LocationPicker({
         <GoogleMapView
           latitude={selectedLocation.latitude}
           longitude={selectedLocation.longitude}
+          isProgrammatic={isProgrammatic}
           onCenterChange={handleCenterChange}
         />
 
