@@ -5,29 +5,44 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Input } from '../../src/components/Input';
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
-import { SEED_BOOKINGS } from '../../src/demo/seedData';
+import { fetchWithAuth } from '../../src/api/client';
+import { EmptyState } from '../../src/components/loading/EmptyState';
 import { Colors, Spacing, Typography } from '../../src/theme';
 import { safeBack } from '../../src/utils/navigation';
 
 export default function LeaveReviewScreen() {
   const router = useRouter();
   const { bookingId } = useLocalSearchParams();
-  const booking = SEED_BOOKINGS.find(b => b.id === bookingId) || SEED_BOOKINGS[0];
 
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmitReview = () => {
+  const handleSubmitReview = async () => {
+    if (!bookingId) {
+      Alert.alert('Error', 'Missing booking identifier.');
+      return;
+    }
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      await fetchWithAuth('/v1/reviews', {
+        method: 'POST',
+        body: JSON.stringify({
+          bookingId: bookingId as string,
+          rating,
+          text: reviewText,
+        }),
+      });
       setSubmitting(false);
       Alert.alert(
         'Review Submitted ⭐',
         'Thank you for rating your commute experience!',
         [{ text: 'OK', onPress: () => safeBack(router) }]
       );
-    }, 600);
+    } catch (err: any) {
+      setSubmitting(false);
+      Alert.alert('Submission Failed', err.message || 'Unable to submit review to backend.');
+    }
   };
 
   return (
@@ -38,11 +53,11 @@ export default function LeaveReviewScreen() {
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Rate Your Trip</Text>
-          <Text style={styles.subtitle}>How was your ride with {booking.driverName}?</Text>
+          <Text style={styles.subtitle}>How was your ride experience?</Text>
         </View>
 
         <Card>
-          <Text style={styles.routeText}>{booking.pickup} → {booking.destination}</Text>
+          <Text style={styles.routeText}>Rate & review your trip experience</Text>
 
           <Text style={styles.starsLabel}>Rating</Text>
           <View style={styles.starsRow}>

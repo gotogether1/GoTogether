@@ -196,7 +196,7 @@ export default function DashboardScreen() {
                     <Text style={styles.driverNameText} numberOfLines={1}>{driverDisplayName}</Text>
                     <View style={styles.starRatingRow}>
                       <Ionicons name="star" size={14} color="#F59E0B" style={{ marginRight: 3 }} />
-                      <Text style={styles.ratingNumberText}>4.8</Text>
+                      <Text style={styles.ratingNumberText}>{ride.driverRating ? parseFloat(ride.driverRating).toFixed(1) : '5.0'}</Text>
                     </View>
                   </View>
                 </View>

@@ -51,17 +51,9 @@ export default function ChatScreen() {
           return;
         }
       } catch (err: any) {
-        // Fallback to local booking state check if offline
+        setErrorMsg(err.message || 'Chat is inaccessible or booking request is not approved.');
       }
-
-      // Check local state fallback
-      const foundBooking = SEED_BOOKINGS.find(b => b.id === bookingId);
-      if (foundBooking) {
-        setBooking(foundBooking);
-        setMessages(SEED_MESSAGES.filter(m => m.bookingId === foundBooking.id));
-      } else {
-        setErrorMsg('Booking request not found or chat is inaccessible.');
-      }
+      setErrorMsg('Booking request not found or chat is inaccessible.');
       setLoading(false);
     }
 
