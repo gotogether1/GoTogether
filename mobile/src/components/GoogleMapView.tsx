@@ -19,14 +19,15 @@ export function GoogleMapView({
   onCenterChange,
 }: GoogleMapViewProps) {
   const webViewRef = useRef<any>(null);
-  const prevCoords = useRef<{ lat: number; lng: number }>({ lat: latitude, lng: longitude });
 
-  // Only inject panTo when coordinates change programmatically (e.g., search click or GPS button click)
+  // Store initial values so htmlContent string never changes during state re-renders
+  const initialLatRef = useRef(latitude);
+  const initialLngRef = useRef(longitude);
+  const initialZoomRef = useRef(zoom);
+
+  // Only inject panTo when coordinates change programmatically (search click or GPS button click)
   useEffect(() => {
-    const dist = Math.abs(latitude - prevCoords.current.lat) + Math.abs(longitude - prevCoords.current.lng);
-    prevCoords.current = { lat: latitude, lng: longitude };
-
-    if (webViewRef.current && (isProgrammatic || dist > 0.005)) {
+    if (webViewRef.current && isProgrammatic) {
       const script = `
         if (window.map) {
           window.map.panTo([${latitude}, ${longitude}], { animate: true, duration: 0.4 });
@@ -110,7 +111,7 @@ export function GoogleMapView({
               easeLinearity: 0.25,
               fadeAnimation: false,
               zoomAnimation: true
-            }).setView([${latitude}, ${longitude}], ${zoom});
+            }).setView([${initialLatRef.current}, ${initialLngRef.current}], ${initialZoomRef.current});
 
             // Official Google Maps Vector Roadmap Tiles with continuous 360-degree wrapping
             L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
