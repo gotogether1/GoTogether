@@ -5,8 +5,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../src/components/Button';
 import { EmptyState } from '../../src/components/loading/EmptyState';
-import { SEED_BOOKINGS, DemoBooking } from '../../src/demo/seedData';
-import { useMyRidesQuery } from '../../src/api/hooks';
+import { useMyRidesQuery, useBookingsQuery, useApproveBookingMutation, useRejectBookingMutation } from '../../src/api/hooks';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { Colors, Spacing, Typography } from '../../src/theme';
 
@@ -15,26 +14,35 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'upcoming' | 'requests' | 'offers' | 'past'>('upcoming');
-  const [bookings, setBookings] = useState<DemoBooking[]>(SEED_BOOKINGS);
 
-  const { data: rawMyRides = [] } = useMyRidesQuery();
+  const { data: myRides = [] } = useMyRidesQuery();
+  const { data: driverBookings = [] } = useBookingsQuery('driver');
+  const { data: riderBookings = [] } = useBookingsQuery('rider');
 
-  // Strictly filter My Rides by authenticated user UID
-  const myRides = user?.uid ? rawMyRides.filter((r: any) => r.driverId === user.uid || r.driverId === `usr_${user.uid}`) : rawMyRides;
+  const approveBookingMutation = useApproveBookingMutation();
+  const rejectBookingMutation = useRejectBookingMutation();
 
-  const handleApprove = (bookingId: string) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'approved' } : b));
-    Alert.alert('Booking Approved!', 'Direct chat with the rider is now unlocked.');
+  const handleApprove = async (bookingId: string) => {
+    try {
+      await approveBookingMutation.mutateAsync(bookingId);
+      Alert.alert('Booking Approved!', 'Direct chat with the rider is now unlocked.');
+    } catch (err: any) {
+      Alert.alert('Approval Failed', err.message || 'Unable to approve booking');
+    }
   };
 
-  const handleReject = (bookingId: string) => {
-    setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'rejected' } : b));
-    Alert.alert('Booking Rejected', 'The rider has been notified.');
+  const handleReject = async (bookingId: string) => {
+    try {
+      await rejectBookingMutation.mutateAsync(bookingId);
+      Alert.alert('Booking Rejected', 'The rider has been notified.');
+    } catch (err: any) {
+      Alert.alert('Rejection Failed', err.message || 'Unable to reject booking');
+    }
   };
 
-  const upcomingBookings = bookings.filter(b => b.status === 'approved');
-  const pendingRequests = bookings.filter(b => b.status === 'pending');
-  const pastBookings = bookings.filter(b => b.status === 'completed' || b.status === 'cancelled');
+  const upcomingBookings = riderBookings.filter((b: any) => b.status === 'approved');
+  const pendingRequests = driverBookings.filter((b: any) => b.status === 'pending');
+  const pastBookings = riderBookings.filter((b: any) => b.status === 'completed' || b.status === 'cancelled');
 
   const activeCount = upcomingBookings.length + myRides.filter((r: any) => r.status === 'published' || r.status === 'active').length;
   const completedCount = pastBookings.length;
@@ -105,7 +113,7 @@ export default function DashboardScreen() {
                 onAction={() => router.push('/(tabs)/find')}
               />
             ) : (
-              upcomingBookings.map(b => (
+              upcomingBookings.map((b: any) => (
                 <TouchableOpacity
                   key={b.id}
                   style={styles.cardItem}
@@ -144,7 +152,7 @@ export default function DashboardScreen() {
                 message="When passengers request to join your offered pool, their requests will show here."
               />
             ) : (
-              pendingRequests.map(b => (
+              pendingRequests.map((b: any) => (
                 <View key={b.id} style={styles.cardItem}>
                   <View style={styles.cardHeader}>
                     <View style={styles.badgePending}>
@@ -238,7 +246,7 @@ export default function DashboardScreen() {
                 message="Your completed and past trip history will show up here."
               />
             ) : (
-              pastBookings.map(b => (
+              pastBookings.map((b: any) => (
                 <View key={b.id} style={styles.cardItem}>
                   <Text style={styles.routeText}>{b.pickup} → {b.destination}</Text>
                   <Text style={styles.subText}>Status: {b.status.toUpperCase()}</Text>

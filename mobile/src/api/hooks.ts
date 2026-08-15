@@ -167,3 +167,32 @@ export function useCreateBookingMutation() {
     },
   });
 }
+
+export function useApproveBookingMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bookingId: string) => {
+      const res = await fetchWithAuth(`/v1/bookings/${bookingId}/approve`, { method: 'POST' });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['my-rides'] });
+      queryClient.invalidateQueries({ queryKey: ['rides'] });
+    },
+  });
+}
+
+export function useRejectBookingMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (bookingId: string) => {
+      const res = await fetchWithAuth(`/v1/bookings/${bookingId}/reject`, { method: 'POST' });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+}
+

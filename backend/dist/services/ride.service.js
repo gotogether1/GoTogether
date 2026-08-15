@@ -217,7 +217,7 @@ class RideService {
      */
     static async getMyRides(driverUid) {
         const sql = `
-      SELECT r.*, u.display_name AS driver_name, u.average_rating AS driver_rating
+      SELECT r.*, u.display_name AS driver_name, u.average_rating AS driver_rating, u.firebase_uid AS driver_fb_uid
       FROM rides r
       LEFT JOIN users u ON r.driver_id = u.id OR r.driver_id = u.firebase_uid
       WHERE r.driver_id = $1 
@@ -302,7 +302,7 @@ class RideService {
         }
         return {
             id: r.id,
-            driverId: r.driver_id,
+            driverId: r.driver_fb_uid || r.driver_id,
             driverName: r.driver_name || 'Driver',
             driverRating: parseFloat(r.driver_rating || '5.0'),
             vehicleType: r.vehicle_type,
