@@ -14,7 +14,7 @@ export const createRideSchema = z.object({
   dropoffPlaceId: z.string().optional(),
   meetingPoint: z.string().min(2).max(150),
   departureAt: z.string(),
-  totalSeats: z.number().int().min(1).max(4),
+  totalSeats: z.number().int().min(1).max(6),
   suggestedContribution: z.number().min(0).default(0),
   stopovers: z.array(
     z.object({
@@ -34,6 +34,14 @@ export const createRideSchema = z.object({
   vehicleDetails: z.string().min(2).max(100),
   rules: z.string().max(300).optional().default(''),
   notes: z.string().max(500).optional().default(''),
+}).refine((data) => {
+  if (data.vehicleType === 'bike_pool' && data.totalSeats > 1) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Bike pool rides can offer a maximum of 1 pillion seat',
+  path: ['totalSeats'],
 });
 
 export const createBookingSchema = z.object({

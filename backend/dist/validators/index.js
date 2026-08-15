@@ -16,7 +16,7 @@ exports.createRideSchema = zod_1.z.object({
     dropoffPlaceId: zod_1.z.string().optional(),
     meetingPoint: zod_1.z.string().min(2).max(150),
     departureAt: zod_1.z.string(),
-    totalSeats: zod_1.z.number().int().min(1).max(4),
+    totalSeats: zod_1.z.number().int().min(1).max(6),
     suggestedContribution: zod_1.z.number().min(0).default(0),
     stopovers: zod_1.z.array(zod_1.z.object({
         name: zod_1.z.string(),
@@ -32,6 +32,14 @@ exports.createRideSchema = zod_1.z.object({
     vehicleDetails: zod_1.z.string().min(2).max(100),
     rules: zod_1.z.string().max(300).optional().default(''),
     notes: zod_1.z.string().max(500).optional().default(''),
+}).refine((data) => {
+    if (data.vehicleType === 'bike_pool' && data.totalSeats > 1) {
+        return false;
+    }
+    return true;
+}, {
+    message: 'Bike pool rides can offer a maximum of 1 pillion seat',
+    path: ['totalSeats'],
 });
 exports.createBookingSchema = zod_1.z.object({
     seatsRequested: zod_1.z.number().int().min(1).max(4).default(1),

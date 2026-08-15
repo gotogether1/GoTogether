@@ -126,16 +126,18 @@ export function useCreateRideMutation() {
 
 // 2. Booking Hooks
 export function useBookingsQuery(type?: 'rider' | 'driver') {
+  const { user } = useAuth();
+  const currentUid = user?.uid || auth.currentUser?.uid;
+
   return useQuery({
-    queryKey: ['bookings', type],
+    queryKey: ['bookings', currentUid, type],
     queryFn: async () => {
-      try {
-        const res = await fetchWithAuth(`/v1/bookings?type=${type || 'rider'}`);
-        return res.data;
-      } catch {
-        return SEED_BOOKINGS;
-      }
+      if (!currentUid) return [];
+      const res = await fetchWithAuth(`/v1/bookings?type=${type || 'rider'}`);
+      return res.data || [];
     },
+    enabled: !!currentUid,
+    staleTime: 0,
   });
 }
 
@@ -143,37 +145,18 @@ export function useCreateBookingMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (bookingData: any) => {
-      try {
-        const res = await fetchWithAuth('/v1/bookings', {
-          method: 'POST',
-          body: JSON.stringify(bookingData),
-        });
-        if (res.data) {
-          SEED_BOOKINGS.unshift(res.data);
-        }
-        return res.data;
-      } catch {
-        const newBooking = {
-          id: `booking_${Date.now()}`,
-          rideId: bookingData.rideId,
-          riderId: auth.currentUser?.uid || 'authenticated_rider',
-          riderName: auth.currentUser?.displayName || 'You',
-          driverId: bookingData.driverId || 'driver_id',
-          driverName: bookingData.driverName || 'Driver',
-          seatsRequested: bookingData.seatsRequested || 1,
-          status: 'pending' as const,
-          riderMessage: bookingData.riderMessage || '',
-          pickup: bookingData.pickup || 'Pickup Location',
-          destination: bookingData.destination || 'Destination',
-          departureAt: new Date().toISOString(),
-          vehicleType: bookingData.vehicleType || 'carpool',
-        };
-        SEED_BOOKINGS.unshift(newBooking);
-        return newBooking;
-      }
+      const res = await fetchWithAuth('/v1/bookings', {
+        method: 'POST',
+        body: JSON.stringify(bookingData),
+      });
+      return res.data;
     },
     onSuccess: () => {
+      const currentUid = auth.currentUser?.uid;
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      if (currentUid) {
+        queryClient.invalidateQueries({ queryKey: ['bookings', currentUid] });
+      }
     },
   });
 }
