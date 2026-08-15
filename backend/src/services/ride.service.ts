@@ -9,6 +9,11 @@ export interface StopoverLocation {
   longitude?: number;
 }
 
+export interface LatLngPoint {
+  latitude: number;
+  longitude: number;
+}
+
 export interface RideData {
   id: string;
   driverId: string;
@@ -18,17 +23,19 @@ export interface RideData {
   pickup: string;
   destination: string;
   pickupAddress?: string;
-  pickupLatitude?: number;
-  pickupLongitude?: number;
+  pickupLatitude: number;
+  pickupLongitude: number;
   dropoffAddress?: string;
-  dropoffLatitude?: number;
-  dropoffLongitude?: number;
+  dropoffLatitude: number;
+  dropoffLongitude: number;
   meetingPoint: string;
   departureAt: string;
   totalSeats: number;
   availableSeats: number;
   suggestedContribution: number;
   stopovers?: StopoverLocation[];
+  routePolyline?: LatLngPoint[];
+  routeSummary?: string;
   vehicleDetails: string;
   rules?: string;
   notes?: string;
@@ -48,23 +55,36 @@ export class RideService {
       pickup: string;
       destination: string;
       pickupAddress?: string;
-      pickupLatitude?: number;
-      pickupLongitude?: number;
+      pickupLatitude: number;
+      pickupLongitude: number;
       dropoffAddress?: string;
-      dropoffLatitude?: number;
-      dropoffLongitude?: number;
+      dropoffLatitude: number;
+      dropoffLongitude: number;
       meetingPoint: string;
       departureAt: string;
       totalSeats: number;
       suggestedContribution?: number;
       stopovers?: StopoverLocation[];
+      routePolyline?: LatLngPoint[];
+      routeSummary?: string;
       vehicleDetails: string;
       rules?: string;
       notes?: string;
     }
   ): Promise<RideData> {
+    // Validate required coordinates
+    if (
+      typeof input.pickupLatitude !== 'number' ||
+      typeof input.pickupLongitude !== 'number' ||
+      typeof input.dropoffLatitude !== 'number' ||
+      typeof input.dropoffLongitude !== 'number'
+    ) {
+      throw ApiError.badRequest('Pickup and Dropoff coordinates are required for ride creation');
+    }
+
     const rideId = `ride_${Date.now()}`;
     const stopoversJson = JSON.stringify(input.stopovers || []);
+    const polylineJson = JSON.stringify(input.routePolyline || []);
 
     const sql = `
       INSERT INTO rides (
@@ -72,9 +92,9 @@ export class RideService {
         pickup_address, pickup_latitude, pickup_longitude,
         dropoff_address, dropoff_latitude, dropoff_longitude,
         meeting_point, departure_at, total_seats, available_seats,
-        suggested_contribution, stopovers, vehicle_details, rules, notes, status
+        suggested_contribution, stopovers, route_polyline, route_variant, vehicle_details, rules, notes, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18, $19, $20, 'active')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18::jsonb, $19, $20, $21, $22, 'active')
       RETURNING *;
     `;
 
@@ -85,17 +105,19 @@ export class RideService {
       input.pickup,
       input.destination,
       input.pickupAddress || input.pickup,
-      input.pickupLatitude || null,
-      input.pickupLongitude || null,
+      input.pickupLatitude,
+      input.pickupLongitude,
       input.dropoffAddress || input.destination,
-      input.dropoffLatitude || null,
-      input.dropoffLongitude || null,
+      input.dropoffLatitude,
+      input.dropoffLongitude,
       input.meetingPoint || 'Main Pick-up Point',
       input.departureAt || new Date().toISOString(),
       input.totalSeats,
-      input.totalSeats, // available_seats starts equal to total_seats
+      input.totalSeats,
       input.suggestedContribution || 0.00,
       stopoversJson,
+      polylineJson,
+      input.routeSummary || 'fastest',
       input.vehicleDetails || 'Vehicle',
       input.rules || '',
       input.notes || '',
@@ -197,6 +219,13 @@ export class RideService {
       parsedStopovers = [];
     }
 
+    let parsedPolyline: LatLngPoint[] = [];
+    try {
+      parsedPolyline = typeof r.route_polyline === 'string' ? JSON.parse(r.route_polyline) : r.route_polyline || [];
+    } catch {
+      parsedPolyline = [];
+    }
+
     return {
       id: r.id,
       driverId: r.driver_id,
@@ -206,17 +235,19 @@ export class RideService {
       pickup: r.pickup,
       destination: r.destination,
       pickupAddress: r.pickup_address,
-      pickupLatitude: r.pickup_latitude ? parseFloat(r.pickup_latitude) : undefined,
-      pickupLongitude: r.pickup_longitude ? parseFloat(r.pickup_longitude) : undefined,
+      pickupLatitude: parseFloat(r.pickup_latitude),
+      pickupLongitude: parseFloat(r.pickup_longitude),
       dropoffAddress: r.dropoff_address,
-      dropoffLatitude: r.dropoff_latitude ? parseFloat(r.dropoff_latitude) : undefined,
-      dropoffLongitude: r.dropoff_longitude ? parseFloat(r.dropoff_longitude) : undefined,
+      dropoffLatitude: parseFloat(r.dropoff_latitude),
+      dropoffLongitude: parseFloat(r.dropoff_longitude),
       meetingPoint: r.meeting_point,
       departureAt: r.departure_at,
       totalSeats: r.total_seats,
       availableSeats: r.available_seats,
       suggestedContribution: parseFloat(r.suggested_contribution || '0.0'),
       stopovers: parsedStopovers,
+      routePolyline: parsedPolyline,
+      routeSummary: r.route_variant,
       vehicleDetails: r.vehicle_details,
       rules: r.rules,
       notes: r.notes,

@@ -12,7 +12,6 @@ export function useRidesQuery(filters?: { vehicleType?: string; pickup?: string;
         const res = await fetchWithAuth(`/v1/rides?${queryParams}`);
         return res.data;
       } catch {
-        // Fallback to local rides state (populated dynamically when user publishes a pool)
         return SEED_RIDES.filter(r => {
           if (filters?.vehicleType && filters.vehicleType !== 'all' && r.vehicleType !== filters.vehicleType) return false;
           if (filters?.pickup && !r.pickup.toLowerCase().includes(filters.pickup.toLowerCase())) return false;
@@ -28,31 +27,15 @@ export function useRideDetailQuery(rideId: string) {
   return useQuery({
     queryKey: ['ride', rideId],
     queryFn: async () => {
+      if (!rideId) return null;
       try {
         const res = await fetchWithAuth(`/v1/rides/${rideId}`);
         return res.data;
       } catch {
-        return SEED_RIDES.find(r => r.id === rideId) || {
-          id: rideId,
-          driverId: 'my_driver_id',
-          driverName: 'You',
-          driverRating: 5.0,
-          driverRideCount: 1,
-          vehicleType: 'carpool',
-          pickup: 'Pickup Location',
-          destination: 'Destination',
-          meetingPoint: 'Main Pick-up Point',
-          departureAt: new Date().toISOString(),
-          totalSeats: 3,
-          availableSeats: 3,
-          suggestedContribution: 15,
-          vehicleDetails: 'My Car',
-          rules: 'No smoking',
-          notes: 'Safe ride',
-          status: 'published',
-        };
+        return SEED_RIDES.find(r => r.id === rideId) || null;
       }
     },
+    enabled: !!rideId,
   });
 }
 
@@ -77,21 +60,26 @@ export function useCreateRideMutation() {
           driverRating: 5.0,
           driverRideCount: 1,
           vehicleType: rideData.vehicleType || 'carpool',
-          pickup: typeof rideData.pickup === 'object' ? (rideData.pickup.name || rideData.pickup.address) : (rideData.pickup || 'Pickup Location'),
-          destination: typeof rideData.destination === 'object' ? (rideData.destination.name || rideData.destination.address) : (rideData.destination || 'Destination'),
+          pickup: rideData.pickup,
+          destination: rideData.destination,
+          pickupAddress: rideData.pickupAddress || rideData.pickup,
+          pickupLatitude: rideData.pickupLatitude,
+          pickupLongitude: rideData.pickupLongitude,
+          dropoffAddress: rideData.dropoffAddress || rideData.destination,
+          dropoffLatitude: rideData.dropoffLatitude,
+          dropoffLongitude: rideData.dropoffLongitude,
           meetingPoint: rideData.meetingPoint || 'Main Pick-up Point',
           departureAt: rideData.departureAt || new Date().toISOString(),
           totalSeats: rideData.totalSeats || 3,
           availableSeats: rideData.totalSeats || 3,
-          suggestedContribution: rideData.suggestedContribution || 15,
+          suggestedContribution: rideData.suggestedContribution || 0,
+          stopovers: rideData.stopovers || [],
+          routePolyline: rideData.routePolyline || [],
+          routeSummary: rideData.routeSummary || 'fastest',
           vehicleDetails: rideData.vehicleDetails || 'My Vehicle',
-          rules: rideData.rules || 'No smoking',
+          rules: rideData.rules || '',
           notes: rideData.notes || '',
           status: 'published' as const,
-          pickupLatitude: rideData.pickup?.latitude || 17.3850,
-          pickupLongitude: rideData.pickup?.longitude || 78.4867,
-          dropoffLatitude: rideData.destination?.latitude || 18.6725,
-          dropoffLongitude: rideData.destination?.longitude || 78.0941,
         };
         SEED_RIDES.unshift(newRide);
         return newRide;

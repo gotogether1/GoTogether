@@ -5,17 +5,32 @@ export const createRideSchema = z.object({
   pickup: z.string().min(2).max(100),
   destination: z.string().min(2).max(100),
   pickupAddress: z.string().optional(),
-  pickupLatitude: z.number().optional(),
-  pickupLongitude: z.number().optional(),
+  pickupLatitude: z.number({ required_error: 'Pickup latitude is required' }),
+  pickupLongitude: z.number({ required_error: 'Pickup longitude is required' }),
   pickupPlaceId: z.string().optional(),
   dropoffAddress: z.string().optional(),
-  dropoffLatitude: z.number().optional(),
-  dropoffLongitude: z.number().optional(),
+  dropoffLatitude: z.number({ required_error: 'Dropoff latitude is required' }),
+  dropoffLongitude: z.number({ required_error: 'Dropoff longitude is required' }),
   dropoffPlaceId: z.string().optional(),
   meetingPoint: z.string().min(2).max(150),
-  departureAt: z.string().datetime(),
+  departureAt: z.string(),
   totalSeats: z.number().int().min(1).max(4),
   suggestedContribution: z.number().min(0).default(0),
+  stopovers: z.array(
+    z.object({
+      name: z.string(),
+      address: z.string().optional(),
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
+    })
+  ).optional().default([]),
+  routePolyline: z.array(
+    z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+    })
+  ).optional().default([]),
+  routeSummary: z.string().optional().default('fastest'),
   vehicleDetails: z.string().min(2).max(100),
   rules: z.string().max(300).optional().default(''),
   notes: z.string().max(500).optional().default(''),

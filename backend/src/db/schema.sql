@@ -31,12 +31,12 @@ CREATE TABLE IF NOT EXISTS rides (
   pickup VARCHAR(255) NOT NULL,
   destination VARCHAR(255) NOT NULL,
   pickup_address TEXT,
-  pickup_latitude NUMERIC(10, 6),
-  pickup_longitude NUMERIC(10, 6),
+  pickup_latitude NUMERIC(10, 6) NOT NULL,
+  pickup_longitude NUMERIC(10, 6) NOT NULL,
   pickup_place_id VARCHAR(255),
   dropoff_address TEXT,
-  dropoff_latitude NUMERIC(10, 6),
-  dropoff_longitude NUMERIC(10, 6),
+  dropoff_latitude NUMERIC(10, 6) NOT NULL,
+  dropoff_longitude NUMERIC(10, 6) NOT NULL,
   dropoff_place_id VARCHAR(255),
   meeting_point VARCHAR(255) NOT NULL,
   departure_at TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS rides (
   available_seats INT NOT NULL CHECK (available_seats >= 0),
   suggested_contribution NUMERIC(10, 2) DEFAULT 0.00,
   route_variant VARCHAR(100) DEFAULT 'fastest',
+  route_polyline JSONB DEFAULT '[]'::jsonb,
   estimated_duration VARCHAR(50),
   estimated_distance VARCHAR(50),
   stopovers JSONB DEFAULT '[]'::jsonb,
@@ -58,7 +59,7 @@ CREATE TABLE IF NOT EXISTS rides (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Ensure location columns exist if table was created previously
+-- Ensure location & polyline columns exist if table was created previously
 ALTER TABLE rides ADD COLUMN IF NOT EXISTS pickup_address TEXT;
 ALTER TABLE rides ADD COLUMN IF NOT EXISTS pickup_latitude NUMERIC(10, 6);
 ALTER TABLE rides ADD COLUMN IF NOT EXISTS pickup_longitude NUMERIC(10, 6);
@@ -67,6 +68,7 @@ ALTER TABLE rides ADD COLUMN IF NOT EXISTS dropoff_address TEXT;
 ALTER TABLE rides ADD COLUMN IF NOT EXISTS dropoff_latitude NUMERIC(10, 6);
 ALTER TABLE rides ADD COLUMN IF NOT EXISTS dropoff_longitude NUMERIC(10, 6);
 ALTER TABLE rides ADD COLUMN IF NOT EXISTS dropoff_place_id VARCHAR(255);
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS route_polyline JSONB DEFAULT '[]'::jsonb;
 
 CREATE TABLE IF NOT EXISTS bookings (
   id VARCHAR(128) PRIMARY KEY,

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../../src/components/Card';
-import { Badge } from '../../src/components/Badge';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
-import { SEED_RIDES, SEED_USERS } from '../../src/demo/seedData';
+import { EmptyState } from '../../src/components/loading/EmptyState';
+import { useRideDetailQuery } from '../../src/api/hooks';
 import { Colors, Spacing, Typography } from '../../src/theme';
 import { useAuth } from '../../src/auth/AuthProvider';
 import { safeBack } from '../../src/utils/navigation';
@@ -17,57 +17,24 @@ export default function RideDetailsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { id } = useLocalSearchParams();
-  const defaultRide = {
-    id: typeof id === 'string' ? id : 'ride_default',
-    driverId: 'driver_default',
-    driverName: 'Driver',
-    driverRating: 5.0,
-    driverRideCount: 1,
-    vehicleType: 'carpool' as const,
-    pickup: 'Pickup Location',
-    destination: 'Destination',
-    meetingPoint: 'Meeting Point',
-    departureAt: new Date().toISOString(),
-    totalSeats: 3,
-    availableSeats: 2,
-    suggestedContribution: 15,
-    vehicleDetails: 'Vehicle',
-    rules: 'No smoking',
-    notes: 'Safe commute',
-    status: 'published' as const,
-    pickupLatitude: 17.3850,
-    pickupLongitude: 78.4867,
-    dropoffLatitude: 18.6725,
-    dropoffLongitude: 78.0941,
-  };
 
-  const defaultDriver = {
-    uid: 'driver_default',
-    displayName: 'Driver',
-    email: 'driver@example.com',
-    city: 'Hyderabad',
-    bio: 'Verified GoTogether driver',
-    photoURL: null,
-    averageRating: 5.0,
-    completedRideCount: 1,
-  };
-
-  const ride = SEED_RIDES.find(r => r.id === id) || defaultRide;
-  const driver = SEED_USERS.find(u => u.uid === ride.driverId) || defaultDriver;
+  const { data: ride, isLoading } = useRideDetailQuery((id as string) || '');
 
   const [requesting, setRequesting] = useState(false);
   const [negotiating, setNegotiating] = useState(false);
-  const [negotiatePrice, setNegotiatePrice] = useState(ride.suggestedContribution ? `${ride.suggestedContribution}` : '10');
+  const [negotiatePrice, setNegotiatePrice] = useState('10');
   const [requestedSeats, setRequestedSeats] = useState('1');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
 
   const handleOpenMap = (locationName: string) => {
-    router.push({
-      pathname: '/ride/map',
-      params: { rideId: ride.id, location: locationName },
-    });
+    if (ride) {
+      router.push({
+        pathname: '/ride/map',
+        params: { rideId: ride.id, location: locationName },
+      });
+    }
   };
 
   const handleBookingSubmit = () => {
@@ -108,52 +75,71 @@ export default function RideDetailsScreen() {
     setTimeout(() => {
       setLoading(false);
       setNegotiating(false);
-      setBookingSubmitted(true);
-      Alert.alert('Negotiated Offer Sent!', `Sent price offer of $${negotiatePrice} to ${driver.displayName}.`);
+      Alert.alert('Price Offer Sent!', 'The driver has received your suggested contribution.');
     }, 600);
   };
 
   const topInsetHeight = Math.max(insets.top + 12, 42);
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingCenter}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Loading trip details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!ride) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.emptyCenter}>
+          <EmptyState
+            icon="alert-circle-outline"
+            title="Ride Not Found"
+            message="The requested ride details could not be found or loaded."
+            actionLabel="Go Back"
+            onAction={() => safeBack(router)}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const driverName = ride.driverName || 'Driver';
+  const driverRating = ride.driverRating || 5.0;
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Top Status Bar Spacer */}
-      <View style={{ height: topInsetHeight }} />
-
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Top Header Row */}
-        <View style={styles.topHeader}>
-          <TouchableOpacity onPress={() => safeBack(router)} style={styles.backBtn} activeOpacity={0.8}>
-            <Ionicons name="arrow-back" size={20} color={Colors.onSurface} />
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Top Floating Back Header */}
+        <View style={[styles.headerFloatingRow, { top: topInsetHeight }]}>
+          <TouchableOpacity onPress={() => safeBack(router)} style={styles.backCircleBtn} activeOpacity={0.8}>
+            <Ionicons name="arrow-back" size={20} color="#0F172A" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle} numberOfLines={1}>Ride Details</Text>
-          <Badge
-            label={ride.vehicleType === 'carpool' ? 'Carpool' : 'Bike Pool'}
-            variant={ride.vehicleType === 'carpool' ? 'primary' : 'success'}
-          />
         </View>
 
         {/* Departure Date Header */}
-        <Text style={styles.dateHeader}>
-          {new Date(ride.departureAt).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
-        </Text>
+        <View style={styles.titleSection}>
+          <Text style={styles.departureDateText}>
+            {new Date(ride.departureAt || Date.now()).toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+            })}
+          </Text>
+          <Text style={styles.departureTimeText}>
+            Departure at {new Date(ride.departureAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </View>
 
-        {/* Vertical Timeline Card */}
+        {/* Timeline Route Card */}
         <Card style={styles.timelineCard}>
           <View style={styles.timelineContainer}>
-            {/* Timeline Line */}
-            <View style={styles.timelineLine} />
-
-            {/* Pickup Node */}
-            <View style={styles.timelineRow}>
-              <View style={styles.timeBox}>
-                <Text style={styles.timeText}>22:00</Text>
-                <Text style={styles.durationText}>3h 30m</Text>
-              </View>
-
+            {/* Pick-up */}
+            <View style={styles.timelineNodeRow}>
               <View style={styles.nodeCircleOuter}>
                 <View style={styles.nodeCircleInner} />
               </View>
@@ -166,18 +152,17 @@ export default function RideDetailsScreen() {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.subLocRow}>
-                  <Ionicons name="location-outline" size={14} color={Colors.primary} style={{ marginRight: 4 }} />
-                  <Text style={styles.locationPlusCode}>{ride.meetingPoint}</Text>
+                  <Ionicons name="location-outline" size={14} color="#0F172A" style={{ marginRight: 4 }} />
+                  <Text style={styles.locationPlusCode}>{ride.meetingPoint || 'Pick-up Location'}</Text>
                 </View>
               </View>
             </View>
 
-            {/* Destination Node */}
-            <View style={styles.timelineRow}>
-              <View style={styles.timeBox}>
-                <Text style={styles.timeText}>01:30 <Text style={styles.plusOne}>+1</Text></Text>
-              </View>
+            {/* Connecting Vertical Line */}
+            <View style={styles.timelineConnectorLine} />
 
+            {/* Drop-off */}
+            <View style={styles.timelineNodeRow}>
               <View style={styles.nodeCircleOuter}>
                 <View style={styles.nodeCircleInner} />
               </View>
@@ -210,20 +195,19 @@ export default function RideDetailsScreen() {
 
         {/* Driver Trust Profile & Preferences Card */}
         <Card style={styles.driverCard}>
-          <TouchableOpacity onPress={() => router.push(`/profile/${driver.uid}`)} style={styles.driverProfileHeader} activeOpacity={0.85}>
+          <TouchableOpacity onPress={() => router.push(`/profile/${ride.driverId}`)} style={styles.driverProfileHeader} activeOpacity={0.85}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>{driver.displayName.charAt(0)}</Text>
+              <Text style={styles.avatarInitial}>{driverName.charAt(0)}</Text>
             </View>
             <View style={styles.driverMeta}>
-              <Text style={styles.driverName}>{driver.displayName}</Text>
-              <Text style={styles.driverRating}>★ {driver.averageRating} / 5 • {driver.completedRideCount} rides</Text>
+              <Text style={styles.driverName}>{driverName}</Text>
+              <Text style={styles.driverRating}>★ {driverRating} / 5 • Verified Driver</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
 
           <View style={styles.driverDivider} />
 
-          {/* Verification & Preferences Badges */}
           <View style={styles.preferencesList}>
             <View style={styles.prefItem}>
               <Ionicons name="shield-checkmark-outline" size={18} color="#047857" style={styles.prefIcon} />
@@ -251,16 +235,16 @@ export default function RideDetailsScreen() {
         <Card>
           <Text style={styles.sectionTitle}>Vehicle & Trip Rules</Text>
           <Text style={styles.detailItem}><Text style={styles.boldText}>Vehicle:</Text> {ride.vehicleDetails}</Text>
-          <Text style={styles.detailItem}><Text style={styles.boldText}>Rules:</Text> {ride.rules}</Text>
-          <Text style={styles.detailItem}><Text style={styles.boldText}>Notes:</Text> {ride.notes}</Text>
+          <Text style={styles.detailItem}><Text style={styles.boldText}>Rules:</Text> {ride.rules || 'Standard pooling rules'}</Text>
+          <Text style={styles.detailItem}><Text style={styles.boldText}>Notes:</Text> {ride.notes || 'No extra notes'}</Text>
         </Card>
 
-        {/* Request / Negotiate Modals or Actions */}
+        {/* Request / Negotiate Actions */}
         {bookingSubmitted ? (
           <View style={styles.submittedBox}>
             <Text style={styles.submittedTitle}>Request Submitted</Text>
             <Text style={styles.submittedText}>
-              Your booking request has been sent to {driver.displayName}. You will receive a notification as soon as it is confirmed.
+              Your booking request has been sent to {driverName}. You will receive a notification as soon as it is confirmed.
             </Text>
             <Button title="View My Bookings" onPress={() => router.push('/(tabs)/dashboard')} style={styles.viewBookingsBtn} />
           </View>
@@ -321,85 +305,95 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   container: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.xl * 2.5,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: 70,
+    paddingBottom: 40,
   },
-  topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.surface,
+  loadingCenter: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    padding: Spacing.xl,
   },
-  headerTitle: {
-    ...Typography.headlineLg,
-    color: Colors.onBackground,
+  loadingText: {
+    ...Typography.bodyMd,
+    fontSize: 14,
+    color: Colors.onSurfaceVariant,
+    marginTop: 12,
+  },
+  emptyCenter: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
   },
-  dateHeader: {
-    ...Typography.displayLg,
-    fontSize: 26,
-    color: Colors.onBackground,
-    marginVertical: Spacing.xs,
+  headerFloatingRow: {
+    position: 'absolute',
+    left: Spacing.lg,
+    right: Spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 50,
+  },
+  backCircleBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  titleSection: {
+    marginBottom: Spacing.lg,
+    marginTop: Spacing.xs,
+  },
+  departureDateText: {
+    ...Typography.headlineLg,
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  departureTimeText: {
+    ...Typography.bodyMd,
+    fontSize: 15,
+    color: Colors.onSurfaceVariant,
+    marginTop: 2,
+    fontWeight: '500',
   },
   timelineCard: {
-    marginVertical: Spacing.xs,
+    marginBottom: Spacing.md,
+    borderRadius: 24,
+    padding: Spacing.lg,
   },
   timelineContainer: {
     position: 'relative',
   },
-  timelineLine: {
-    position: 'absolute',
-    left: 80,
-    top: 24,
-    bottom: 24,
-    width: 3,
-    backgroundColor: Colors.primary,
-  },
-  timelineRow: {
+  timelineNodeRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginVertical: Spacing.sm,
-  },
-  timeBox: {
-    width: 70,
-  },
-  timeText: {
-    ...Typography.bodyLg,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  durationText: {
-    ...Typography.labelSm,
-    color: Colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  plusOne: {
-    fontSize: 12,
-    color: Colors.primary,
   },
   nodeCircleOuter: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 2,
+    borderColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
+    marginRight: 14,
+    marginTop: 2,
   },
   nodeCircleInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: Colors.primary,
   },
   locationContent: {
@@ -408,27 +402,48 @@ const styles = StyleSheet.create({
   locationTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.xs,
+    justifyContent: 'space-between',
   },
   locationName: {
-    ...Typography.bodyLg,
-    fontWeight: '700',
-    color: Colors.onSurface,
+    ...Typography.headlineLg,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    flex: 1,
   },
   mapBtn: {
-    padding: 2,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
   subLocRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: 3,
   },
   locationPlusCode: {
-    ...Typography.labelSm,
+    ...Typography.bodyMd,
+    fontSize: 13,
     color: Colors.onSurfaceVariant,
   },
+  timelineConnectorLine: {
+    width: 2,
+    height: 36,
+    backgroundColor: Colors.primary,
+    marginLeft: 10,
+    marginVertical: 4,
+    opacity: 0.6,
+  },
   priceCard: {
-    marginVertical: Spacing.xs,
+    marginBottom: Spacing.md,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   priceRow: {
     flexDirection: 'row',
@@ -436,16 +451,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   passengerCount: {
-    ...Typography.bodyLg,
+    ...Typography.labelLg,
+    fontSize: 14,
+    color: '#334155',
     fontWeight: '600',
-    color: Colors.onSurface,
   },
   priceAmount: {
-    ...Typography.displayLg,
+    ...Typography.headlineLg,
+    fontSize: 22,
+    fontWeight: '900',
     color: Colors.primary,
   },
   driverCard: {
-    marginVertical: Spacing.xs,
+    marginBottom: Spacing.md,
+    borderRadius: 24,
   },
   driverProfileHeader: {
     flexDirection: 'row',
@@ -455,32 +474,36 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primaryContainer,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Spacing.md,
+    marginRight: 14,
   },
   avatarInitial: {
+    ...Typography.headlineLg,
     fontSize: 20,
-    fontWeight: '700',
-    color: Colors.primary,
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
   driverMeta: {
     flex: 1,
   },
   driverName: {
-    ...Typography.bodyLg,
-    fontWeight: '700',
-    color: Colors.onSurface,
+    ...Typography.headlineLg,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   driverRating: {
-    ...Typography.labelSm,
+    ...Typography.bodyMd,
+    fontSize: 13,
     color: Colors.onSurfaceVariant,
     marginTop: 2,
   },
   chevron: {
     fontSize: 24,
-    color: Colors.outline,
+    color: '#94A3B8',
+    fontWeight: '300',
   },
   driverDivider: {
     height: 1,
@@ -488,74 +511,79 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.md,
   },
   preferencesList: {
-    gap: Spacing.sm,
+    gap: 10,
   },
   prefItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   prefIcon: {
-    marginRight: Spacing.sm,
+    marginRight: 10,
+    width: 20,
   },
   prefText: {
     ...Typography.bodyMd,
-    color: Colors.onSurfaceVariant,
+    fontSize: 13,
+    color: '#334155',
+    fontWeight: '500',
   },
   sectionTitle: {
-    ...Typography.headlineMd,
-    color: Colors.onBackground,
-    marginBottom: Spacing.sm,
+    ...Typography.headlineLg,
+    fontSize: 16,
     fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: Spacing.sm,
   },
   detailItem: {
     ...Typography.bodyMd,
-    color: Colors.onSurface,
-    marginBottom: Spacing.xs,
+    fontSize: 13.5,
+    color: Colors.onSurfaceVariant,
+    marginBottom: 6,
   },
   boldText: {
     fontWeight: '700',
+    color: '#0F172A',
   },
   bottomActionBar: {
     flexDirection: 'row',
     gap: Spacing.sm,
-    marginVertical: Spacing.md,
-    paddingBottom: Spacing.md,
+    marginTop: Spacing.lg,
   },
   negotiateBtn: {
     flex: 1,
   },
   bookBtn: {
-    flex: 1.5,
+    flex: 1,
   },
   actionFormCard: {
-    marginVertical: Spacing.md,
-    borderColor: Colors.primary,
-    borderWidth: 1.5,
+    marginTop: Spacing.md,
   },
   cancelBtn: {
-    marginTop: Spacing.xs,
+    marginTop: Spacing.sm,
   },
   submittedBox: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.5,
+    borderColor: '#86EFAC',
+    borderRadius: 24,
     padding: Spacing.lg,
-    borderRadius: 16,
-    marginVertical: Spacing.md,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
+    marginTop: Spacing.lg,
   },
   submittedTitle: {
-    ...Typography.headlineMd,
-    color: '#047857',
-    marginBottom: Spacing.xs,
-    fontWeight: '800',
+    ...Typography.headlineLg,
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#166534',
+    marginBottom: 6,
   },
   submittedText: {
     ...Typography.bodyMd,
-    color: Colors.onSurface,
+    fontSize: 13.5,
+    color: '#15803D',
     lineHeight: 20,
     marginBottom: Spacing.md,
   },
   viewBookingsBtn: {
-    backgroundColor: '#047857',
+    backgroundColor: '#166534',
   },
 });

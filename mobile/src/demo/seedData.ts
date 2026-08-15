@@ -18,19 +18,24 @@ export interface DemoRide {
   vehicleType: 'carpool' | 'bike_pool';
   pickup: string;
   destination: string;
+  pickupAddress?: string;
+  pickupLatitude: number;
+  pickupLongitude: number;
+  dropoffAddress?: string;
+  dropoffLatitude: number;
+  dropoffLongitude: number;
   meetingPoint: string;
   departureAt: string;
   totalSeats: number;
   availableSeats: number;
   suggestedContribution: number;
+  stopovers?: Array<{ name: string; address?: string; latitude?: number; longitude?: number }>;
+  routePolyline?: Array<{ latitude: number; longitude: number }>;
+  routeSummary?: string;
   vehicleDetails: string;
   rules: string;
   notes: string;
   status: 'published' | 'cancelled' | 'completed';
-  pickupLatitude?: number;
-  pickupLongitude?: number;
-  dropoffLatitude?: number;
-  dropoffLongitude?: number;
 }
 
 export interface DemoBooking {
@@ -69,7 +74,7 @@ export interface DemoMessage {
   createdAt: string;
 }
 
-// Clean initial state (No test users or demo rides hardcoded)
+// Clean initial state (No hardcoded demo users or static rides)
 export const SEED_USERS: DemoUser[] = [];
 
 export const SEED_RIDES: DemoRide[] = [];
