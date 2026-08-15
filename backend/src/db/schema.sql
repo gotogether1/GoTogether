@@ -30,6 +30,14 @@ CREATE TABLE IF NOT EXISTS rides (
   vehicle_type VARCHAR(50) NOT NULL CHECK (vehicle_type IN ('carpool', 'bike_pool')),
   pickup VARCHAR(255) NOT NULL,
   destination VARCHAR(255) NOT NULL,
+  pickup_address TEXT,
+  pickup_latitude NUMERIC(10, 6),
+  pickup_longitude NUMERIC(10, 6),
+  pickup_place_id VARCHAR(255),
+  dropoff_address TEXT,
+  dropoff_latitude NUMERIC(10, 6),
+  dropoff_longitude NUMERIC(10, 6),
+  dropoff_place_id VARCHAR(255),
   meeting_point VARCHAR(255) NOT NULL,
   departure_at TIMESTAMP WITH TIME ZONE NOT NULL,
   total_seats INT NOT NULL CHECK (total_seats > 0),
@@ -49,6 +57,16 @@ CREATE TABLE IF NOT EXISTS rides (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Ensure location columns exist if table was created previously
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS pickup_address TEXT;
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS pickup_latitude NUMERIC(10, 6);
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS pickup_longitude NUMERIC(10, 6);
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS pickup_place_id VARCHAR(255);
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS dropoff_address TEXT;
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS dropoff_latitude NUMERIC(10, 6);
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS dropoff_longitude NUMERIC(10, 6);
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS dropoff_place_id VARCHAR(255);
 
 CREATE TABLE IF NOT EXISTS bookings (
   id VARCHAR(128) PRIMARY KEY,
