@@ -83,8 +83,8 @@ export class BookingService {
     // 7. Insert booking row into PostgreSQL
     const bookingId = `booking_${Date.now()}`;
     const insertSql = `
-      INSERT INTO bookings (id, ride_id, rider_id, seats_requested, negotiated_price, rider_message, status)
-      VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+      INSERT INTO bookings (id, ride_id, rider_id, seats_requested, rider_message, status)
+      VALUES ($1, $2, $3, $4, $5, 'pending')
       RETURNING *;
     `;
     const res = await query(insertSql, [
@@ -92,7 +92,6 @@ export class BookingService {
       rideId,
       targetRiderId,
       seatsRequested,
-      negotiatedPrice || null,
       riderMessage || '',
     ]);
 
@@ -104,7 +103,6 @@ export class BookingService {
         riderId: b.rider_id,
         driverId: ride.driverId,
         seatsRequested: b.seats_requested,
-        negotiatedPrice: b.negotiated_price ? parseFloat(b.negotiated_price) : undefined,
         riderMessage: b.rider_message,
         pickup: ride.pickup,
         destination: ride.destination,
@@ -161,7 +159,6 @@ export class BookingService {
       driverId: b.driver_id,
       driverName: b.driver_name || 'Driver',
       seatsRequested: b.seats_requested,
-      negotiatedPrice: b.negotiated_price ? parseFloat(b.negotiated_price) : undefined,
       riderMessage: b.rider_message,
       pickup: b.pickup,
       destination: b.destination,

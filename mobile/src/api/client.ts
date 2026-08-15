@@ -3,9 +3,12 @@ import { auth } from '../config/firebase';
 
 let envBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://gotogether-backend-zceg.onrender.com';
 
-// On Android emulator, 'localhost' points to internal Android VM loopback. Map 'localhost' to '10.0.2.2' (Android host loopback)
-if (Platform.OS === 'android' && envBaseUrl.includes('localhost')) {
+// Only allow local loopback mapping during local development on Android emulator when explicitly configured with localhost
+if (__DEV__ && Platform.OS === 'android' && envBaseUrl.includes('localhost')) {
   envBaseUrl = envBaseUrl.replace('localhost', '10.0.2.2');
+} else if (!__DEV__ && (envBaseUrl.includes('localhost') || envBaseUrl.includes('10.0.2.2'))) {
+  // Enforce production Render URL in release builds
+  envBaseUrl = 'https://gotogether-backend-zceg.onrender.com';
 }
 
 export const API_BASE_URL = envBaseUrl;

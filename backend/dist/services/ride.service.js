@@ -42,9 +42,9 @@ class RideService {
         pickup_address, pickup_latitude, pickup_longitude,
         dropoff_address, dropoff_latitude, dropoff_longitude,
         meeting_point, departure_at, total_seats, available_seats,
-        suggested_contribution, stopovers, route_polyline, route_variant, vehicle_details, rules, notes, status
+        suggested_contribution, stopovers, route_polyline, vehicle_details, rules, notes, status
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18::jsonb, $19, $20, $21, $22, 'active')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17::jsonb, $18::jsonb, $19, $20, $21, 'active')
       RETURNING *;
     `;
         const params = [
@@ -66,7 +66,6 @@ class RideService {
             input.suggestedContribution || 0.00,
             stopoversJson,
             polylineJson,
-            input.routeSummary || 'fastest',
             input.vehicleDetails || 'Vehicle',
             input.rules || '',
             input.notes || '',
