@@ -249,15 +249,15 @@ export function LocationPicker({
 
         {/* GPS Locate Button */}
         <TouchableOpacity
-          style={[styles.gpsLocateBtn, { bottom: bottomInset + 140 }]}
+          style={[styles.gpsLocateBtn, { bottom: bottomInset + 76 }]}
           onPress={handleUseCurrentLocation}
           activeOpacity={0.8}
         >
           <Ionicons name="locate" size={22} color={Colors.primary} />
         </TouchableOpacity>
 
-        {/* Floating Next Button sitting right above direction button */}
-        <View style={[styles.bottomBarContainer, { paddingBottom: bottomInset + 10 }]}>
+        {/* Single Floating Next Button at Bottom Right */}
+        <View style={[styles.bottomBarContainer, { paddingBottom: bottomInset + 16 }]}>
           <TouchableOpacity
             style={styles.nextPillBtn}
             onPress={() => onConfirm(selectedLocation)}
@@ -265,14 +265,6 @@ export function LocationPicker({
           >
             <Text style={styles.nextPillText}>Next</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.floatingArrowBtn}
-            onPress={() => onConfirm(selectedLocation)}
-            activeOpacity={0.88}
-          >
-            <Ionicons name="arrow-forward" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -467,8 +459,6 @@ const styles = StyleSheet.create({
   bottomBarContainer: {
     position: 'absolute',
     right: 20,
-    alignItems: 'flex-end',
-    gap: 10,
     zIndex: 30,
   },
   nextPillBtn: {
@@ -476,8 +466,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.primary,
     paddingHorizontal: 22,
-    height: 44,
-    borderRadius: 22,
+    height: 48,
+    borderRadius: 24,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
@@ -489,18 +479,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#FFFFFF',
-  },
-  floatingArrowBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
   },
 });
