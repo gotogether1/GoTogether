@@ -94,6 +94,7 @@ class RideService {
       LEFT JOIN users u ON r.driver_id = u.id OR r.driver_id = u.firebase_uid
       WHERE r.status = 'active'
         AND r.available_seats > 0
+        AND r.departure_at >= (CURRENT_TIMESTAMP - INTERVAL '15 minutes')
         AND r.driver_id != $1
         AND (u.firebase_uid IS NULL OR u.firebase_uid != $1)
         AND ($2::VARCHAR IS NULL OR r.vehicle_type = $2)
@@ -262,6 +263,27 @@ class RideService {
         }
         const updateSql = `UPDATE rides SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *;`;
         const updateRes = await (0, index_js_1.query)(updateSql, [rideId]);
+        return this.mapRideRow(updateRes.rows[0]);
+    }
+    /**
+     * Complete Ride
+     */
+    static async completeRide(driverId, rideId) {
+        const checkSql = `SELECT * FROM rides WHERE id = $1 LIMIT 1;`;
+        const checkRes = await (0, index_js_1.query)(checkSql, [rideId]);
+        if (!checkRes.rows || checkRes.rows.length === 0) {
+            throw api_error_js_1.ApiError.notFound('Ride not found');
+        }
+        const ride = checkRes.rows[0];
+        const userRes = await (0, index_js_1.query)('SELECT id, firebase_uid FROM users WHERE id = $1 OR firebase_uid = $1 LIMIT 1', [ride.driver_id]);
+        const driverDbId = userRes.rows[0]?.id;
+        const driverFbUid = userRes.rows[0]?.firebase_uid;
+        if (ride.driver_id !== driverId && driverFbUid !== driverId && driverDbId !== driverId) {
+            throw api_error_js_1.ApiError.forbidden('Only the driver can complete this ride');
+        }
+        const updateSql = `UPDATE rides SET status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *;`;
+        const updateRes = await (0, index_js_1.query)(updateSql, [rideId]);
+        await (0, index_js_1.query)(`UPDATE users SET completed_ride_count = completed_ride_count + 1 WHERE id = $1 OR firebase_uid = $1;`, [driverId]);
         return this.mapRideRow(updateRes.rows[0]);
     }
     static mapRideRow(r) {

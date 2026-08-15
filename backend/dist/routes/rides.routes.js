@@ -79,6 +79,19 @@ router.post('/:rideId/cancel', async (req, res, next) => {
     }
 });
 /**
+ * Complete Ride
+ */
+router.post('/:rideId/complete', async (req, res, next) => {
+    try {
+        const uid = req.auth.uid;
+        const ride = await ride_service_js_1.RideService.completeRide(uid, req.params.rideId);
+        res.json({ message: 'Ride marked as completed', data: ride });
+    }
+    catch (err) {
+        next(err);
+    }
+});
+/**
  * Bookings for a Ride
  */
 router.post('/:rideId/bookings', async (req, res, next) => {

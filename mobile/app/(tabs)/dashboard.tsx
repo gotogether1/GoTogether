@@ -204,6 +204,25 @@ export default function DashboardScreen() {
                   </View>
                   <Text style={styles.routeText}>{r.pickup} → {r.destination}</Text>
                   <Text style={styles.subText}>Departure: {new Date(r.departureAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+                  
+                  {(r.status === 'published' || r.status === 'active') && (
+                    <View style={styles.actionRow}>
+                      <Button
+                        title="Mark Complete"
+                        variant="secondary"
+                        onPress={async () => {
+                          try {
+                            const { fetchWithAuth } = require('../../src/api/client');
+                            await fetchWithAuth(`/v1/rides/${r.id}/complete`, { method: 'POST' });
+                            Alert.alert('Ride Completed! ⭐', 'Your ride has been marked as completed.');
+                          } catch (err: any) {
+                            Alert.alert('Error', err.message || 'Unable to complete ride');
+                          }
+                        }}
+                        style={{ marginTop: 8 }}
+                      />
+                    </View>
+                  )}
                 </TouchableOpacity>
               ))
             )}

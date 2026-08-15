@@ -80,6 +80,19 @@ router.post('/:rideId/cancel', async (req: Request, res: Response, next: NextFun
 });
 
 /**
+ * Complete Ride
+ */
+router.post('/:rideId/complete', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const uid = req.auth!.uid;
+    const ride = await RideService.completeRide(uid, req.params.rideId);
+    res.json({ message: 'Ride marked as completed', data: ride });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * Bookings for a Ride
  */
 router.post('/:rideId/bookings', async (req: Request, res: Response, next: NextFunction) => {
