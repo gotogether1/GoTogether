@@ -3,7 +3,7 @@ import { GoTogetherLocation, PlaceAutocompleteSuggestion, RouteOption } from '..
 
 const GOOGLE_MAPS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
-// Fallback regional locations for instant testing & seamless offline/keyless dev experience
+// Regional quick locations for instant fallback
 const FALLBACK_PLACES: GoTogetherLocation[] = [
   {
     placeId: 'fallback-banswada',
@@ -64,21 +64,21 @@ const FALLBACK_PLACES: GoTogetherLocation[] = [
 ];
 
 /**
- * Fetch Google Places Autocomplete Suggestions
+ * Fetch Worldwide Places Autocomplete Suggestions (Google Places API + OpenStreetMap Nominatim Global Engine)
  */
 export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutocompleteSuggestion[]> {
   if (!query || query.trim().length < 2) return [];
 
-  const cleanQuery = query.trim().toLowerCase();
+  const cleanQuery = query.trim();
 
-  // If Google API Key is present, call Google Places API
+  // 1. Try Google Places API first if Key is present
   if (GOOGLE_MAPS_API_KEY) {
     try {
-      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&types=geocode|establishment&key=${GOOGLE_MAPS_API_KEY}`;
+      const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(cleanQuery)}&types=geocode|establishment&key=${GOOGLE_MAPS_API_KEY}`;
       const res = await fetch(url);
       const data = await res.json();
 
-      if (data.status === 'OK' && Array.isArray(data.predictions)) {
+      if (data.status === 'OK' && Array.isArray(data.predictions) && data.predictions.length > 0) {
         return data.predictions.map((p: any) => ({
           placeId: p.place_id,
           name: p.structured_formatting?.main_text || p.description.split(',')[0],
@@ -87,13 +87,41 @@ export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutoc
         }));
       }
     } catch (err) {
-      console.warn('Google Places Autocomplete API call failed, using fallback:', err);
+      console.warn('Google Places Autocomplete API call failed:', err);
     }
   }
 
-  // Fallback search over regional list
+  // 2. Query Nominatim Global OpenStreetMap Geocoding Engine (1.2+ Billion worldwide addresses)
+  try {
+    const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleanQuery)}&format=json&addressdetails=1&limit=10`;
+    const res = await fetch(nomUrl, {
+      headers: {
+        'User-Agent': 'GoTogetherMobileApp/1.0',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
+    const data = await res.json();
+
+    if (Array.isArray(data) && data.length > 0) {
+      return data.map((item: any) => {
+        const mainName = item.name || item.address?.city || item.address?.town || item.address?.village || item.display_name.split(',')[0];
+        const fullAddr = item.display_name;
+        return {
+          placeId: `nom-${item.place_id}-${item.lat}-${item.lon}`,
+          name: mainName,
+          address: fullAddr,
+          secondaryText: fullAddr.replace(`${mainName}, `, ''),
+        };
+      });
+    }
+  } catch (err) {
+    console.warn('Nominatim Global Autocomplete call failed:', err);
+  }
+
+  // 3. Fallback search over local places list
+  const cleanLower = cleanQuery.toLowerCase();
   const matches = FALLBACK_PLACES.filter(
-    p => p.name.toLowerCase().includes(cleanQuery) || p.address.toLowerCase().includes(cleanQuery)
+    p => p.name.toLowerCase().includes(cleanLower) || p.address.toLowerCase().includes(cleanLower)
   );
 
   return matches.map(p => ({
@@ -108,12 +136,30 @@ export async function fetchPlacesAutocomplete(query: string): Promise<PlaceAutoc
  * Get Location details from placeId or geocode place name
  */
 export async function fetchPlaceDetails(placeId: string, fallbackName?: string): Promise<GoTogetherLocation> {
+  // If placeId came from Nominatim, parse exact lat & lon directly from placeId
+  if (placeId && placeId.startsWith('nom-')) {
+    const parts = placeId.split('-');
+    if (parts.length >= 4) {
+      const lat = parseFloat(parts[2]);
+      const lon = parseFloat(parts[3]);
+      if (!isNaN(lat) && !isNaN(lon)) {
+        return {
+          placeId,
+          name: fallbackName ? fallbackName.split(',')[0] : 'Selected Location',
+          address: fallbackName || 'Selected Location',
+          latitude: lat,
+          longitude: lon,
+        };
+      }
+    }
+  }
+
   const match = FALLBACK_PLACES.find(p => p.placeId === placeId);
   if (match) return match;
 
   if (GOOGLE_MAPS_API_KEY) {
     // First try Google Place Details API by place_id
-    if (placeId && !placeId.startsWith('fallback-') && !placeId.startsWith('loc-')) {
+    if (placeId && !placeId.startsWith('fallback-') && !placeId.startsWith('loc-') && !placeId.startsWith('nom-')) {
       try {
         const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=place_id,name,formatted_address,geometry&key=${GOOGLE_MAPS_API_KEY}`;
         const res = await fetch(url);
@@ -158,11 +204,31 @@ export async function fetchPlaceDetails(placeId: string, fallbackName?: string):
     }
   }
 
+  // Secondary Nominatim lookup for direct text strings
+  try {
+    const queryText = fallbackName || placeId;
+    const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryText)}&format=json&limit=1`;
+    const res = await fetch(nomUrl, {
+      headers: { 'User-Agent': 'GoTogetherMobileApp/1.0' },
+    });
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      const top = data[0];
+      return {
+        placeId: `nom-${top.place_id}`,
+        name: top.display_name.split(',')[0],
+        address: top.display_name,
+        latitude: parseFloat(top.lat),
+        longitude: parseFloat(top.lon),
+      };
+    }
+  } catch {}
+
   return {
     placeId,
     name: fallbackName || 'Selected Location',
     address: `${fallbackName || 'Selected Point'}, Telangana, India`,
-    latitude: 17.3850, // Default to Telangana hub (Hyderabad) instead of hardcoding Banswada
+    latitude: 17.3850,
     longitude: 78.4867,
   };
 }
@@ -171,7 +237,7 @@ export async function fetchPlaceDetails(placeId: string, fallbackName?: string):
  * Reverse Geocode coordinates to readable address
  */
 export async function reverseGeocode(latitude: number, longitude: number): Promise<GoTogetherLocation> {
-  // Try Google Geocoding API if key exists
+  // 1. Try Google Geocoding API if key exists
   if (GOOGLE_MAPS_API_KEY) {
     try {
       const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`;
@@ -194,7 +260,29 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
     }
   }
 
-  // Fallback using Expo Location native geocoder (only if permission granted)
+  // 2. Try Nominatim Global Reverse Geocoding Engine
+  try {
+    const nomUrl = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+    const res = await fetch(nomUrl, {
+      headers: { 'User-Agent': 'GoTogetherMobileApp/1.0' },
+    });
+    const data = await res.json();
+
+    if (data && data.display_name) {
+      const mainName = data.name || data.address?.city || data.address?.town || data.address?.village || data.display_name.split(',')[0];
+      return {
+        placeId: `nom-rev-${data.place_id}`,
+        name: mainName,
+        address: data.display_name,
+        latitude,
+        longitude,
+      };
+    }
+  } catch (err) {
+    console.warn('Nominatim reverse geocoding failed:', err);
+  }
+
+  // 3. Fallback using Expo Location native geocoder (only if permission granted)
   try {
     const { status } = await Location.getForegroundPermissionsAsync();
     if (status === 'granted') {
